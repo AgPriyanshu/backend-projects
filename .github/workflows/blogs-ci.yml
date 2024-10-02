@@ -17,6 +17,15 @@ jobs: # Workflow definition.
     - uses: actions/checkout@v4  # Githubs pre-defined actions.
     
     # Action Definition.
+    - name: Setup PostgreSQL for Linux/macOS/Windows
+      uses: ikalnytskyi/action-setup-postgres@v6
+      with:
+        username: blog_user
+        password: blog
+        database: blog
+        port: 5432
+        postgres-version: "17"
+      id: postgres
     - name: Set up Python ${{ matrix.python-version }} 
       uses: actions/setup-python@v3
       with:
