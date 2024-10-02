@@ -1,9 +1,7 @@
 name: Django CI # Workflow name.
 on: # Events.
   push:
-    branches: [ "master" ]
-  pull_request:
-    branches: [ "master" ]
+    branches: [ "blogs*" ]
 
 jobs: # Workflow definition.
   build: # Jobs.
