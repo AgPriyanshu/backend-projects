@@ -1,4 +1,4 @@
-name: Django CI # Workflow name.
+name: Todo Project CI # Workflow name.
 on: # Events.
   push:
     branches: [ "todo*" ]
