@@ -8,6 +8,11 @@ class CustomJSONRenderer(JSONRenderer):
 
     def render(self, data, accepted_media_type=None, renderer_context=None):
         response = renderer_context.get("response", None)
+        message = ''
+        response_data_body = {}
+        if isinstance(data,dict):
+            response_data_body = data.get('data',data)
+            message = data.get('message','')
 
         # Building the custom response structure
         response_data = {
@@ -18,8 +23,9 @@ class CustomJSONRenderer(JSONRenderer):
                     if response
                     else True
                 ),
+                "message": message
             },
-            "data": data,
+            "data": response_data_body,
         }
 
         # Return serialized JSON data

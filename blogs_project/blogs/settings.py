@@ -37,7 +37,7 @@ INSTALLED_APPS = [
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
-    "core"
+    "core",
 ]
 
 MIDDLEWARE = [
@@ -75,14 +75,13 @@ WSGI_APPLICATION = "blogs.wsgi.application"
 # https://docs.djangoproject.com/en/5.1/ref/settings/#databases
 
 DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'blog',
-        'USER': 'blog_user',
-        'PASSWORD': 'blog',
-        'HOST': 'localhost',
-        'PORT': '5432',
-
+    "default": {
+        "ENGINE": "django.db.backends.postgresql",
+        "NAME": "blog",
+        "USER": "blog_user",
+        "PASSWORD": "blog",
+        "HOST": "localhost",
+        "PORT": "5432",
     }
 }
 
@@ -106,8 +105,8 @@ AUTH_PASSWORD_VALIDATORS = [
 ]
 
 REST_FRAMEWORK = {
-    'DEFAULT_RENDERER_CLASSES': [
-        'blogs.renderer.CustomJSONRenderer',
+    "DEFAULT_RENDERER_CLASSES": [
+        "blogs.renderer.CustomJSONRenderer",
     ]
 }
 

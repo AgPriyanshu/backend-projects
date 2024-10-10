@@ -37,6 +37,9 @@ INSTALLED_APPS = [
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
+    "rest_framework.authtoken",
+    "auth",
+    "core",
 ]
 
 MIDDLEWARE = [
@@ -75,8 +78,12 @@ WSGI_APPLICATION = "todo.wsgi.application"
 
 DATABASES = {
     "default": {
-        "ENGINE": "django.db.backends.sqlite3",
-        "NAME": BASE_DIR / "db.sqlite3",
+        "ENGINE": "django.db.backends.postgresql",
+        "NAME": "todo",
+        "USER": "todo_user",
+        "PASSWORD": "todo",
+        "HOST": "localhost",
+        "PORT": "5432",
     }
 }
 
@@ -99,7 +106,14 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 
-
+REST_FRAMEWORK = {
+    "DEFAULT_RENDERER_CLASSES": [
+        "todo.renderer.CustomJSONRenderer",
+    ],
+    "DEFAULT_AUTHENTICATION_CLASSES": [
+        "todo.authentication.BearerAuthentication",
+    ],
+}
 # Internationalization
 # https://docs.djangoproject.com/en/5.1/topics/i18n/
 
