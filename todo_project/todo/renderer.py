@@ -13,7 +13,8 @@ class CustomJSONRenderer(JSONRenderer):
         if isinstance(data,dict):
             response_data_body = data.get('data',data)
             message = data.get('message','')
-
+        else:
+            response_data_body = data
         # Building the custom response structure
         response_data = {
             "meta": {
