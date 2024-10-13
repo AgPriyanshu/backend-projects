@@ -1,16 +1,16 @@
 version: '3.8'
 
 services:
-  db:
-    image: postgres:latest
-    volumes:
-      - ./data/db:/var/lib/postgresql/data/
-    environment:
-      - POSTGRES_DB=weather
-      - POSTGRES_USER=weather_user
-      - POSTGRES_PASSWORD=weather
-    ports:
-      - "5431:5432"
+  # db:
+  #   image: postgres:latest
+  #   volumes:
+  #     - ./data/db:/var/lib/postgresql/data/
+  #   environment:
+  #     - POSTGRES_DB=weather
+  #     - POSTGRES_USER=weather_user
+  #     - POSTGRES_PASSWORD=weather
+  #   ports:
+  #     - "5431:5432"
 
   redis:
     image: redis:latest
@@ -28,6 +28,6 @@ services:
       - "8000:8000"
 
     depends_on:
-      - db
+      # - db
       - redis
 

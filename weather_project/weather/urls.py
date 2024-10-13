@@ -15,9 +15,20 @@ Including another URLconf
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
 
+from django.views.generic import TemplateView
 from django.contrib import admin
-from django.urls import path
+from django.urls import path, include
+from .settings import BASE_DIR
+import os
 
 urlpatterns = [
     path("admin/", admin.site.urls),
+    path(
+        "api-doc/",
+        TemplateView.as_view(
+            template_name=os.path.join(BASE_DIR, "templates/open-api.html"),
+            extra_context={"schema_url": BASE_DIR / "docs" / "open-api.yaml"},
+        ),
+        name="api-doc",
+    ),
 ]
