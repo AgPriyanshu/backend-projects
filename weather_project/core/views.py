@@ -1,16 +1,26 @@
-from rest_framework.views import APIView
-from rest_framework.response import Response
-from rest_framework import authentication, permissions
+from datetime import datetime
+
 from django.contrib.auth.models import User
+from rest_framework import authentication, permissions
+from rest_framework.decorators import api_view
+from rest_framework.response import Response
+
+from .helpers import get_current_ist_date
+from .weather_api import weather_api_session
 
 
-class ListUsers(APIView):
-    authentication_classes = [authentication.TokenAuthentication]
-    permission_classes = [permissions.IsAdminUser]
+@api_view(["GET"])
+def current(request, location: str):
+    weather_api_url = ""
+    if location:
+        weather_api_url += location
 
-    def get(self, request, format=None):
-        """
-        Return a list of all users.
-        """
-        usernames = [user.username for user in User.objects.all()]
-        return Response(usernames)
+    date = get_current_ist_date()
+    weather_api_url += "/" + date
+    response = weather_api_session.request(url=weather_api_url, method="GET")
+    return Response(
+        {
+            "message": f"Current weather for location: {location} ",
+            "data": response.json(),
+        }
+    )

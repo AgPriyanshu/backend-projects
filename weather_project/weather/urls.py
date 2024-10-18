@@ -16,13 +16,16 @@ Including another URLconf
 """
 
 from django.views.generic import TemplateView
-from django.contrib import admin
-from django.urls import path, include
+from django.urls import path, re_path
 from .settings import BASE_DIR
+from core import views
 import os
 
 urlpatterns = [
-    path("admin/", admin.site.urls),
+    re_path(
+        r"^weather/current/(?P<location>[^/]+)",
+        views.current,
+    ),
     path(
         "api-doc/",
         TemplateView.as_view(
