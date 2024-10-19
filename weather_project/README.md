@@ -1,8 +1,6 @@
-# Todo API
+# Weather API
 
-This is a simple Django REST API backend that allows performing basic CRUD (Create, Read, Update, Delete) operations on todo tasks.
-
-## Instructions
+This is a simple Django REST API backend that gives current weather details.
 
 ### Local Setup
 
