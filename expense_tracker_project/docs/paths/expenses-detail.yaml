@@ -1,0 +1,19 @@
+get:
+  description: To get expense detail by id.
+  operationId: getExpenseDetailById
+  responses:
+    "200":
+      parameters:
+        - name: id
+          in: path
+          description: ID of pet to return
+          required: true
+          schema:
+            type: integer
+            format: int64
+      content:
+        application/json:
+          schema:
+            $ref: "../schemas/expense.yaml"
+  tags:
+    - Expenses

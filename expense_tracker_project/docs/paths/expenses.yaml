@@ -1,0 +1,13 @@
+get:
+  description: To get expenses list.
+  operationId: listExpenses
+  responses:
+    "200":
+      content:
+        application/json:
+          schema:
+            type: array
+            items:
+              $ref: "../schemas/expense.yaml"
+  tags:
+    - Expenses

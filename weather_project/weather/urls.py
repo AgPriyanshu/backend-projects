@@ -21,6 +21,7 @@ from .settings import BASE_DIR
 from core import views
 import os
 
+
 urlpatterns = [
     re_path(
         r"^weather/current/(?P<location>[^/]+)",

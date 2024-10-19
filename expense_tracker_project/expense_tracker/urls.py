@@ -15,9 +15,35 @@ Including another URLconf
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
 
-from django.contrib import admin
+from django.views.generic import TemplateView
+from django.conf.urls.static import static
 from django.urls import path
+from . import settings
+import os
+
 
 urlpatterns = [
-    path("admin/", admin.site.urls),
+    path(
+        "api-doc/",
+        TemplateView.as_view(
+            template_name=os.path.join(settings.BASE_DIR, "templates/open-api.html"),
+        ),
+        name="api-doc",
+    ),
 ]
+
+# Adding static file urls.
+urlpatterns += static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
+
+# Enable api doc url only if debug is true.
+if settings.DEBUG:
+    urlpatterns.append(
+        path(
+            "api-doc/",
+            TemplateView.as_view(
+                template_name="openapi.html",
+                extra_context={"schema_url": "openapi-schema"},
+            ),
+            name="api-doc",
+        )
+    )
