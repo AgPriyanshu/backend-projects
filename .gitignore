@@ -1,2 +1,62 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Django specific
+*.log
+*.pot
+*.pyc
+*.pyo
+*.sqlite3
+*.env
+db.sqlite3
+
+# If using migrations
+*/migrations/*
+
+# Static files
+staticfiles/
+static/
+
+# Media files
+media/
+
+# Local environment variables
+.env
+
+# Virtual environments
+venv/
+env/
+ENV/
+
+# MySQL database files
+*.sql
+
+# macOS files
+.DS_Store
+
+# pyenv
+.python-version
+
+# VSCode
+.vscode/
+
+# JetBrains IDEs
+.idea/
+
+# Docker
+*.dockerfile
+docker-compose.yml
+.dockerignore
+
+# node modules
+node_modules/
+
+# Yarn
+.yarn/
+.pnp.*
+
 .vscode
 virtual-env
+data
