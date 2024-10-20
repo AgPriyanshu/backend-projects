@@ -6,22 +6,18 @@ from blogs_app.views import BlogsViewSet
 from .settings import BASE_DIR
 import os
 
-# router = DefaultRouter()
-# router.register(r"blogs", BlogsViewSet, basename="blog")
-
-# urlpatterns = [path("", include(router.urls))]
-
 urlpatterns = [
-    # re_path(
-    #     r"^weather/current/(?P<location>[^/]+)",
-    #     views.current,
+    path(r"auth/", include("auth_app.urls")),
+    path(r"blogs/", include("blogs_app.urls")),
+    path(r"weather/", include("weather_app.urls")),
+    path(r"tasks/", include("todo_app.urls")),
+    # TODO: Add API Doc for each app
+    # path(
+    #     "api-doc/",
+    #     TemplateView.as_view(
+    #         template_name=os.path.join(BASE_DIR, "templates/open-api.html"),
+    #         extra_context={"schema_url": BASE_DIR / "docs" / "open-api.yaml"},
+    #     ),
+    #     name="api-doc",
     # ),
-    path(
-        "api-doc/",
-        TemplateView.as_view(
-            template_name=os.path.join(BASE_DIR, "templates/open-api.html"),
-            extra_context={"schema_url": BASE_DIR / "docs" / "open-api.yaml"},
-        ),
-        name="api-doc",
-    ),
 ]

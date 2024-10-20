@@ -1,5 +1,6 @@
 from rest_framework.serializers import ModelSerializer
-from ..todo_project.core.models import Task
+
+from .models import Task
 
 
 class TaskSerializer(ModelSerializer):

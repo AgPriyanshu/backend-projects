@@ -23,7 +23,6 @@ jobs: # Workflow definition.
         password: todo
         database: todo
         port: 5432
-        postgres-version: "17"
       id: postgres
     - name: Set up Python ${{ matrix.python-version }} 
       uses: actions/setup-python@v3

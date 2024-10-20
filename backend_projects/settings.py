@@ -43,6 +43,11 @@ MIDDLEWARE = [
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
 ]
 
+if DEBUG:
+    INSTALLED_APPS += ["debug_toolbar"]
+    MIDDLEWARE += ["debug_toolbar.middleware.DebugToolbarMiddleware"]
+
+
 ROOT_URLCONF = "backend_projects.urls"
 
 TEMPLATES = [
@@ -96,6 +101,14 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 
+REST_FRAMEWORK = {
+    "DEFAULT_RENDERER_CLASSES": [
+        "backend_projects.renderer.CustomJSONRenderer",
+    ],
+    "DEFAULT_AUTHENTICATION_CLASSES": [
+        "auth_app.authentication.BearerAuthentication",
+    ],
+}
 
 # Internationalization
 # https://docs.djangoproject.com/en/5.1/topics/i18n/

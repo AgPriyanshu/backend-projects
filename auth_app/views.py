@@ -11,7 +11,7 @@ from .serializers import AuthSerializer
 class AuthViewSet(ViewSet):
     queryset = User.objects.all()
 
-    @action(detail=False, methods=["POST"])
+    @action(detail=False, methods=["POST"], url_name="login")
     def login(self, request):
         request_body = request.data.copy()
         serializer = AuthSerializer(data=request_body)
@@ -36,7 +36,11 @@ class AuthViewSet(ViewSet):
                 status=status.HTTP_403_FORBIDDEN,
             )
 
-    @action(detail=False, methods=["POST"])
+    @action(
+        detail=False,
+        methods=["POST"],
+        url_name="register",
+    )
     def register(self, request):
         request_body = request.data.copy()
         serializer = AuthSerializer(data=request_body)
