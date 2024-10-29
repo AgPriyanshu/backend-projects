@@ -4,6 +4,7 @@ from django.views.generic import TemplateView
 from django.conf.urls.static import static
 from .settings import BASE_DIR, STATIC_ROOT, STATIC_URL
 import os
+from .env_variables import EnvVariable
 
 urlpatterns = [
     path(r"auth/", include("auth_app.urls")),
@@ -21,3 +22,8 @@ urlpatterns = [
     ),
     # TODO: Add API Doc for each app
 ] + static(STATIC_URL, document_root=STATIC_ROOT)
+
+if EnvVariable.DEBUG.value == 1:
+    from debug_toolbar.toolbar import debug_toolbar_urls
+
+    urlpatterns + debug_toolbar_urls()

@@ -47,7 +47,6 @@ ENV/
 
 # Docker
 *.dockerfile
-docker-compose.yml
 .dockerignore
 
 # node modules
