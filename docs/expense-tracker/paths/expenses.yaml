@@ -1,6 +1,8 @@
 get:
   description: To get expenses list.
   operationId: listExpenses
+  security:
+    - bearerAuth: []
   responses:
     "200":
       content:

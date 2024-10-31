@@ -11,6 +11,7 @@ urlpatterns = [
     path(r"blogs/", include("blogs_app.urls")),
     path(r"weather/", include("weather_app.urls")),
     path(r"tasks/", include("todo_app.urls")),
+    path(r"expenses/", include("expense_tracker_app.urls")),
     path(
         "expense-app/api-doc/",
         TemplateView.as_view(

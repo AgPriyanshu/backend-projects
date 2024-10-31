@@ -26,6 +26,8 @@ INSTALLED_APPS = [
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
+    "rest_framework.authtoken",
+    "shared.apps.SharedConfig",
     "auth_app.apps.AuthAppConfig",
     "blogs_app.apps.BlogsAppConfig",
     "expense_tracker_app.apps.ExpenseTrackerAppConfig",

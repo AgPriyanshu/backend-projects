@@ -1,9 +1,6 @@
 from django.db import models
-import uuid
+from shared.models import BaseModel
 
 
-class Task(models.Model):
-    id = models.UUIDField(primary_key=True, default=uuid.uuid4)
+class Task(BaseModel):
     description = models.TextField()
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
