@@ -1,9 +1,9 @@
 from rest_framework.serializers import ModelSerializer
 
-from .models import Blog
+from .models import Expense
 
 
-class BlogsSerializer(ModelSerializer):
+class ExpensesSerializer(ModelSerializer):
     class Meta:
-        model = Blog
+        model = Expense
         fields = "__all__"

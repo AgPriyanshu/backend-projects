@@ -2,29 +2,56 @@
 <html>
   <head>
     <title>Swagger</title>
-    <meta charset="utf-8"/>
-    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
     {% load static %}
-    <link rel="stylesheet" type="text/css" href="//unpkg.com/swagger-ui-dist@3/swagger-ui.css" />
-
+    <link
+      rel="stylesheet"
+      type="text/css"
+      href="//unpkg.com/swagger-ui-dist@3/swagger-ui.css"
+    />
   </head>
   <body>
     <div id="swagger-ui"></div>
     <script src="//unpkg.com/swagger-ui-dist@3/swagger-ui-bundle.js"></script>
     <script>
-    const ui = SwaggerUIBundle({
+      const ui = SwaggerUIBundle({
         url: "{% static 'expense-tracker/open-api.yaml' %}",
-        dom_id: '#swagger-ui',
+        dom_id: "#swagger-ui",
         presets: [
           SwaggerUIBundle.presets.apis,
-          SwaggerUIBundle.SwaggerUIStandalonePreset
+          SwaggerUIBundle.SwaggerUIStandalonePreset,
         ],
         layout: "BaseLayout",
         requestInterceptor: (request) => {
-          request.headers['X-CSRFToken'] = "{{ csrf_token }}"
+          request.headers.Authorization =
+            "Bearer " + localStorage.getItem("accessToken");
           return request;
-        }
-      })
+        },
+      });
+      function addAuthButton() {
+        var container = document.querySelector(".information-container");
+        var div = document.createElement("div");
+        var button = document.createElement("button");
+        button.appendChild(document.createTextNode("Authorization"));
+        button.style =
+          "font-size: 14px; font-weight: 700; min-width: 80px; padding: 6px 15px; text-align: center; border-radius: 3px; background: #41cd8e; text-shadow: 0 1px 0 rgba(0,0,0,.1); font-family: Titillium Web,sans-serif; color: #fff; border: none;";
+        button.addEventListener("click", function (event) {
+          event.preventDefault();
+          var token = prompt(
+            "Enter JWT access token token. Eg. eyJraW...qJSaxQ"
+          );
+          if (!token) {
+            localStorage.removeItem("accessToken");
+            alert("Token cleared");
+          } else {
+            token = token.replace(/[^\d\w_.-]/gi, "");
+            localStorage.setItem("accessToken", token);
+          }
+        });
+        addAuthButton();
+        container.appendChild(div.appendChild(button));
+      }
     </script>
   </body>
 </html>

@@ -1,11 +1,9 @@
-import os
 from django.urls import include, path
-from django.views.generic import TemplateView
 from rest_framework.routers import DefaultRouter
 
-from backend_projects.settings import BASE_DIR
+from .views import ExpenseViewSet
 
-# router = DefaultRouter()
-# router.register(r"", BlogsViewSet, basename="blogs")
+router = DefaultRouter()
+router.register(r"", ExpenseViewSet, basename="expenses")
 
-urlpatterns = []
+urlpatterns = [path("", include(router.urls))]

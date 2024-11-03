@@ -6,6 +6,12 @@ components:
   schemas:
     expense:
       $ref: "./schemas/expense.yaml"
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
 paths:
   /expenses/:
     $ref: "./paths/expenses.yaml"

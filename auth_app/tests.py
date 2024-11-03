@@ -1,7 +1,7 @@
-from django.test import TestCase, Client
+from django.contrib.auth.models import User
+from django.test import Client, TestCase
 from rest_framework.reverse import reverse
 from rest_framework.status import HTTP_200_OK
-from django.contrib.auth.models import User
 
 user_creds = {"username": "test-suite@gmail.com", "password": "test-password"}
 

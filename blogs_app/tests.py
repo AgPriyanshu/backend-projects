@@ -1,9 +1,9 @@
-from django.test import TestCase, Client
-from .models import Blog
+from django.test import Client, TestCase
 from rest_framework.reverse import reverse
 
+from .models import Blog
 
-# Create your tests here.
+
 class TestBlogs(TestCase):
     def setUp(self):
         self.blog1 = Blog.objects.create(title="Blog1")

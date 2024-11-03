@@ -1,3 +1,14 @@
-from django.shortcuts import render
+from rest_framework.permissions import IsAuthenticated
+from rest_framework.viewsets import ModelViewSet
 
-# Create your views here.
+from .models import Expense
+from .serializers import ExpensesSerializer
+
+
+class ExpenseViewSet(ModelViewSet):
+    queryset = Expense.objects.all()
+    serializer_class = ExpensesSerializer
+    permission_classes = [IsAuthenticated]
+
+    def destroy(self, request, *args, **kwargs):
+        pass

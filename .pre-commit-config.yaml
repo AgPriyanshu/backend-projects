@@ -1,0 +1,76 @@
+# .pre-commit-config.yaml
+repos:
+  # Black: Automatic code formatter
+  - repo: https://github.com/psf/black
+    rev: 24.10.0 # Use the latest stable version or specify the version you prefer
+    hooks:
+      - id: black
+        language_version: python3 # Specify your Python version
+        args:
+          - --preview
+  # isort: Sorts imports according to PEP 8
+  - repo: https://github.com/PyCQA/isort
+    rev: 5.13.2
+    hooks:
+      - id: isort
+        args: ["--profile", "black"] # To work well with Black's formatting
+
+  # autoflake: Removes unused imports and variables
+  - repo: https://github.com/PyCQA/autoflake
+    rev: v2.2.0
+    hooks:
+      - id: autoflake
+        args:
+          [
+            "--in-place",
+            "--remove-all-unused-imports",
+            "--remove-unused-variables",
+            "--expand-star-imports",
+            "--remove-duplicate-keys",
+            "--ignore-init-module-imports",
+          ]
+        language_version: python3
+
+  # Flake8: Python linter for PEP 8 compliance
+  - repo: https://github.com/pycqa/flake8
+    rev: 7.1.1
+    hooks:
+      - id: flake8
+        additional_dependencies: # Optionally add Django-specific plugins
+          - flake8-django # Django-specific linting rules
+        args: ["--max-line-length=88", "--ignore=F841,E501"] # To match Black's line length
+
+  # Check YAML files
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v5.0.0
+    hooks:
+      # Identify invalid files
+      # check whether the files parse as valid python.
+      - id: check-ast
+
+      # checks yaml files for parseable syntax.
+      - id: check-yaml
+
+      # General quality checks
+      # trims trailing whitespace.
+      - id: trailing-whitespace
+
+      # replaces or checks mixed line ending
+      - id: mixed-line-ending
+
+      # ensures that a file is either empty, or ends with one newline.
+      - id: end-of-file-fixer
+
+      # Python checks
+      # check for debugger imports and py37+ `breakpoint()` calls in python source.
+      - id: debug-statements
+
+      # Git checks
+      # detects the presence of private keys
+      - id: detect-private-key
+      # check for files that would conflict in case-insensitive filesystems
+      - id: check-case-conflict
+      # check for files that contain merge conflict strings.
+      - id: check-merge-conflict
+      # prevent giant files from being committed
+      - id: check-added-large-files

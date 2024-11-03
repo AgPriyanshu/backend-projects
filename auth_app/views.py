@@ -1,10 +1,12 @@
-from django.contrib.auth.models import User
 from django.contrib.auth import authenticate
+from django.contrib.auth.models import User
 from rest_framework import status
-from rest_framework.viewsets import ViewSet
-from rest_framework.decorators import action
-from rest_framework.response import Response
 from rest_framework.authtoken.models import Token
+from rest_framework.decorators import action
+from rest_framework.exceptions import APIException
+from rest_framework.response import Response
+from rest_framework.viewsets import ViewSet
+
 from .serializers import AuthSerializer
 
 
@@ -47,7 +49,7 @@ class AuthViewSet(ViewSet):
         serializer.is_valid(raise_exception=True)
         # Check if user already exists.
         if user := User.objects.filter(username=serializer.validated_data["username"]):
-            raise Exception("User already exists")
+            raise APIException("User already exists")
         else:
             user = User.objects.create_user(
                 username=serializer.validated_data["username"],
