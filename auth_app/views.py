@@ -1,11 +1,12 @@
-from django.contrib.auth.models import User
 from django.contrib.auth import authenticate
+from django.contrib.auth.models import User
 from rest_framework import status
-from rest_framework.viewsets import ViewSet
-from rest_framework.decorators import action
-from rest_framework.response import Response
 from rest_framework.authtoken.models import Token
+from rest_framework.decorators import action
 from rest_framework.exceptions import APIException
+from rest_framework.response import Response
+from rest_framework.viewsets import ViewSet
+
 from .serializers import AuthSerializer
 
 

@@ -1,9 +1,10 @@
-from django.test import TestCase, Client
+from django.contrib.auth.models import User
+from django.test import Client, TestCase
+from rest_framework.authtoken.models import Token
 from rest_framework.reverse import reverse
 from rest_framework.status import HTTP_204_NO_CONTENT
-from rest_framework.authtoken.models import Token
+
 from .models import Task
-from django.contrib.auth.models import User
 
 
 class TestTasks(TestCase):

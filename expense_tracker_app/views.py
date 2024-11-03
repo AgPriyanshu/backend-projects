@@ -1,9 +1,8 @@
-from django.shortcuts import render
-from rest_framework.viewsets import ModelViewSet
 from rest_framework.permissions import IsAuthenticated
+from rest_framework.viewsets import ModelViewSet
 
-from .serializers import ExpensesSerializer
 from .models import Expense
+from .serializers import ExpensesSerializer
 
 
 class ExpenseViewSet(ModelViewSet):

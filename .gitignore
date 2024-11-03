@@ -44,7 +44,7 @@ ENV/
 
 # JetBrains IDEs
 .idea/
- 
+
 # node modules
 node_modules/
 

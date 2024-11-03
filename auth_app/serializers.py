@@ -1,5 +1,5 @@
-from rest_framework.serializers import Serializer, CharField
 from django.contrib.auth.password_validation import validate_password
+from rest_framework.serializers import CharField, Serializer
 
 
 class AuthSerializer(Serializer):

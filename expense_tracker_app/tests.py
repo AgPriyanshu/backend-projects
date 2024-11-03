@@ -1,4 +1,3 @@
-from django.test.client import Client
 from rest_framework.reverse import reverse
 
 from shared.tests import BaseTest
