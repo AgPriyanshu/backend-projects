@@ -3,7 +3,6 @@ from .models import Blog
 from rest_framework.reverse import reverse
 
 
-# Create your tests here.
 class TestBlogs(TestCase):
     def setUp(self):
         self.blog1 = Blog.objects.create(title="Blog1")

@@ -44,11 +44,7 @@ ENV/
 
 # JetBrains IDEs
 .idea/
-
-# Docker
-*.dockerfile
-.dockerignore
-
+ 
 # node modules
 node_modules/
 
