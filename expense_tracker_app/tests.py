@@ -18,7 +18,6 @@ class TestExpenses(BaseTest):
             "title": "Groceries",
             "spend": "1000.00",
         }
-
         expense2_assertion_obj = {
             "title": "TV",
             "spend": "10000.00",
