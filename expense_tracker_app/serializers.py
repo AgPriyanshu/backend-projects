@@ -7,3 +7,4 @@ class ExpensesSerializer(ModelSerializer):
     class Meta:
         model = Expense
         fields = ("id", "title", "spend")
+        read_only_fields = ("id",)
