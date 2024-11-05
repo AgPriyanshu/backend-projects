@@ -41,9 +41,23 @@ class TestExpenses(BaseTest):
         # Arrange.
         id = self.expense1.id
         url = reverse("expenses-detail", kwargs={"pk": id})
+
         # Act.
         response = self.client.get(url).json()
 
         # Assert.
         self.assertEqual(str(id), response["data"]["id"])
         self.assertEqual(self.expense1.title, response["data"]["title"])
+
+    def test_can_update_expense(self):
+        # Arrange.
+        id = self.expense1.id
+        url = reverse("expenses-detail", kwargs={"pk": id})
+
+        # Act.
+        response = self.client.patch(url, data={"title": "Updated Groceries"}).json()
+        response_data = response["data"]
+
+        # Assert.
+        self.assertEqual(str(id), response_data["id"])
+        self.assertEqual("Updated Groceries", response_data["title"])
