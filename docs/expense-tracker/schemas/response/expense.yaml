@@ -1,0 +1,11 @@
+type: object
+properties:
+  id:
+    type: string
+    format: uuid
+  title:
+    type: string
+  spend:
+    type: number
+    format: double
+    default: 10000.00

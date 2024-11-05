@@ -3,9 +3,6 @@ info:
   title: Expense Tracker API
   description: A simple API to track you expenses.
 components:
-  schemas:
-    expense:
-      $ref: "./schemas/expense.yaml"
   securitySchemes:
     bearerAuth:
       type: http
