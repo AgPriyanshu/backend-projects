@@ -10,6 +10,6 @@ get:
           schema:
             type: array
             items:
-              $ref: "../schemas/expense.yaml"
+              $ref: "../schemas/response/expense.yaml"
   tags:
     - Expenses
