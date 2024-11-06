@@ -1,4 +1,5 @@
 from rest_framework.reverse import reverse
+from rest_framework.status import HTTP_204_NO_CONTENT
 
 from shared.tests import BaseTest
 
@@ -37,6 +38,22 @@ class TestExpenses(BaseTest):
             expense2_assertion_obj,
         )
 
+    def test_can_add_expense(self):
+        # Arrange.
+        url = reverse("expenses-list")
+        expense = {
+            "title": "Groceries",
+            "spend": "1000.00",
+        }
+
+        # Act.
+        response = self.client.post(url, data=expense)
+        response_json = response.json()["data"]
+        expenseObj = Expense.objects.filter(id=response_json["id"]).first()
+
+        # Assert.
+        self.assertEqual(expenseObj.title, expense["title"])
+
     def test_can_fetch_expense(self):
         # Arrange.
         id = self.expense1.id
@@ -61,3 +78,14 @@ class TestExpenses(BaseTest):
         # Assert.
         self.assertEqual(str(id), response_data["id"])
         self.assertEqual("Updated Groceries", response_data["title"])
+
+    def test_can_delete_expense(self):
+        # Arrange.
+        expense_to_delete = Expense.objects.create(title="Groceries", spend=1000)
+        url = reverse("expenses-detail", kwargs={"pk": expense_to_delete.id})
+
+        # Act.
+        response = self.client.delete(url)
+
+        # Assert.
+        self.assertEqual(response.status_code, HTTP_204_NO_CONTENT)

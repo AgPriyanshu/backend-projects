@@ -18,3 +18,32 @@ get:
                   $ref: "../schemas/response/expense.yaml"
   tags:
     - Expenses
+
+post:
+  description: To add an expense.
+  operationId: createExpense
+  security:
+    - bearerAuth: []
+
+  requestBody:
+    required: true
+    content:
+      application/json:
+        schema:
+          $ref: "../schemas/request/expense.yaml"
+
+  responses:
+    "201":
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              meta:
+                $ref: "../../shared/schemas/response.yaml#meta"
+              data:
+                type: array
+                items:
+                  $ref: "../schemas/response/expense.yaml"
+  tags:
+    - Expenses
