@@ -14,7 +14,12 @@ get:
       content:
         application/json:
           schema:
-            $ref: "../schemas/response/expense.yaml"
+            type: object
+            properties:
+              meta:
+                $ref: "../../shared/schemas/response.yaml#meta"
+              data:
+                $ref: "../schemas/response/expense.yaml"
   tags:
     - Expenses
 
@@ -40,31 +45,36 @@ patch:
       content:
         application/json:
           schema:
-            $ref: "../schemas/response/expense.yaml"
+            type: object
+            properties:
+              meta:
+                $ref: "../../shared/schemas/response.yaml#meta"
+              data:
+                $ref: "../schemas/response/expense.yaml"
   tags:
     - Expenses
-# patch:
-#   description: To update expense details by id.
-#   operationId: updateExpenseDetailById
-#   parameters:
-#     - name: id
-#       in: path
-#       description: expense id
-#       required: true
-#       schema:
-#         type: string
-#         format: uuid
-#   requestBody:
-#     required: true
-#     content:
-#       application/json:
-#         schema:
-#           type: object
-#           properties:
-#             name:
-#               type: string
-#   responses:
-#     "200":
-#       description: Successful update
-#   tags:
-#     - Expenses
+
+delete:
+  description: To delete expense details by id.
+  operationId: delteExpenseDetailById
+  parameters:
+    - name: id
+      in: path
+      description: expense id
+      required: true
+      schema:
+        type: string
+        format: uuid
+  responses:
+    "204":
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              meta:
+                $ref: "../../shared/schemas/response.yaml#meta"
+              data:
+                $ref: "../../shared/schemas/response.yaml#data"
+  tags:
+    - Expenses
