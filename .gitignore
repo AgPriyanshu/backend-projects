@@ -37,7 +37,6 @@ ENV/
 # pyenv
 .python-version
 
-
 # JetBrains IDEs
 .idea/
 
@@ -48,6 +47,5 @@ node_modules/
 .yarn/
 .pnp.*
 
-.vscode
 virtual-env
 data

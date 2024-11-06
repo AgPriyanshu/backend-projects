@@ -1,0 +1,19 @@
+{
+  "[python]": {
+    "editor.defaultFormatter": "ms-python.black-formatter",
+    "editor.formatOnSave": true,
+    "editor.codeActionsOnSave": {
+      "source.organizeImports": "explicit"
+    },
+    "editor.tabSize": 4,
+    "editor.detectIndentation": false
+  },
+  "[yaml]": {
+    "editor.defaultFormatter": "redhat.vscode-yaml"
+  },
+  "python.analysis.packageIndexDepths": [
+    ["rest_framework", 5, true],
+    ["django", 5, true]
+  ],
+  "black-formatter.args": ["--line-length=88", "--preview"]
+}
