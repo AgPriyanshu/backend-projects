@@ -9,6 +9,3 @@ class ExpenseViewSet(ModelViewSet):
     queryset = Expense.objects.all()
     serializer_class = ExpensesSerializer
     permission_classes = [IsAuthenticated]
-
-    def destroy(self, request, *args, **kwargs):
-        pass
