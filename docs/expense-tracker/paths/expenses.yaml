@@ -8,8 +8,13 @@ get:
       content:
         application/json:
           schema:
-            type: array
-            items:
-              $ref: "../schemas/response/expense.yaml"
+            type: object
+            properties:
+              meta:
+                $ref: "../../shared/schemas/response.yaml#meta"
+              data:
+                type: array
+                items:
+                  $ref: "../schemas/response/expense.yaml"
   tags:
     - Expenses

@@ -1,0 +1,14 @@
+meta:
+  type: object
+  properties:
+    success:
+      type: boolean
+      default: true
+    type:
+      type: string
+    message:
+      type: string
+
+data:
+  type: object
+  
