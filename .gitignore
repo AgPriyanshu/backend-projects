@@ -37,8 +37,6 @@ ENV/
 # pyenv
 .python-version
 
-# VSCode
-.vscode/
 
 # JetBrains IDEs
 .idea/
