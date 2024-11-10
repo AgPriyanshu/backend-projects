@@ -2,7 +2,7 @@ from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
 
 
-class BaseSerializer(serializers.ModelSerializer):
+class BaseModelSerializer(serializers.ModelSerializer):
     """
     Features of this serializer:
         - A base serializer that raises a 400 error if any read-only fields are attempted to be updated.
