@@ -8,7 +8,7 @@ from .serializers import ExpensesQueryParams, ExpensesSerializer
 
 
 class ExpenseViewSet(ModelViewSet):
-    queryset = Expense.objects.all()
+    queryset = Expense.objects.order_by("-created_at").all()
     serializer_class = ExpensesSerializer
     permission_classes = [IsAuthenticated]
 
