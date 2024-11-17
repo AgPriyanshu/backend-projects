@@ -1,4 +1,3 @@
-from datetime import timedelta
 from enum import StrEnum
 from typing import Type
 
@@ -32,7 +31,7 @@ class RecentTimePeriod(StrEnum):
             case RecentTimePeriod.LAST_WEEK:
                 today = timezone.now()
                 start_date = today - relativedelta(weeks=1)
-                end_date = today - timedelta(days=1)
+                end_date = today
                 return (
                     start_date,
                     end_date,
@@ -41,7 +40,7 @@ class RecentTimePeriod(StrEnum):
             case RecentTimePeriod.LAST_MONTH:
                 today = timezone.now()
                 start_date = today - relativedelta(months=1)
-                end_date = today - timedelta(days=1)
+                end_date = today
                 return (
                     start_date,
                     end_date,
@@ -50,7 +49,7 @@ class RecentTimePeriod(StrEnum):
             case RecentTimePeriod.LAST_6_MONTHS:
                 today = timezone.now()
                 start_date = today - relativedelta(months=6)
-                end_date = today - timedelta(days=1)
+                end_date = today
                 return (
                     start_date,
                     end_date,
