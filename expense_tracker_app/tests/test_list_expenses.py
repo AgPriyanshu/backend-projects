@@ -35,6 +35,7 @@ class TestExpenses(BaseTest):
         self.expense1.save()
         self.expense2.created_at = today - relativedelta(months=1)
         self.expense2.save()
+        expected_results = ExpensesSerializer([self.expense1], many=True).data
 
         url = reverse("expenses-list")
         query_params = {"time_period": "last_week"}
@@ -44,7 +45,7 @@ class TestExpenses(BaseTest):
         response_json = response.json()["data"]
 
         # Assert.
-        self.assertCountEqual(response_json, [self.expense1.id])
+        self.assertCountEqual(response_json, expected_results)
 
     def test_can_list_expenses_from_last_month(self):
         # Arrange.
@@ -53,7 +54,12 @@ class TestExpenses(BaseTest):
         self.expense1.save()
         self.expense2.created_at = today - relativedelta(months=1)
         self.expense2.save()
-        expected_results = ExpensesSerializer([self.expense2], many=True)
+        expense3 = Expense.objects.create(
+            title="Falana", spend=10000, created_at=today - relativedelta(months=2)
+        )
+        expected_results = ExpensesSerializer(
+            [self.expense1, self.expense2], many=True
+        ).data
 
         url = reverse("expenses-list")
         query_params = {"time_period": "last_month"}
@@ -63,4 +69,4 @@ class TestExpenses(BaseTest):
         response_json = response.json()["data"]
 
         # Assert.
-        self.assertCountEqual(response_json, expected_results.data)
+        self.assertCountEqual(response_json, expected_results)
