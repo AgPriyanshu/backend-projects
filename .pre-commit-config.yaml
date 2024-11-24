@@ -38,7 +38,11 @@ repos:
       - id: flake8
         additional_dependencies: # Optionally add Django-specific plugins
           - flake8-django # Django-specific linting rules
-        args: ["--max-line-length=88", "--ignore=F841,E501"] # To match Black's line length
+        args: [
+            "--max-line-length=88",
+            "--ignore=F841,E501",
+            "--per-file-ignores=__init__.py:F401,F403",
+          ] # To match Black's line length
 
   # Check YAML files
   - repo: https://github.com/pre-commit/pre-commit-hooks

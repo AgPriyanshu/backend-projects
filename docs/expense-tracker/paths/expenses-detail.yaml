@@ -1,19 +1,80 @@
 get:
-  description: To get expense detail by id.
+  description: To get expense details by id.
   operationId: getExpenseDetailById
+  parameters:
+    - name: id
+      in: path
+      required: true
+      description: "The UUID of the object."
+      schema:
+        type: string
+        format: uuid
   responses:
     "200":
-      parameters:
-        - name: id
-          in: path
-          description: ID of pet to return
-          required: true
-          schema:
-            type: integer
-            format: int64
       content:
         application/json:
           schema:
-            $ref: "../schemas/expense.yaml"
+            type: object
+            properties:
+              meta:
+                $ref: "../../shared/schemas/response.yaml#meta"
+              data:
+                $ref: "../schemas/response/expense.yaml"
+  tags:
+    - Expenses
+
+patch:
+  description: To update expense details by id.
+  operationId: updateExpenseDetailById
+  parameters:
+    - name: id
+      in: path
+      description: expense id
+      required: true
+      schema:
+        type: string
+        format: uuid
+  requestBody:
+    required: true
+    content:
+      application/json:
+        schema:
+          $ref: "../schemas/request/expense.yaml"
+  responses:
+    "200":
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              meta:
+                $ref: "../../shared/schemas/response.yaml#meta"
+              data:
+                $ref: "../schemas/response/expense.yaml"
+  tags:
+    - Expenses
+
+delete:
+  description: To delete expense details by id.
+  operationId: delteExpenseDetailById
+  parameters:
+    - name: id
+      in: path
+      description: expense id
+      required: true
+      schema:
+        type: string
+        format: uuid
+  responses:
+    "204":
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              meta:
+                $ref: "../../shared/schemas/response.yaml#meta"
+              data:
+                $ref: "../../shared/schemas/response.yaml#data"
   tags:
     - Expenses

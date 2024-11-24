@@ -3,13 +3,63 @@ get:
   operationId: listExpenses
   security:
     - bearerAuth: []
+  parameters:
+    - in: query
+      name: time_period
+      required: false
+      schema:
+        oneOf:
+          - type: string
+            enum: ["last_week", "last_month", "last_3_months"]
+          - type: array
+            items:
+              type: string
+              format: date
+            minItems: 2
+            maxItems: 2
+      description: Time period for filtering. Can be a predefined string (e.g., "last_week") or an array of two dates in DD-MM-YYYY format (e.g., ["01-01-2024", "31-01-2024"]).
+
   responses:
     "200":
       content:
         application/json:
           schema:
-            type: array
-            items:
-              $ref: "../schemas/expense.yaml"
+            type: object
+            properties:
+              meta:
+                $ref: "../../shared/schemas/response.yaml#meta"
+              data:
+                type: array
+                items:
+                  $ref: "../schemas/response/expense.yaml"
+  tags:
+    - Expenses
+
+post:
+  description: To add an expense.
+  operationId: createExpense
+  security:
+    - bearerAuth: []
+
+  requestBody:
+    required: true
+    content:
+      application/json:
+        schema:
+          $ref: "../schemas/request/expense.yaml"
+
+  responses:
+    "201":
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              meta:
+                $ref: "../../shared/schemas/response.yaml#meta"
+              data:
+                type: array
+                items:
+                  $ref: "../schemas/response/expense.yaml"
   tags:
     - Expenses

@@ -12,8 +12,6 @@ __pycache__/
 *.env
 db.sqlite3
 
-# If using migrations
-*/migrations/*
 
 # Static files
 staticfiles/
@@ -39,9 +37,6 @@ ENV/
 # pyenv
 .python-version
 
-# VSCode
-.vscode/
-
 # JetBrains IDEs
 .idea/
 
@@ -52,6 +47,5 @@ node_modules/
 .yarn/
 .pnp.*
 
-.vscode
 virtual-env
 data
