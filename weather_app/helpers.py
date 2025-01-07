@@ -4,7 +4,6 @@ import pytz
 
 
 def get_current_ist_date() -> str:
-
     # Get the IST timezone object
     ist_timezone = pytz.timezone("Asia/Kolkata")
 

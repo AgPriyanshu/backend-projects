@@ -1,18 +1,18 @@
-[tool.black]
-line-length = 88
-include = '\.pyi?$'
-exclude = '''
-/(
-	\.git
-| \.hg
-| \.mypy_cache
-| \.tox
-| \.venv
-| _build
-| buck-out
-| build
-)/
-'''
+[tool.ruff]
+# List of linting rules to ignore
+ignore = ["E501", "F401"]  # Example: Ignore specific rules like line length or unused imports
 
-[tool.isort]
-profile = "black"
+# Specify the Python version used in your project
+target-version = "py39"  # Replace with your Python version, e.g., py310 for Python 3.10
+
+# Define the directories and files Ruff should lint
+exclude = [
+    ".venv",       # Virtual environment
+    "migrations",  # Django migrations
+    "build",       # Build directory
+    "dist"         # Distribution files
+]
+
+# Additional configuration options
+line-length = 88  # Set line length (default is 88)
+select = ["E", "F", "W", "C"]
