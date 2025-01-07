@@ -1,13 +1,5 @@
 # .pre-commit-config.yaml
 repos:
-  # Black: Automatic code formatter
-  - repo: https://github.com/psf/black
-    rev: 24.10.0 # Use the latest stable version or specify the version you prefer
-    hooks:
-      - id: black
-        language_version: python3 # Specify your Python version
-        args:
-          - --preview
   # isort: Sorts imports according to PEP 8
   - repo: https://github.com/PyCQA/isort
     rev: 5.13.2
@@ -31,18 +23,11 @@ repos:
           ]
         language_version: python3
 
-  # Flake8: Python linter for PEP 8 compliance
-  - repo: https://github.com/pycqa/flake8
-    rev: 7.1.1
+  # Ruff: An extremely fast Python linter and formatter, written in Rust
+  - repo: https://github.com/charliermarsh/ruff-pre-commit
+    rev: v0.8.6
     hooks:
-      - id: flake8
-        additional_dependencies: # Optionally add Django-specific plugins
-          - flake8-django # Django-specific linting rules
-        args: [
-            "--max-line-length=88",
-            "--ignore=F841,E501",
-            "--per-file-ignores=__init__.py:F401,F403",
-          ] # To match Black's line length
+      - id: ruff
 
   # Check YAML files
   - repo: https://github.com/pre-commit/pre-commit-hooks
