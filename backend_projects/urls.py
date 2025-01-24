@@ -1,11 +1,17 @@
 import os
 
 from django.conf.urls.static import static
+from django.http import HttpResponse
 from django.urls import include, path
 from django.views.generic import TemplateView
 
 from .env_variables import EnvVariable
 from .settings import BASE_DIR, STATIC_ROOT, STATIC_URL
+
+
+def health_check(request):
+    return HttpResponse("OK")
+
 
 urlpatterns = [
     path(r"auth/", include("auth_app.urls")),
@@ -22,6 +28,7 @@ urlpatterns = [
         ),
         name="api-doc",
     ),
+    path("health/", health_check, name="health_check"),
     # TODO: Add API Doc for each app
 ] + static(STATIC_URL, document_root=STATIC_ROOT)
 
