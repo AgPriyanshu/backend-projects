@@ -15,6 +15,7 @@ class AuthViewSet(ViewSet):
 
     @action(detail=False, methods=["POST"], url_name="login")
     def login(self, request):
+
         request_body = request.data.copy()
         serializer = AuthSerializer(data=request_body)
         serializer.is_valid(raise_exception=True)

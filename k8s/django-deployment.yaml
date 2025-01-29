@@ -3,7 +3,7 @@ kind: Deployment
 metadata:
   name: django-app
 spec:
-  replicas: 3
+  replicas: 1
   selector:
     matchLabels:
       app: django-app
@@ -14,7 +14,8 @@ spec:
     spec:
       containers:
         - name: django-app
-          image: your-docker-username/backend-projects:latest
+          image: django-app:latest
+          imagePullPolicy: Never
           ports:
             - containerPort: 8000
           envFrom:
@@ -22,15 +23,22 @@ spec:
                 name: django-config
             - secretRef:
                 name: django-secrets
+          resources:
+            limits:
+              memory: "512Mi"
+              cpu: "500m"
+            requests:
+              memory: "256Mi"
+              cpu: "250m"
           readinessProbe:
             httpGet:
-              path: /health/
+              path: /ping/
               port: 8000
             initialDelaySeconds: 5
             periodSeconds: 10
           livenessProbe:
             httpGet:
-              path: /health/
+              path: /ping/
               port: 8000
             initialDelaySeconds: 15
             periodSeconds: 20

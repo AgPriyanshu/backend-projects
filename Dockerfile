@@ -2,8 +2,8 @@
 FROM python:3.12-slim
 
 # Set environment variables
-ENV PYTHONDONTWRITEBYTECODE 1
-ENV PYTHONUNBUFFERED 1
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1
 
 # Set work directory
 WORKDIR /app
@@ -16,15 +16,17 @@ RUN apt-get update && apt-get install -y \
 
 # Install Python dependencies
 COPY requirements.txt .
-RUN pip install --upgrade pip
-RUN pip install -r requirements.txt
+RUN pip install --upgrade pip \
+    && pip install -r requirements.txt
 
 # Copy project files
 COPY . .
 
+# Ensure the entrypoint script is executable
+RUN chmod +x ./docker-entrypoint.sh
+
 # Expose port 8000
 EXPOSE 8000
 
-ENTRYPOINT [ "./docker-entrypoint.sh" ]
-
-CMD [ "gunicorn", "expense_tracker.wsgi:application", "--bind", "0.0.0.0:8000" ]
+ENTRYPOINT ["./docker-entrypoint.sh"]
+CMD ["gunicorn", "backend_projects.wsgi:application", "--bind", "0.0.0.0:8000", "--workers", "4"]

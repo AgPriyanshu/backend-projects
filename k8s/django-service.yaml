@@ -9,4 +9,5 @@ spec:
     - protocol: TCP
       port: 80
       targetPort: 8000
-  type: LoadBalancer
+      nodePort: 30001 # Add this line to specify the NodePort
+  type: NodePort

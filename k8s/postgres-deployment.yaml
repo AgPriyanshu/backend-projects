@@ -15,8 +15,16 @@ spec:
       containers:
         - name: postgres
           image: postgres:latest
+          imagePullPolicy: IfNotPresent
           ports:
             - containerPort: 5432
+          resources:
+            limits:
+              memory: "512Mi"
+              cpu: "500m"
+            requests:
+              memory: "256Mi"
+              cpu: "250m"
           env:
             - name: POSTGRES_DB
               valueFrom:
