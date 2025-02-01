@@ -5,7 +5,7 @@ services:
     image: backendprojects
     build: .
     container_name: django_app
-    command: gunicorn backend_projects.wsgi:application --bind 0.0.0.0:8000 --reload
+    command: uvicorn backend_projects.asgi:application --host 0.0.0.0 --port 8000 --log-config log_config.yaml --reload
     volumes:
       - .:/app
     ports:
