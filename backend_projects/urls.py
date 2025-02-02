@@ -1,7 +1,6 @@
 import os
 
 from django.conf.urls.static import static
-from django.http import HttpResponse
 from django.urls import include, path
 from django.views.generic import TemplateView
 
@@ -28,7 +27,7 @@ urlpatterns = [
     # TODO: Add API Doc for each app
 ] + static(STATIC_URL, document_root=STATIC_ROOT)
 
-if EnvVariable.DEBUG.value == 1:
+if EnvVariable.DEBUG.value == "1":
     from debug_toolbar.toolbar import debug_toolbar_urls
 
-    urlpatterns + debug_toolbar_urls()
+    urlpatterns += debug_toolbar_urls()
