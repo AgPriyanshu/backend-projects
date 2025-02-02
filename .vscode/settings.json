@@ -15,5 +15,16 @@
     ["rest_framework", 5, true],
     ["django", 5, true]
   ],
-  "black-formatter.args": ["--line-length=88", "--preview"]
+  "black-formatter.args": ["--line-length=88", "--preview"],
+  "sqltools.connections": [
+    {
+      "previewLimit": 50,
+      "server": "localhost",
+      "port": 5431,
+      "driver": "PostgreSQL",
+      "name": "docker-localhost",
+      "database": "postgres",
+      "username": "postgres"
+    }
+  ]
 }

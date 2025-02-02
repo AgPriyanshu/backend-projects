@@ -36,7 +36,7 @@ INSTALLED_APPS = [
 ]
 
 MIDDLEWARE = [
-    "shared.middleware.LoggingMiddleware",
+    "shared.middleware.LoggingMiddleware",  # Make sure this is first
     "django.middleware.security.SecurityMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
@@ -142,9 +142,10 @@ INTERNAL_IPS = [
     "127.0.0.1",
 ]
 
+# Update logging settings
 LOGGING = {
     "version": 1,
-    "disable_existing_loggers": True,
+    "disable_existing_loggers": False,
     "handlers": {
         "console": {
             "class": "logging.StreamHandler",
@@ -152,6 +153,6 @@ LOGGING = {
     },
     "root": {
         "handlers": ["console"],
-        "level": "WARNING",
+        "level": "DEBUG" if DEBUG else "INFO",
     },
 }

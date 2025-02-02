@@ -1,41 +1,32 @@
-import json
 import logging
 import time
-from typing import Any
+from typing import Callable
+
+from django.http import HttpRequest, HttpResponse
 
 logger = logging.getLogger(__name__)
 
 
 class LoggingMiddleware:
-    def __init__(self, get_response):
+    def __init__(self, get_response: Callable):
         self.get_response = get_response
 
-    def __call__(self, request) -> Any:
+    def __call__(self, request: HttpRequest) -> HttpResponse:
         start_time = time.time()
 
-        # Structure request logging
-        request_data = {
-            "method": request.method,
-            "path": request.path,
-            "query_params": dict(request.GET),
-            "body": request.body.decode() if request.body else None,
-        }
-        logger.info("Request received", extra={"request_data": request_data})
+        # Log request
+        logger.debug(
+            f"Request: {request.method} {request.path} - Headers: {dict(request.headers)}"
+        )
 
         response = self.get_response(request)
+
+        # Calculate duration
         duration = time.time() - start_time
 
-        # Structure response logging
-        try:
-            response_body = json.loads(response.content.decode())
-        except:
-            response_body = response.content.decode()
-
-        response_data = {
-            "status_code": response.status_code,
-            "duration": f"{duration:.2f}s",
-            "body": response_body,
-        }
-        logger.info("Response sent", extra={"response_data": response_data})
+        # Log response
+        logger.debug(
+            f"Response: {request.method} {request.path} - Status: {response.status_code} - Duration: {duration:.2f}s"
+        )
 
         return response
