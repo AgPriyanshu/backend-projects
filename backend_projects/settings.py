@@ -34,7 +34,6 @@ INSTALLED_APPS = [
     "todo_app.apps.TodoAppConfig",
     "weather_app.apps.WeatherAppConfig",
     "note_markdown_app.apps.NoteMarkdownAppConfig",
-
 ]
 
 MIDDLEWARE = [
@@ -48,7 +47,7 @@ MIDDLEWARE = [
 ]
 
 if DEBUG:
-    INSTALLED_APPS += ["debug_toolbar","django_extensions"]
+    INSTALLED_APPS += ["debug_toolbar", "django_extensions"]
     MIDDLEWARE += ["debug_toolbar.middleware.DebugToolbarMiddleware"]
 
 ROOT_URLCONF = "backend_projects.urls"
@@ -141,3 +140,6 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 INTERNAL_IPS = [
     "127.0.0.1",
 ]
+
+MEDIA_URL = "/media/"
+MEDIA_ROOT = os.path.join(BASE_DIR, "media")

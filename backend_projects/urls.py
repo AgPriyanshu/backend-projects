@@ -1,11 +1,11 @@
 import os
 
+from django.conf import settings
 from django.conf.urls.static import static
 from django.contrib import admin
 from django.urls import include, path
 from django.views.generic import TemplateView
 
-from .env_variables import EnvVariable
 from .settings import BASE_DIR, STATIC_ROOT, STATIC_URL
 
 urlpatterns = [
@@ -28,7 +28,9 @@ urlpatterns = [
     # TODO: Add API Doc for each app
 ] + static(STATIC_URL, document_root=STATIC_ROOT)
 
-if EnvVariable.DEBUG.value == 1:
+
+if settings.DEBUG:
     from debug_toolbar.toolbar import debug_toolbar_urls
 
-    urlpatterns + debug_toolbar_urls()
+    urlpatterns += debug_toolbar_urls()
+    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
