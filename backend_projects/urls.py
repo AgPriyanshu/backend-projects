@@ -1,6 +1,7 @@
 import os
 
 from django.conf.urls.static import static
+from django.contrib import admin
 from django.urls import include, path
 from django.views.generic import TemplateView
 
@@ -8,11 +9,13 @@ from .env_variables import EnvVariable
 from .settings import BASE_DIR, STATIC_ROOT, STATIC_URL
 
 urlpatterns = [
+    path(r"admin/", admin.site.urls),
     path(r"auth/", include("auth_app.urls")),
     path(r"blogs/", include("blogs_app.urls")),
     path(r"weather/", include("weather_app.urls")),
     path(r"tasks/", include("todo_app.urls")),
     path(r"expenses/", include("expense_tracker_app.urls")),
+    path(r"notes/", include("note_markdown_app.urls")),
     path(
         "expense-app/api-doc/",
         TemplateView.as_view(

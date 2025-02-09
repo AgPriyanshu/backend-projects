@@ -1,3 +1,7 @@
-from django.db import models
+from django.db.models import TextField
 
-# Create your models here.
+from shared.models import BaseModel
+
+
+class Note(BaseModel):
+    content = TextField()

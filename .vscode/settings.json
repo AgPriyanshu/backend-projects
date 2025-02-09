@@ -16,5 +16,7 @@
     ["django", 5, true]
   ],
   "black-formatter.args": ["--line-length=88", "--preview"],
-  "cSpell.words": ["relativedelta"]
+  "cSpell.words": ["relativedelta"],
+  "editor.defaultFormatter": "charliermarsh.ruff",
+  "editor.inlineSuggest.enabled": true
 }
