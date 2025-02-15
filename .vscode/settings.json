@@ -16,5 +16,18 @@
     ["django", 5, true]
   ],
   "black-formatter.args": ["--line-length=88", "--preview"],
-  "cSpell.words": ["relativedelta"]
+  "cSpell.words": ["relativedelta"],
+  "editor.defaultFormatter": "charliermarsh.ruff",
+  "editor.inlineSuggest.enabled": true,
+  "sqltools.connections": [
+    {
+      "previewLimit": 50,
+      "server": "localhost",
+      "port": 5431,
+      "driver": "PostgreSQL",
+      "name": "local-db",
+      "username": "postgres",
+      "database": "postgres"
+    }
+  ]
 }

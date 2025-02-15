@@ -1,0 +1,45 @@
+get:
+  description: Get note details by id
+  operationId: getNoteById
+  security:
+    - bearerAuth: []
+  parameters:
+    - name: id
+      in: path
+      required: true
+      description: "The UUID of the note"
+      schema:
+        type: string
+        format: uuid
+  responses:
+    "200":
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              meta:
+                $ref: "../../shared/schemas/response.yaml#meta"
+              data:
+                $ref: "../schemas/response/note.yaml"
+  tags:
+    - Notes
+
+delete:
+  description: Delete note by id
+  operationId: deleteNoteById
+  security:
+    - bearerAuth: []
+  parameters:
+    - name: id
+      in: path
+      required: true
+      description: "The UUID of the note"
+      schema:
+        type: string
+        format: uuid
+  responses:
+    "204":
+      description: Note deleted successfully
+  tags:
+    - Notes

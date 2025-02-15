@@ -2,7 +2,7 @@ services:
   web:
     build: .
     container_name: django_app
-    command: gunicorn backend_projects.wsgi:application --bind 0.0.0.0:8000 --reload
+    command: gunicorn backend_projects.wsgi:application --bind 0.0.0.0:8000 --reload --workers 1 --timeout 600
     volumes:
       - .:/app
     ports:

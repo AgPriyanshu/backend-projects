@@ -1,0 +1,22 @@
+get:
+  description: Get HTML preview of markdown note
+  operationId: getMarkdownPreview
+  security:
+    - bearerAuth: []
+  parameters:
+    - name: id
+      in: path
+      required: true
+      description: "The UUID of the note"
+      schema:
+        type: string
+        format: uuid
+  responses:
+    "200":
+      description: HTML preview of the markdown content
+      content:
+        text/html:
+          schema:
+            type: string
+  tags:
+    - Notes
