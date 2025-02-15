@@ -1,6 +1,8 @@
+import markdown
+from django.http.response import HttpResponse
 from rest_framework import status
+from rest_framework.decorators import action
 from rest_framework.permissions import IsAuthenticated
-from rest_framework.response import Response
 
 from shared.views import BaseModelViewSet
 
@@ -16,8 +18,11 @@ class NotesViewSet(BaseModelViewSet):
     def get_queryset(self):
         return self.queryset.filter(user=self.request.user)
 
-    def create(self, request, *args, **kwargs):
-        serializer = self.get_serializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
-        self.perform_create(serializer)
-        return Response(serializer.data, status=status.HTTP_201_CREATED)
+    @action(methods=["GET"], detail=True, url_path="markdown-preview")
+    def markdown_preview(self, request, pk=None):
+        note = self.get_object()
+        with note.content.open("r") as input_file:
+            text = input_file.read()
+            preview = markdown.markdown(text)
+
+        return HttpResponse(preview, status=status.HTTP_200_OK)
