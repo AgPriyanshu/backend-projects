@@ -11,8 +11,6 @@ class TestTasks(TestCase):
     def setUp(self):
         self.task1 = Task.objects.create(description="Description1")
         self.task2 = Task.objects.create(description="Description2")
-        self.task1.save()
-        self.task2.save()
 
         user_creds = {"username": "test-suite@gmail.com", "password": "test-password"}
         self.test_user = User.objects.create_user(**user_creds)

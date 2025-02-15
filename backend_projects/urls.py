@@ -7,6 +7,7 @@ from django.urls import include, path
 from django.views.generic import TemplateView
 
 from .settings import BASE_DIR, STATIC_ROOT, STATIC_URL
+from .views import ping
 
 urlpatterns = [
     path(r"admin/", admin.site.urls),
@@ -34,6 +35,7 @@ urlpatterns = [
         ),
         name="note-api-doc",
     ),
+    path("ping/", ping),
     # TODO: Add API Doc for each app
 ] + static(STATIC_URL, document_root=STATIC_ROOT)
 

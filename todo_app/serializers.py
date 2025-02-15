@@ -10,4 +10,4 @@ class TaskSerializer(ModelSerializer):
             "id",
             "description",
         )
-        kwargs = {"id": "ready_only"}
+        read_only_fields = ("id",)
