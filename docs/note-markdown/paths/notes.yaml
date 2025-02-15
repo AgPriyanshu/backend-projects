@@ -1,0 +1,45 @@
+get:
+  description: Get list of notes
+  operationId: listNotes
+  security:
+    - bearerAuth: []
+  responses:
+    "200":
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              meta:
+                $ref: "../../shared/schemas/response.yaml#meta"
+              data:
+                type: array
+                items:
+                  $ref: "../schemas/response/note.yaml"
+  tags:
+    - Notes
+
+post:
+  description: Create a new note
+  operationId: createNote
+  security:
+    - bearerAuth: []
+  requestBody:
+    required: true
+    content:
+      multipart/form-data:
+        schema:
+          $ref: "../schemas/request/note.yaml"
+  responses:
+    "201":
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              meta:
+                $ref: "../../shared/schemas/response.yaml#meta"
+              data:
+                $ref: "../schemas/response/note.yaml"
+  tags:
+    - Notes

@@ -23,7 +23,16 @@ urlpatterns = [
                 BASE_DIR, "templates/expense-tracker-open-api.html"
             ),
         ),
-        name="api-doc",
+        name="expense-api-doc",
+    ),
+    path(
+        "note-app/api-doc/",
+        TemplateView.as_view(
+            template_name=os.path.join(
+                BASE_DIR, "templates/note-markdown-open-api.html"
+            ),
+        ),
+        name="note-api-doc",
     ),
     # TODO: Add API Doc for each app
 ] + static(STATIC_URL, document_root=STATIC_ROOT)
