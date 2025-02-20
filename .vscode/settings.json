@@ -26,5 +26,6 @@
       "database": "postgres",
       "username": "postgres"
     }
-  ]
+  ],
+  "cSpell.words": ["Shortner"]
 }
