@@ -15,7 +15,7 @@ def generate_base62_slug():
 
 class Url(BaseModel):
     url = models.URLField(help_text="Enter a valid URL")
-    slug = models.CharField(max_length=8, editable=False)
+    slug = models.CharField(max_length=8, editable=False, unique=True)
 
     def save(self, *args, **kwargs):
         if not self.slug:
