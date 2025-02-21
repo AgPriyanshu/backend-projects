@@ -34,6 +34,7 @@ INSTALLED_APPS = [
     "todo_app.apps.TodoAppConfig",
     "weather_app.apps.WeatherAppConfig",
     "note_markdown_app.apps.NoteMarkdownAppConfig",
+    "url_shortner_app.apps.UrlShortnerAppConfig",
 ]
 
 MIDDLEWARE = [

@@ -17,6 +17,7 @@ urlpatterns = [
     path(r"tasks/", include("todo_app.urls")),
     path(r"expenses/", include("expense_tracker_app.urls")),
     path(r"notes/", include("note_markdown_app.urls")),
+    path(r"urls/", include("url_shortner_app.urls")),
     path(
         "expense-app/api-doc/",
         TemplateView.as_view(
