@@ -4,7 +4,7 @@ from pathlib import Path
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-
+ASGI_APPLICATION = "backend_projects.asgi.application"
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/5.1/howto/deployment/checklist/
 
@@ -20,6 +20,7 @@ ALLOWED_HOSTS = ["*"]
 # Application definition
 
 INSTALLED_APPS = [
+    "daphne",
     "django.contrib.admin",
     "django.contrib.auth",
     "django.contrib.contenttypes",
@@ -35,6 +36,7 @@ INSTALLED_APPS = [
     "weather_app.apps.WeatherAppConfig",
     "note_markdown_app.apps.NoteMarkdownAppConfig",
     "url_shortner_app.apps.UrlShortnerAppConfig",
+    "chat_app.apps.ChatAppConfig",
 ]
 
 MIDDLEWARE = [
