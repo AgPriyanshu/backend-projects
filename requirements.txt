@@ -9,6 +9,7 @@ certifi==2024.8.30
 cffi==1.17.1
 cfgv==3.4.0
 channels==4.2.0
+channels_redis==4.2.1
 charset-normalizer==3.4.0
 click==8.1.7
 constantly==23.10.4
@@ -31,7 +32,9 @@ hyperlink==21.0.0
 identify==2.6.1
 idna==3.10
 incremental==24.7.2
+language_tool_python==2.9.0
 Markdown==3.7
+msgpack==1.1.0
 mypy-extensions==1.0.0
 nodeenv==1.9.1
 packaging==24.1
@@ -63,7 +66,7 @@ Twisted==24.11.0
 txaio==23.1.1
 typing_extensions==4.12.2
 urllib3==2.2.3
-uvicorn==0.27.1
+uvicorn==0.34.0
 uvloop==0.21.0
 virtualenv==20.27.1
 watchfiles==1.0.4
