@@ -16,7 +16,7 @@ DEBUG = os.environ.get("DEBUG", "0") == "1"
 
 ALLOWED_HOSTS = ["*"]
 
-
+CORS_ALLOWED_ORIGINS = ["http://localhost:3000"]
 # Application definition
 
 INSTALLED_APPS = [
@@ -26,6 +26,7 @@ INSTALLED_APPS = [
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
+    "corsheaders",
     "rest_framework.authtoken",
     "shared.apps.SharedConfig",
     "auth_app.apps.AuthAppConfig",
@@ -35,12 +36,14 @@ INSTALLED_APPS = [
     "weather_app.apps.WeatherAppConfig",
     "note_markdown_app.apps.NoteMarkdownAppConfig",
     "url_shortner_app.apps.UrlShortnerAppConfig",
+    "device_classifier.apps.DeviceClassifierConfig",
 ]
 
 MIDDLEWARE = [
     "shared.middleware.LoggingMiddleware",  # Make sure this is first
     "django.middleware.security.SecurityMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
+    "corsheaders.middleware.CorsMiddleware",
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",

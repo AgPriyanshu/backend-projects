@@ -49,3 +49,7 @@ node_modules/
 
 virtual-env
 data
+
+wandb/
+*.pkl
+*.pth
