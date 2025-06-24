@@ -26,6 +26,7 @@ INSTALLED_APPS = [
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
+    "django.contrib.gis",  # Required for GeoDjango
     "rest_framework.authtoken",
     "shared.apps.SharedConfig",
     "auth_app.apps.AuthAppConfig",
@@ -35,6 +36,7 @@ INSTALLED_APPS = [
     "weather_app.apps.WeatherAppConfig",
     "note_markdown_app.apps.NoteMarkdownAppConfig",
     "url_shortner_app.apps.UrlShortnerAppConfig",
+    "map_app.apps.MapAppConfig",
 ]
 
 MIDDLEWARE = [
@@ -79,7 +81,7 @@ WSGI_APPLICATION = "backend_projects.wsgi.application"
 
 DATABASES = {
     "default": {
-        "ENGINE": "django.db.backends.postgresql",
+        "ENGINE": "django.contrib.gis.db.backends.postgis",  # Use PostGIS backend
         "NAME": os.environ["DB_NAME"],
         "USER": os.environ["DB_USER"],
         "PASSWORD": os.environ["DB_PASSWORD"],

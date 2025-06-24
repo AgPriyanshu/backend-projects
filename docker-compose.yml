@@ -2,7 +2,7 @@ version: "3.4"
 
 services:
   web:
-    image: backendprojects
+    # image: backendprojects
     build: .
     container_name: django_app
     command: uvicorn backend_projects.asgi:application --host 0.0.0.0 --port 8000 --log-config log_config.yaml --reload
@@ -18,8 +18,8 @@ services:
     env_file: ./.env
 
   db:
-    image: postgres:latest
-    container_name: postgres_db
+    image: postgis/postgis:17-3.5
+    container_name: postgres_postgis_db
     environment:
       POSTGRES_DB: postgres
       POSTGRES_USER: postgres

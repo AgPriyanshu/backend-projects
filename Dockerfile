@@ -8,16 +8,30 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
 # Set work directory
 WORKDIR /app
 
-# Install system dependencies
+# Install system dependencies including GIS libraries
 RUN apt-get update && apt-get install -y \
     build-essential \
     libpq-dev \
+    gdal-bin \
+    libgdal-dev \
+    libgeos-dev \
+    libproj-dev \
+    libspatialite-dev \
+    spatialite-bin \
     && rm -rf /var/lib/apt/lists/*
+
+# Set GDAL environment variables
+ENV CPLUS_INCLUDE_PATH=/usr/include/gdal
+ENV C_INCLUDE_PATH=/usr/include/gdal
 
 # Install Python dependencies
 COPY requirements.txt .
 RUN pip install --upgrade pip \
     && pip install -r requirements.txt
+
+# Install GDAL Python package matching the system GDAL version
+RUN GDAL_VERSION=$(gdal-config --version) && \
+    pip install GDAL==$GDAL_VERSION
 
 # Copy project files
 COPY . .
