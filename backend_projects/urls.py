@@ -20,6 +20,7 @@ urlpatterns = [
     path(r"urls/", include("url_shortner_app.urls")),
     path(r"map/", include("map_app.urls")),
     path(r"chats/", include("chat_app.urls")),
+    path(r"ai-chat/", include("ai_chat.urls")),
     path(
         "expense-app/api-doc/",
         TemplateView.as_view(

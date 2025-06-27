@@ -20,7 +20,8 @@ CHANNEL_LAYERS = {
     "default": {
         "BACKEND": "channels_redis.core.RedisChannelLayer",
         "CONFIG": {
-            "hosts": [("redis", 6379)],
+            "hosts": [(os.environ.get("REDIS_HOST", "127.0.0.1"), int(os.environ.get("REDIS_PORT", "6379")))],
+            "symmetric_encryption_keys": [SECRET_KEY],
         },
     },
 }
@@ -35,6 +36,9 @@ INSTALLED_APPS = [
     "django.contrib.messages",
     "django.contrib.staticfiles",
     "django.contrib.gis",  # Required for GeoDjango
+    "channels",
+    "corsheaders",  # CORS support
+    "rest_framework",
     "rest_framework.authtoken",
     "shared.apps.SharedConfig",
     "auth_app.apps.AuthAppConfig",
@@ -46,10 +50,12 @@ INSTALLED_APPS = [
     "url_shortner_app.apps.UrlShortnerAppConfig",
     "map_app.apps.MapAppConfig",
     "chat_app.apps.ChatAppConfig",
+    "ai_chat.apps.AiChatConfig",
 ]
 
 MIDDLEWARE = [
-    "shared.middleware.LoggingMiddleware",  # Make sure this is first
+    "corsheaders.middleware.CorsMiddleware",  # CORS middleware - must be first
+    "shared.middleware.LoggingMiddleware",  # Make sure this is second
     "django.middleware.security.SecurityMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
@@ -62,6 +68,30 @@ MIDDLEWARE = [
 if DEBUG:
     INSTALLED_APPS += ["debug_toolbar", "django_extensions"]
     MIDDLEWARE += ["debug_toolbar.middleware.DebugToolbarMiddleware"]
+
+# CORS Configuration
+CORS_ALLOWED_ORIGINS = [
+    "http://localhost:3000",  # React dev server
+    "http://127.0.0.1:3000",
+    "http://localhost:5173",  # Vite dev server
+    "http://127.0.0.1:5173",
+]
+
+CORS_ALLOW_CREDENTIALS = True
+
+CORS_ALLOW_ALL_ORIGINS = DEBUG  # Allow all origins in development
+
+CORS_ALLOWED_HEADERS = [
+    "accept",
+    "accept-encoding",
+    "authorization",
+    "content-type",
+    "dnt",
+    "origin",
+    "user-agent",
+    "x-csrftoken",
+    "x-requested-with",
+]
 
 ROOT_URLCONF = "backend_projects.urls"
 
@@ -83,6 +113,7 @@ TEMPLATES = [
 ]
 
 WSGI_APPLICATION = "backend_projects.wsgi.application"
+ASGI_APPLICATION = "backend_projects.asgi.application"
 
 
 # Database
@@ -91,11 +122,11 @@ WSGI_APPLICATION = "backend_projects.wsgi.application"
 DATABASES = {
     "default": {
         "ENGINE": "django.contrib.gis.db.backends.postgis",  # Use PostGIS backend
-        "NAME": os.environ["DB_NAME"],
-        "USER": os.environ["DB_USER"],
-        "PASSWORD": os.environ["DB_PASSWORD"],
-        "HOST": os.environ["DB_HOST"],
-        "PORT": os.environ["DB_PORT"],
+        "NAME": os.environ.get("DB_NAME", "backend_projects"),
+        "USER": os.environ.get("DB_USER", "postgres"),
+        "PASSWORD": os.environ.get("DB_PASSWORD", ""),
+        "HOST": os.environ.get("DB_HOST", "localhost"),
+        "PORT": os.environ.get("DB_PORT", "5432"),
     }
 }
 
@@ -122,7 +153,11 @@ REST_FRAMEWORK = {
         "backend_projects.renderer.CustomJSONRenderer",
     ],
     "DEFAULT_AUTHENTICATION_CLASSES": [
+        "rest_framework.authentication.TokenAuthentication",  # Add standard token auth
         "auth_app.authentication.BearerAuthentication",
+    ],
+    "DEFAULT_PERMISSION_CLASSES": [
+        "rest_framework.permissions.IsAuthenticated",
     ],
 }
 
@@ -156,6 +191,16 @@ INTERNAL_IPS = [
 
 MEDIA_URL = "/media/"
 MEDIA_ROOT = os.path.join(BASE_DIR, "media")
+
+# LLM Server Configuration
+LLM_SERVER_CONFIG = {
+    "BASE_URL": os.environ.get("LLM_SERVER_URL", "http://localhost:8001"),
+    "DEFAULT_MODEL": os.environ.get("LLM_DEFAULT_MODEL", "qwen3:8b"),
+    "TIMEOUT": int(os.environ.get("LLM_TIMEOUT", "30")),
+    "MAX_TOKENS": int(os.environ.get("LLM_MAX_TOKENS", "2000")),
+    "TEMPERATURE": float(os.environ.get("LLM_TEMPERATURE", "0.7")),
+    "ENABLE_TOOLS": os.environ.get("LLM_ENABLE_TOOLS", "true").lower() == "true",
+}
 
 # Update logging settings
 LOGGING = {
