@@ -1,5 +1,6 @@
 from rest_framework import serializers
 from django.contrib.gis.geos import GEOSGeometry
+import json
 from .models import Layer, Feature, FeatureAttribute
 
 
@@ -50,6 +51,43 @@ class LayerListSerializer(serializers.ModelSerializer):
             "created_at",
             "updated_at",
         ]
+
+
+class LayerGeoJSONSerializer(serializers.ModelSerializer):
+    """Serializer for Layer as GeoJSON format for map visualization"""
+    geojson = serializers.SerializerMethodField()
+    
+    class Meta:
+        model = Layer
+        fields = ["id", "name", "description", "geojson", "created_at", "updated_at"]
+    
+    def get_geojson(self, obj):
+        """Convert layer features to GeoJSON format"""
+        features = []
+        for feature in obj.features.all():
+            try:
+                # Convert geometry to GeoJSON - use json.loads instead of eval
+                geometry = json.loads(feature.geometry.geojson)
+                
+                # Collect attributes as properties
+                properties = {}
+                for attr in feature.attributes.all():
+                    properties[attr.key] = attr.get_typed_value()
+                
+                features.append({
+                    "type": "Feature",
+                    "geometry": geometry,
+                    "properties": properties
+                })
+            except Exception as e:
+                # Log the error but continue processing other features
+                print(f"Error processing feature {feature.id}: {e}")
+                continue
+        
+        return {
+            "type": "FeatureCollection",
+            "features": features
+        }
 
 
 class ShapefileUploadSerializer(serializers.Serializer):

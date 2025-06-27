@@ -3,12 +3,14 @@ from rest_framework import status, viewsets
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.parsers import MultiPartParser, FormParser
+from rest_framework.permissions import AllowAny
 from django.shortcuts import get_object_or_404
 from django.db import transaction
 from .models import Layer, Feature, FeatureAttribute
 from .serializers import (
     LayerSerializer,
     LayerListSerializer,
+    LayerGeoJSONSerializer,
     FeatureSerializer,
     ShapefileUploadSerializer,
 )
@@ -23,6 +25,7 @@ class LayerViewSet(viewsets.ModelViewSet):
     """
 
     queryset = Layer.objects.all().order_by("-created_at")
+    permission_classes = [AllowAny]  # Allow access without authentication
 
     def get_serializer_class(self):
         if self.action == "list":
@@ -263,6 +266,28 @@ class LayerViewSet(viewsets.ModelViewSet):
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR,
             )
 
+    @action(detail=True, methods=["get"])
+    def geojson(self, request, pk=None):
+        """
+        Get layer data as GeoJSON for map visualization
+        GET /api/layers/{id}/geojson/
+        """
+        layer = self.get_object()
+        
+        try:
+            serializer = LayerGeoJSONSerializer(layer)
+            return Response(
+                {
+                    "success": True,
+                    "layer": serializer.data,
+                }
+            )
+        except Exception as e:
+            return Response(
+                {"error": "Failed to generate GeoJSON", "details": str(e)},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )
+
 
 class FeatureViewSet(viewsets.ReadOnlyModelViewSet):
     """
@@ -271,6 +296,7 @@ class FeatureViewSet(viewsets.ReadOnlyModelViewSet):
     """
 
     serializer_class = FeatureSerializer
+    permission_classes = [AllowAny]  # Allow access without authentication
 
     def get_queryset(self):
         return Feature.objects.prefetch_related("attributes").order_by("-created_at")
@@ -310,6 +336,7 @@ class FeatureAttributeViewSet(viewsets.ReadOnlyModelViewSet):
 
     queryset = FeatureAttribute.objects.all().order_by("-created_at")
     serializer_class = None  # We'll use custom responses
+    permission_classes = [AllowAny]  # Allow access without authentication
 
     def list(self, request):
         """List all feature attributes with optional filtering"""
