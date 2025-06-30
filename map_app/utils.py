@@ -1,5 +1,5 @@
 from django.db import transaction
-from django.db.models import Count, Avg, Min, Max, Q
+from django.db.models import Count, Avg, Min, Max, Sum, StdDev, Q
 from typing import Dict, List, Any, Optional
 import json
 from datetime import datetime
@@ -23,7 +23,7 @@ class AttributeManager:
 
     @staticmethod
     def get_attribute_statistics(layer: Layer, attribute_key: str) -> Dict[str, Any]:
-        """Get statistical analysis of an attribute"""
+        """Get comprehensive statistical analysis of an attribute"""
         attributes = FeatureAttribute.objects.filter(
             feature__layer=layer, key=attribute_key
         )
@@ -35,7 +35,11 @@ class AttributeManager:
         sample_attr = attributes.first()
         data_type = sample_attr.data_type
 
-        stats = {"data_type": data_type, "total_count": attributes.count()}
+        stats = {
+            "data_type": data_type, 
+            "count": attributes.count(),
+            "attribute_key": attribute_key
+        }
 
         if data_type in ["integer", "float"]:
             numeric_attrs = attributes.exclude(numeric_value__isnull=True)
@@ -44,19 +48,56 @@ class AttributeManager:
                     min=Min("numeric_value"),
                     max=Max("numeric_value"),
                     avg=Avg("numeric_value"),
+                    sum=Sum("numeric_value"),
+                    std=StdDev("numeric_value"),
                     count=Count("id"),
                 )
                 stats.update(agg)
+                
+                # Add percentiles (approximated)
+                values = list(numeric_attrs.values_list("numeric_value", flat=True))
+                values.sort()
+                n = len(values)
+                if n > 0:
+                    stats["median"] = values[n // 2] if n % 2 == 1 else (values[n // 2 - 1] + values[n // 2]) / 2
+                    stats["q1"] = values[n // 4] if n >= 4 else values[0]
+                    stats["q3"] = values[3 * n // 4] if n >= 4 else values[-1]
+                    stats["percentile_90"] = values[int(0.9 * n)] if n >= 10 else values[-1]
+                    stats["percentile_10"] = values[int(0.1 * n)] if n >= 10 else values[0]
 
         elif data_type == "string":
-            # Get frequency distribution
+            # Get frequency distribution and unique values
             value_counts = {}
+            unique_values = []
+            
             for attr in attributes:
                 value = attr.value
-                value_counts[value] = value_counts.get(value, 0) + 1
+                if value not in value_counts:
+                    value_counts[value] = 0
+                    unique_values.append(value)
+                value_counts[value] += 1
 
-            stats["frequency"] = value_counts
-            stats["unique_count"] = len(value_counts)
+            # Sort by frequency
+            sorted_values = sorted(value_counts.items(), key=lambda x: x[1], reverse=True)
+            
+            stats.update({
+                "unique_values": unique_values[:50],  # Limit to first 50 unique values
+                "unique_count": len(unique_values),
+                "frequency_distribution": dict(sorted_values[:20]),  # Top 20 most frequent
+                "most_common": sorted_values[0] if sorted_values else None,
+                "least_common": sorted_values[-1] if sorted_values else None
+            })
+
+        elif data_type == "boolean":
+            # Count true/false values
+            true_count = attributes.filter(value__in=["true", "True", "1", "yes", "Yes"]).count()
+            false_count = attributes.count() - true_count
+            
+            stats.update({
+                "true_count": true_count,
+                "false_count": false_count,
+                "true_percentage": (true_count / attributes.count() * 100) if attributes.count() > 0 else 0
+            })
 
         return stats
 
@@ -64,7 +105,7 @@ class AttributeManager:
     def get_features_by_attribute_filter(
         layer: Layer, filters: Dict[str, Any]
     ) -> List[Feature]:
-        """Filter features by attribute values"""
+        """Filter features by attribute values with enhanced filtering support"""
         feature_ids = set()
 
         for key, value in filters.items():
@@ -76,6 +117,35 @@ class AttributeManager:
                 if "max" in value:
                     q &= Q(numeric_value__lte=value["max"])
 
+                attrs = FeatureAttribute.objects.filter(
+                    feature__layer=layer, key=key
+                ).filter(q)
+            elif isinstance(value, list):
+                # Handle list of filter objects: [{"field": "pop", "operator": "gt", "value": 1000}]
+                q = Q()
+                for filter_item in value:
+                    if isinstance(filter_item, dict):
+                        operator = filter_item.get("operator")
+                        filter_value = filter_item.get("value")
+                        
+                        if operator == "gt":
+                            q &= Q(numeric_value__gt=float(filter_value))
+                        elif operator == "lt":
+                            q &= Q(numeric_value__lt=float(filter_value))
+                        elif operator == "gte":
+                            q &= Q(numeric_value__gte=float(filter_value))
+                        elif operator == "lte":
+                            q &= Q(numeric_value__lte=float(filter_value))
+                        elif operator == "eq":
+                            q &= Q(value=str(filter_value))
+                        elif operator == "contains":
+                            q &= Q(value__icontains=str(filter_value))
+                        elif operator == "in":
+                            if isinstance(filter_value, list):
+                                q &= Q(value__in=[str(v) for v in filter_value])
+                            else:
+                                q &= Q(value=str(filter_value))
+                
                 attrs = FeatureAttribute.objects.filter(
                     feature__layer=layer, key=key
                 ).filter(q)
