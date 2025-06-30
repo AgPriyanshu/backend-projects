@@ -196,7 +196,7 @@ MEDIA_ROOT = os.path.join(BASE_DIR, "media")
 LLM_SERVER_CONFIG = {
     "BASE_URL": os.environ.get("LLM_SERVER_URL", "http://localhost:8001"),
     "DEFAULT_MODEL": os.environ.get("LLM_DEFAULT_MODEL", "qwen3:8b"),
-    "TIMEOUT": int(os.environ.get("LLM_TIMEOUT", "30")),
+    "TIMEOUT": int(os.environ.get("LLM_TIMEOUT", "120")),  # Increased for geospatial tool processing
     "MAX_TOKENS": int(os.environ.get("LLM_MAX_TOKENS", "2000")),
     "TEMPERATURE": float(os.environ.get("LLM_TEMPERATURE", "0.7")),
     "ENABLE_TOOLS": os.environ.get("LLM_ENABLE_TOOLS", "true").lower() == "true",
