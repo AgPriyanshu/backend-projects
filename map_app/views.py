@@ -60,18 +60,57 @@ class LayerViewSet(viewsets.ModelViewSet):
                     zip_file, layer_name, description
                 )
 
-            # Serialize the created layer
-            layer_serializer = LayerSerializer(layer)
-
-            return Response(
-                {
-                    "success": True,
-                    "message": f'Successfully imported {processing_stats["features_created"]} features',
-                    "layer": layer_serializer.data,
-                    "processing_stats": processing_stats,
-                },
-                status=status.HTTP_201_CREATED,
-            )
+            # Check if processing was actually successful
+            features_created = processing_stats["features_created"]
+            errors = processing_stats.get("errors", [])
+            
+            # If no features were created and there are errors, treat as failure
+            if features_created == 0 and errors:
+                # Delete the layer since no features were created
+                layer.delete()
+                
+                # Return detailed error information
+                error_summary = errors[:5]  # Show first 5 errors
+                if len(errors) > 5:
+                    error_summary.append(f"... and {len(errors) - 5} more errors")
+                    
+                return Response(
+                    {
+                        "success": False,
+                        "error": "Shapefile processing failed",
+                        "details": f"No features could be imported. {len(errors)} errors occurred during processing.",
+                        "errors": error_summary,
+                        "processing_stats": processing_stats,
+                    },
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+            
+            # If some features were created but there were also errors, show warning
+            elif features_created > 0 and errors:
+                layer_serializer = LayerSerializer(layer)
+                return Response(
+                    {
+                        "success": True,
+                        "warning": f"Partial import: {features_created} features imported, but {len(errors)} errors occurred",
+                        "message": f'Successfully imported {features_created} features with {len(errors)} errors',
+                        "layer": layer_serializer.data,
+                        "processing_stats": processing_stats,
+                    },
+                    status=status.HTTP_201_CREATED,
+                )
+            
+            # Complete success - no errors
+            else:
+                layer_serializer = LayerSerializer(layer)
+                return Response(
+                    {
+                        "success": True,
+                        "message": f'Successfully imported {features_created} features',
+                        "layer": layer_serializer.data,
+                        "processing_stats": processing_stats,
+                    },
+                    status=status.HTTP_201_CREATED,
+                )
 
         except ValueError as e:
             return Response(
@@ -107,7 +146,7 @@ class LayerViewSet(viewsets.ModelViewSet):
 
         try:
             preview_info = get_shapefile_preview(zip_file)
-            return Response({"success": True, "shapefile_info": preview_info})
+            return Response({"success": True, "preview": preview_info})
 
         except ValueError as e:
             return Response(
@@ -276,12 +315,8 @@ class LayerViewSet(viewsets.ModelViewSet):
         
         try:
             serializer = LayerGeoJSONSerializer(layer)
-            return Response(
-                {
-                    "success": True,
-                    "layer": serializer.data,
-                }
-            )
+            # Return the GeoJSON directly as expected by frontend
+            return Response(serializer.data['geojson'])
         except Exception as e:
             return Response(
                 {"error": "Failed to generate GeoJSON", "details": str(e)},

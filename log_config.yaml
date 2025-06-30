@@ -47,6 +47,15 @@ loggers:
     handlers: [request_handler]
     level: DEBUG
     propagate: true
+  # Suppress watchfiles debug logs for git changes
+  watchfiles:
+    level: WARNING
+    handlers: [console]
+    propagate: false
+  watchfiles.main:
+    level: WARNING
+    handlers: [console]
+    propagate: false
   myproject:
     level: DEBUG
     handlers: [console]

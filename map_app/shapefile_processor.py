@@ -32,8 +32,18 @@ class ShapefileProcessor:
                 extracted_files, temp_dir
             )
 
-            # Create layer
-            layer = Layer.objects.create(name=layer_name, description=description)
+            # Get shapefile info before creating layer
+            shapefile_info = self._get_shapefile_metadata(shapefile_path)
+
+            # Create layer with metadata
+            layer = Layer.objects.create(
+                name=layer_name, 
+                description=description,
+                file_name=zip_file.name,
+                file_size=zip_file.size,
+                geometry_type=shapefile_info['geometry_type'],
+                srid=shapefile_info['srid']
+            )
 
             # Process shapefile and create features
             stats = self._process_shapefile(shapefile_path, layer)
@@ -105,17 +115,17 @@ class ShapefileProcessor:
             stats["field_info"] = field_info
 
             # Process features
-            with transaction.atomic():
-                for feature_data in shapefile_layer:
-                    try:
+            for feature_data in shapefile_layer:
+                try:
+                    with transaction.atomic():
                         self._create_feature_from_shapefile_feature(feature_data, layer)
                         stats["features_created"] += 1
-                    except Exception as e:
-                        error_msg = f"Error processing feature: {str(e)}"
-                        stats["errors"].append(error_msg)
-                        if len(stats["errors"]) > 10:  # Limit error reporting
-                            stats["errors"].append("... (more errors truncated)")
-                            break
+                except Exception as e:
+                    error_msg = f"Error processing feature: {str(e)}"
+                    stats["errors"].append(error_msg)
+                    if len(stats["errors"]) > 20:  # Limit error reporting
+                        stats["errors"].append("... (more errors truncated)")
+                        break
 
         except Exception as e:
             raise ValueError(f"Error processing shapefile: {str(e)}")
@@ -157,8 +167,32 @@ class ShapefileProcessor:
         # Get geometry
         geom = shapefile_feature.geom
         if geom:
-            # Convert to GEOSGeometry
-            geos_geom = GEOSGeometry(geom.wkt)
+            try:
+                # Convert to GEOSGeometry
+                geos_geom = GEOSGeometry(geom.wkt)
+                
+                # Force geometry to 2D if it has Z dimension
+                if geos_geom.hasz:
+                    # Create a simple 2D version by removing Z coordinates
+                    import re
+                    wkt = geom.wkt
+                    
+                    # Remove Z from geometry type declarations
+                    wkt_2d = re.sub(r'\b(\w+)\s+Z\b', r'\1', wkt)
+                    
+                    # Remove third coordinate (Z) from coordinate triplets
+                    # Matches patterns like "x y z" and converts to "x y"
+                    wkt_2d = re.sub(r'(-?\d+\.?\d*)\s+(-?\d+\.?\d*)\s+(-?\d+\.?\d*)', r'\1 \2', wkt_2d)
+                    
+                    # Create new 2D geometry
+                    geos_geom = GEOSGeometry(wkt_2d, srid=4326)
+                
+                # Ensure the geometry has the correct SRID
+                if not geos_geom.srid:
+                    geos_geom.srid = 4326
+                    
+            except Exception as e:
+                raise ValueError(f"Cannot process geometry: {str(e)}")
         else:
             raise ValueError("Feature has no geometry")
 
@@ -194,23 +228,100 @@ class ShapefileProcessor:
 
                 shapefile_layer = ds[0]
 
+                # Get field information
+                field_info = self._analyze_fields(shapefile_layer)
+                
+                # Convert field info to frontend format
+                attributes = {}
+                for field_name, info in field_info.items():
+                    attributes[field_name] = {
+                        "data_type": info["type"],
+                        "sample_values": info["sample_values"]
+                    }
+
+                # Extract SRID
+                srid = 4326  # Default to WGS84
+                if shapefile_layer.srs:
+                    try:
+                        srs = shapefile_layer.srs
+                        if hasattr(srs, 'auth_code'):
+                            auth_name, auth_code = srs.auth_code
+                            if auth_name == 'EPSG':
+                                srid = int(auth_code)
+                    except:
+                        pass  # Keep default
+
+                # Get first few features as examples
+                first_features = []
+                feature_count = 0
+                for feature_data in shapefile_layer:
+                    if feature_count >= 3:  # Limit to first 3 features
+                        break
+                    
+                    # Extract feature properties
+                    properties = {}
+                    for field_name in shapefile_layer.fields:
+                        value = feature_data.get(field_name)
+                        if value is not None:
+                            properties[field_name] = value
+                    
+                    first_features.append({
+                        "properties": properties,
+                        "geometry_type": str(feature_data.geom.geom_type) if feature_data.geom else "Unknown"
+                    })
+                    feature_count += 1
+
                 info = {
                     "layer_name": shapefile_layer.name,
                     "feature_count": len(shapefile_layer),
-                    "geometry_type": str(shapefile_layer.geom_type),
-                    "srs": str(shapefile_layer.srs) if shapefile_layer.srs else None,
-                    "extent": (
-                        list(shapefile_layer.extent)
-                        if hasattr(shapefile_layer, "extent")
-                        else None
-                    ),
-                    "fields": self._analyze_fields(shapefile_layer),
+                    "geometry_type": str(shapefile_layer.geom_type).replace('OGRGeomType.', ''),
+                    "srid": srid,
+                    "attributes": attributes,
+                    "first_features": first_features,
                 }
 
                 return info
 
             except Exception as e:
                 raise ValueError(f"Error analyzing shapefile: {str(e)}")
+
+    def _get_shapefile_metadata(self, shapefile_path: str) -> Dict[str, Any]:
+        """Extract metadata from shapefile for Layer model"""
+        try:
+            # Open shapefile with GDAL
+            ds = DataSource(shapefile_path)
+            if len(ds) == 0:
+                raise ValueError("Shapefile contains no layers")
+
+            shapefile_layer = ds[0]
+            
+            # Extract SRID from spatial reference system
+            srid = 4326  # Default to WGS84
+            if shapefile_layer.srs:
+                try:
+                    # Try to get EPSG code from SRS
+                    srs = shapefile_layer.srs
+                    if hasattr(srs, 'auth_code'):
+                        auth_name, auth_code = srs.auth_code
+                        if auth_name == 'EPSG':
+                            srid = int(auth_code)
+                except:
+                    pass  # Keep default
+
+            return {
+                'geometry_type': str(shapefile_layer.geom_type).replace('OGRGeomType.', ''),
+                'srid': srid,
+                'feature_count': len(shapefile_layer),
+                'layer_name': shapefile_layer.name,
+            }
+        except Exception as e:
+            # Return defaults if metadata extraction fails
+            return {
+                'geometry_type': 'Unknown',
+                'srid': 4326,
+                'feature_count': 0,
+                'layer_name': 'Unknown',
+            }
 
 
 def process_shapefile_upload(

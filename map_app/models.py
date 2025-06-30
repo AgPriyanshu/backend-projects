@@ -6,6 +6,10 @@ from django.contrib.gis.db import models as gis_models
 class Layer(models.Model):
     name = models.CharField(max_length=255)
     description = models.TextField()
+    file_name = models.CharField(max_length=255, default="")
+    file_size = models.BigIntegerField(default=0)  # File size in bytes
+    geometry_type = models.CharField(max_length=50, default="")  # e.g., "Polygon", "Point", "LineString"
+    srid = models.IntegerField(default=4326)  # Spatial Reference System ID
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
