@@ -4,15 +4,16 @@ from . import views
 
 # Create router and register viewsets
 router = DefaultRouter()
-router.register(r'sessions', views.ChatSessionViewSet, basename='chat-session')
-router.register(r'models', views.LLMModelViewSet, basename='llm-model')
-router.register(r'presets', views.ChatPresetViewSet, basename='chat-preset')
-router.register(r'health', views.ChatHealthViewSet, basename='chat-health')
+router.register(r"sessions", views.ChatSessionViewSet, basename="chat-session")
+router.register(r"models", views.LLMModelViewSet, basename="llm-model")
+router.register(r"presets", views.ChatPresetViewSet, basename="chat-preset")
+router.register(r"health", views.ChatHealthViewSet, basename="chat-health")
+router.register(r"mcp", views.MCPToolsViewSet, basename="mcp-tools")
 
-app_name = 'ai_chat'
+app_name = "ai_chat"
 
 urlpatterns = [
-    path('api/', include(router.urls)),
+    path("api/", include(router.urls)),
 ]
 
 """
@@ -45,4 +46,16 @@ Chat Presets:
 Health & Stats:
 - GET /ai-chat/api/health/llm_server/ - Check LLM server health
 - GET /ai-chat/api/health/stats/ - Get user chat statistics
-""" 
+
+MCP Tools:
+- GET /ai-chat/api/mcp/list_tools/ - List available MCP tools
+- POST /ai-chat/api/mcp/execute_tool/ - Execute any MCP tool
+- GET /ai-chat/api/mcp/list_layers/ - List all geospatial layers
+- POST /ai-chat/api/mcp/find_layer_by_name/ - Find layer by name
+- POST /ai-chat/api/mcp/get_layer_info/ - Get layer information
+- POST /ai-chat/api/mcp/analyze_population/ - Analyze population data
+- POST /ai-chat/api/mcp/get_attribute_stats/ - Get attribute statistics
+- POST /ai-chat/api/mcp/analyze_layer_attributes/ - Comprehensive layer analysis
+- POST /ai-chat/api/mcp/web_search/ - Search the web
+- POST /ai-chat/api/mcp/calculate/ - Perform calculations
+"""
