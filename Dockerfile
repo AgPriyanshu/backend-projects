@@ -1,32 +1,29 @@
-# Use the official Python image as the base
-FROM python:3.12-slim
+ARG PYTHON_VERSION=3.12-slim
 
-# Set environment variables
-ENV PYTHONDONTWRITEBYTECODE=1 \
-    PYTHONUNBUFFERED=1
+FROM python:${PYTHON_VERSION}
 
-# Set work directory
-WORKDIR /app
+ENV PYTHONDONTWRITEBYTECODE 1
+ENV PYTHONUNBUFFERED 1
 
-# Install system dependencies
+# install psycopg2 dependencies.
 RUN apt-get update && apt-get install -y \
-    build-essential \
     libpq-dev \
+    gcc \
     && rm -rf /var/lib/apt/lists/*
 
-# Install Python dependencies
-COPY requirements.txt .
-RUN pip install --upgrade pip \
-    && pip install -r requirements.txt
+RUN mkdir -p /code
 
-# Copy project files
-COPY . .
+WORKDIR /code
 
-# Ensure the entrypoint script is executable
-RUN chmod +x ./docker-entrypoint.sh
+RUN pip install poetry
+COPY pyproject.toml poetry.lock /code/
+RUN poetry config virtualenvs.create false
+RUN poetry install --only main --no-root --no-interaction
+COPY . /code
 
-# Expose port 8000
+ENV SECRET_KEY "XrrkvcNPXBXQb7EOFZK2LQrL0HSjHmygdFWUnEZe75eAwarMnv"
+RUN python manage.py collectstatic --noinput
+
 EXPOSE 8000
 
-ENTRYPOINT ["./docker-entrypoint.sh"]
-CMD ["uvicorn", "backend_projects.asgi:application", "--host", "0.0.0.0", "--port", "8000", "--log-config", "log_config.yaml"]
+CMD ["gunicorn","--bind",":8000","--workers","2","--worker-class","uvicorn.workers.UvicornWorker","backend_projects.asgi"]
