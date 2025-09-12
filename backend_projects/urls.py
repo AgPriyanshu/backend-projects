@@ -7,6 +7,7 @@ from django.urls import include, path
 from django.views.generic import TemplateView
 
 from .settings import BASE_DIR, STATIC_ROOT, STATIC_URL
+from .views import ping
 
 urlpatterns = [
     path(r"admin/", admin.site.urls),
@@ -16,6 +17,8 @@ urlpatterns = [
     path(r"tasks/", include("todo_app.urls")),
     path(r"expenses/", include("expense_tracker_app.urls")),
     path(r"notes/", include("note_markdown_app.urls")),
+    path(r"urls/", include("url_shortner_app.urls")),
+    path(r"device-classifier/", include("device_classifier.urls")),
     path(
         "expense-app/api-doc/",
         TemplateView.as_view(
@@ -34,6 +37,7 @@ urlpatterns = [
         ),
         name="note-api-doc",
     ),
+    path("ping/", ping),
     # TODO: Add API Doc for each app
 ] + static(STATIC_URL, document_root=STATIC_ROOT)
 

@@ -16,12 +16,10 @@ class WeatherAPI(Session):
         self, method, url, params=None, data=None, headers=None, *args, **kwargs
     ):
         url = parse.urljoin(self.base_url, url)
-        if params:
-            params = {**params}
-        else:
-            params = {}
-        params = {**params, "key": VISUAL_CROSSING_API_KEY}
-        return super().request(method, url, params, data, headers, *args, **kwargs)
+        params = {**(params or {}), "key": VISUAL_CROSSING_API_KEY}
+        return super().request(
+            method, url, params=params, data=data, headers=headers, *args, **kwargs
+        )
 
 
 weather_api_session = WeatherAPI()

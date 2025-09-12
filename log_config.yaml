@@ -1,0 +1,57 @@
+version: 1
+disable_existing_loggers: false
+
+formatters:
+  verbose:
+    format: "[%(asctime)s] %(levelname)s [%(name)s:%(lineno)s] %(message)s"
+  uvicorn:
+    format: "%(asctime)s | %(levelname)s | %(name)s | %(message)s"
+  request:
+    format: "[%(asctime)s] %(levelname)s [%(name)s] %(message)s - %(request)s - %(status)d"
+
+handlers:
+  console:
+    class: logging.StreamHandler
+    formatter: verbose
+    level: DEBUG
+  request_handler:
+    class: logging.StreamHandler
+    formatter: request
+    level: DEBUG
+
+loggers:
+  "": # Root logger
+    handlers: [console]
+    level: DEBUG
+  uvicorn:
+    level: INFO
+    handlers: [console]
+    propagate: false
+  uvicorn.error:
+    level: ERROR
+    handlers: [console]
+    propagate: false
+  uvicorn.access:
+    level: INFO
+    handlers: [console]
+    propagate: false
+  django:
+    handlers: [console]
+    level: DEBUG
+    propagate: true
+  django.request:
+    handlers: [request_handler]
+    level: DEBUG
+    propagate: true
+  django.server:
+    handlers: [request_handler]
+    level: DEBUG
+    propagate: true
+  myproject:
+    level: DEBUG
+    handlers: [console]
+    propagate: false
+  shared.middleware:
+    handlers: [console]
+    level: DEBUG
+    propagate: true
