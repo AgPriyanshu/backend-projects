@@ -4,6 +4,6 @@ from rest_framework.routers import DefaultRouter
 from .views import NotesViewSet
 
 router = DefaultRouter()
-router.register(r"", NotesViewSet, basename="expenses")
+router.register(r"", NotesViewSet, basename="notes")
 
 urlpatterns = [path("", include(router.urls))]

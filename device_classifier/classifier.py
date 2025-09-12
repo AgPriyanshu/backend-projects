@@ -7,7 +7,7 @@ from fastai.vision.all import PILImage, load_learner
 from PIL import Image
 
 # Suppress PIL warnings
-warnings.filterwarnings('ignore', category=UserWarning, module='PIL.Image')
+warnings.filterwarnings("ignore", category=UserWarning, module="PIL.Image")
 
 logger = logging.getLogger(__name__)
 
@@ -19,7 +19,7 @@ class DeviceClassifier:
     Classifies images into gadget categories: smartphone, tablet, smartwatch, headphones, camera
     """
 
-    def __init__(self, model_path: Union[str, Path] = None):
+    def __init__(self, model_path: Union[str, Path, None] = None):
         """
         Initialize the classifier.
 
@@ -62,7 +62,9 @@ class DeviceClassifier:
             self.is_loaded = False
             return False
 
-    def _preprocess_image(self, image: Union[str, Path, Image.Image, bytes]) -> PILImage:
+    def _preprocess_image(
+        self, image: Union[str, Path, Image.Image, bytes]
+    ) -> PILImage:
         """
         Preprocess image for inference.
 
@@ -78,6 +80,7 @@ class DeviceClassifier:
                 pil_image = Image.open(image)
             elif isinstance(image, bytes):
                 from io import BytesIO
+
                 pil_image = Image.open(BytesIO(image))
             elif isinstance(image, Image.Image):
                 pil_image = image
@@ -86,7 +89,11 @@ class DeviceClassifier:
 
             # Convert to RGB (same as training preprocessing)
             if pil_image.mode == "P":
-                pil_image = pil_image.convert("RGBA") if "transparency" in pil_image.info else pil_image.convert("RGB")
+                pil_image = (
+                    pil_image.convert("RGBA")
+                    if "transparency" in pil_image.info
+                    else pil_image.convert("RGB")
+                )
             elif pil_image.mode in ("RGBA", "LA"):
                 pil_image = pil_image.convert("RGB")
 
@@ -128,26 +135,23 @@ class DeviceClassifier:
             # Create detailed predictions
             all_predictions = []
             for i, (class_name, prob) in enumerate(zip(self.classes, probs)):
-                all_predictions.append({
-                    'class': str(class_name),
-                    'confidence': float(prob),
-                    'rank': i + 1
-                })
-
+                all_predictions.append(
+                    {"class": str(class_name), "confidence": float(prob), "rank": i + 1}
+                )
 
             # Sort by confidence (descending)
-            all_predictions.sort(key=lambda x: x['confidence'], reverse=True)
+            all_predictions.sort(key=lambda x: x["confidence"], reverse=True)
 
             # Update ranks after sorting
             for i, pred in enumerate(all_predictions):
-                pred['rank'] = i + 1
+                pred["rank"] = i + 1
 
             result = {
-                'predicted_class': predicted_class,
-                'confidence': confidence,
-                'all_predictions': all_predictions,
-                'success': True,
-                'error': None
+                "predicted_class": predicted_class,
+                "confidence": confidence,
+                "all_predictions": all_predictions,
+                "success": True,
+                "error": None,
             }
 
             logger.info(f"Prediction: {predicted_class} ({confidence:.3f})")
@@ -156,14 +160,16 @@ class DeviceClassifier:
         except Exception as e:
             logger.error(f"Prediction failed: {e}")
             return {
-                'predicted_class': None,
-                'confidence': 0.0,
-                'all_predictions': [],
-                'success': False,
-                'error': str(e)
+                "predicted_class": None,
+                "confidence": 0.0,
+                "all_predictions": [],
+                "success": False,
+                "error": str(e),
             }
 
-    def predict_batch(self, images: List[Union[str, Path, Image.Image, bytes]]) -> List[Dict]:
+    def predict_batch(
+        self, images: List[Union[str, Path, Image.Image, bytes]]
+    ) -> List[Dict]:
         """
         Predict gadget classes for multiple images.
 
@@ -187,12 +193,12 @@ class DeviceClassifier:
             Dict with model information
         """
         if not self.is_loaded:
-            return {'loaded': False, 'error': 'Model not loaded'}
+            return {"loaded": False, "error": "Model not loaded"}
 
         return {
-            'loaded': True,
-            'classes': self.classes,
-            'num_classes': len(self.classes),
-            'model_type': 'FastAI Vision Learner',
-            'architecture': 'ResNet18'
+            "loaded": True,
+            "classes": self.classes,
+            "num_classes": len(self.classes),
+            "model_type": "FastAI Vision Learner",
+            "architecture": "ResNet18",
         }
