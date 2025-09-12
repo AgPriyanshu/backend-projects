@@ -42,9 +42,8 @@ INSTALLED_APPS = [
     "django.contrib.messages",
     "django.contrib.staticfiles",
     "corsheaders",
-    "django.contrib.gis",  # Required for GeoDjango
+    "django.contrib.gis",
     "channels",
-    "corsheaders",  # CORS support
     "rest_framework",
     "rest_framework.authtoken",
     "shared.apps.SharedConfig",
@@ -62,11 +61,10 @@ INSTALLED_APPS = [
 ]
 
 MIDDLEWARE = [
-    "corsheaders.middleware.CorsMiddleware",  # CORS middleware - must be first
-    "shared.middleware.LoggingMiddleware",  # Make sure this is second
+    "corsheaders.middleware.CorsMiddleware",
+    "shared.middleware.LoggingMiddleware",
     "django.middleware.security.SecurityMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
-    "corsheaders.middleware.CorsMiddleware",
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",

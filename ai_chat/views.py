@@ -1,32 +1,30 @@
-from django.shortcuts import render
 import asyncio
 import json
 import logging
-from typing import AsyncGenerator
-from django.shortcuts import get_object_or_404
-from django.http import StreamingHttpResponse
-from rest_framework import viewsets, status
-from rest_framework.decorators import action
-from rest_framework.response import Response
-from rest_framework.permissions import AllowAny
-from rest_framework.authentication import TokenAuthentication
-from django.contrib.auth.models import User
-from asgiref.sync import sync_to_async, async_to_sync
-import django.db.models
 
-from .models import ChatSession, ChatMessage, LLMModel, ChatPreset
+import django.db.models
+from asgiref.sync import async_to_sync
+from django.contrib.auth.models import User
+from django.http import StreamingHttpResponse
+from rest_framework import status, viewsets
+from rest_framework.authentication import TokenAuthentication
+from rest_framework.decorators import action
+from rest_framework.permissions import AllowAny
+from rest_framework.response import Response
+
+from .mcp_tools import mcp_server
+from .models import ChatMessage, ChatPreset, ChatSession, LLMModel
 from .serializers import (
-    ChatSessionSerializer,
-    ChatSessionListSerializer,
-    CreateChatSessionSerializer,
     ChatMessageSerializer,
-    SendMessageSerializer,
-    LLMModelSerializer,
-    ChatPresetSerializer,
     ChatPresetListSerializer,
+    ChatPresetSerializer,
+    ChatSessionListSerializer,
+    ChatSessionSerializer,
+    CreateChatSessionSerializer,
+    LLMModelSerializer,
+    SendMessageSerializer,
 )
 from .services import ChatService
-from .mcp_tools import mcp_server
 
 logger = logging.getLogger(__name__)
 
@@ -61,7 +59,6 @@ class ChatSessionViewSet(viewsets.ModelViewSet):
             user=default_user, system_prompt=system_prompt, **serializer.validated_data
         )
 
-        # Return the created session data
         return session
 
     def create(self, request, *args, **kwargs):
@@ -274,9 +271,11 @@ class ChatHealthViewSet(viewsets.ViewSet):
                 {
                     "llm_server_healthy": is_healthy,
                     "llm_server_url": chat_service.llm_service.base_url,
-                    "timestamp": ChatMessage.objects.aggregate(
-                        latest=django.db.models.Max("created_at")
-                    ).get("latest"),
+                    "timestamp": (
+                        ChatMessage.objects.aggregate(
+                            latest=django.db.models.Max("created_at")
+                        ).get("latest")
+                    ),
                 }
             )
         except Exception as e:
@@ -296,24 +295,26 @@ class ChatHealthViewSet(viewsets.ViewSet):
             )
 
             stats = {
-                "total_sessions": ChatSession.objects.filter(
-                    user=default_user, is_active=True
-                ).count(),
-                "total_messages": ChatMessage.objects.filter(
-                    session__user=default_user
-                ).count(),
-                "recent_sessions": ChatSession.objects.filter(
-                    user=default_user, is_active=True
-                )
-                .order_by("-updated_at")[:5]
-                .count(),
-                "favorite_model": ChatSession.objects.filter(
-                    user=default_user, is_active=True
-                )
-                .values("model_name")
-                .annotate(count=django.db.models.Count("model_name"))
-                .order_by("-count")
-                .first(),
+                "total_sessions": (
+                    ChatSession.objects.filter(
+                        user=default_user, is_active=True
+                    ).count()
+                ),
+                "total_messages": (
+                    ChatMessage.objects.filter(session__user=default_user).count()
+                ),
+                "recent_sessions": (
+                    ChatSession.objects.filter(user=default_user, is_active=True)
+                    .order_by("-updated_at")[:5]
+                    .count()
+                ),
+                "favorite_model": (
+                    ChatSession.objects.filter(user=default_user, is_active=True)
+                    .values("model_name")
+                    .annotate(count=django.db.models.Count("model_name"))
+                    .order_by("-count")
+                    .first()
+                ),
             }
 
             return Response(stats)

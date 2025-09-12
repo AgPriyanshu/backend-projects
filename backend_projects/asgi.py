@@ -8,10 +8,11 @@ https://docs.djangoproject.com/en/5.1/howto/deployment/asgi/
 """
 
 import os
-from django.core.asgi import get_asgi_application
-from channels.routing import ProtocolTypeRouter, URLRouter
+
 from channels.auth import AuthMiddlewareStack
+from channels.routing import ProtocolTypeRouter, URLRouter
 from channels.security.websocket import OriginValidator
+from django.core.asgi import get_asgi_application
 
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "backend_projects.settings")
 
@@ -20,24 +21,22 @@ os.environ.setdefault("DJANGO_SETTINGS_MODULE", "backend_projects.settings")
 django_asgi_app = get_asgi_application()
 
 # Import routing after Django initialization
-import ai_chat.routing
+import ai_chat.routing  # noqa: E402
 
-application = ProtocolTypeRouter({
-    # HTTP requests
-    "http": django_asgi_app,
-    
-    # WebSocket chat
-    "websocket": OriginValidator(
-        AuthMiddlewareStack(
-            URLRouter(
-                ai_chat.routing.websocket_urlpatterns
-            )
+application = ProtocolTypeRouter(
+    {
+        "http": django_asgi_app,
+        "websocket": OriginValidator(
+            AuthMiddlewareStack(URLRouter(ai_chat.routing.websocket_urlpatterns)),
+            (
+                ["*"]
+                if os.environ.get("DEBUG", "0") == "1"
+                else [
+                    "http://localhost:3000",
+                    "http://127.0.0.1:3000",
+                    "https://yourdomain.com",
+                ]
+            ),
         ),
-        # Allow all origins in development, restrict in production
-        ["*"] if os.environ.get("DEBUG", "0") == "1" else [
-            "http://localhost:3000",
-            "http://127.0.0.1:3000",
-            "https://yourdomain.com",
-        ]
-    ),
-})
+    }
+)
