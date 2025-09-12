@@ -13,14 +13,14 @@ class TaskViewSet(BaseModelViewSet):
     serializer_class = TaskSerializer
     permission_classes = [IsAuthenticated]
 
-    @action(detail=True, methods=['post'])
+    @action(detail=True, methods=["post"])
     def mark_done(self, request, pk=None):
         task = self.get_object()
         task.mark_done()
-        return Response({'status': 'task marked as done'})
+        return Response({"status": "task marked as done"})
 
-    @action(detail=True, methods=['post'])
+    @action(detail=True, methods=["post"])
     def mark_undone(self, request, pk=None):
         task = self.get_object()
         task.mark_undone()
-        return Response({'status': 'task marked as undone'})
+        return Response({"status": "task marked as undone"})
