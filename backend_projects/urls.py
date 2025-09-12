@@ -19,6 +19,9 @@ urlpatterns = [
     path(r"notes/", include("note_markdown_app.urls")),
     path(r"urls/", include("url_shortner_app.urls")),
     path(r"device-classifier/", include("device_classifier.urls")),
+    path(r"map/", include("map_app.urls")),
+    path(r"chats/", include("chat_app.urls")),
+    path(r"ai-chat/", include("ai_chat.urls")),
     path(
         "expense-app/api-doc/",
         TemplateView.as_view(
@@ -40,7 +43,6 @@ urlpatterns = [
     path("ping/", ping),
     # TODO: Add API Doc for each app
 ] + static(STATIC_URL, document_root=STATIC_ROOT)
-
 
 if settings.DEBUG:
     from debug_toolbar.toolbar import debug_toolbar_urls

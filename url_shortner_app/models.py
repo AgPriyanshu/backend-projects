@@ -7,7 +7,6 @@ from shared.models import BaseModel
 
 
 def generate_base62_slug():
-    # Generate UUID4, encode in base64, and trim to 8 characters
     return (
         base64.urlsafe_b64encode(uuid.uuid4().bytes).decode("utf-8").rstrip("=\n")[:8]
     )

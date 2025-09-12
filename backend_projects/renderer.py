@@ -2,6 +2,7 @@ import json
 
 from rest_framework import status
 from rest_framework.renderers import JSONRenderer
+from rest_framework.utils.encoders import JSONEncoder
 
 
 class CustomJSONRenderer(JSONRenderer):
@@ -30,5 +31,5 @@ class CustomJSONRenderer(JSONRenderer):
             "data": response_data_body,
         }
 
-        # Return serialized JSON data
-        return json.dumps(response_data)
+        # Return serialized JSON data using DRF's encoder
+        return json.dumps(response_data, cls=JSONEncoder, ensure_ascii=False)
