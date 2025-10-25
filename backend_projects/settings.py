@@ -58,6 +58,7 @@ INSTALLED_APPS = [
     "map_app.apps.MapAppConfig",
     "chat_app.apps.ChatAppConfig",
     "ai_chat.apps.AiChatConfig",
+    "ecommerce_app.apps.EcommerceAppConfig",
 ]
 
 MIDDLEWARE = [

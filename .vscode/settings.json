@@ -1,4 +1,5 @@
 {
+  // === PYTHON SETTINGS ===
   "[python]": {
     "editor.defaultFormatter": "ms-python.black-formatter",
     "editor.formatOnSave": true,
@@ -8,14 +9,47 @@
     "editor.tabSize": 4,
     "editor.detectIndentation": false
   },
-  "[yaml]": {
-    "editor.defaultFormatter": "redhat.vscode-yaml"
-  },
+
+  "python.defaultInterpreterPath": "venv/bin/python",
+  "python.analysis.autoImportCompletions": true,
   "python.analysis.packageIndexDepths": [
     ["rest_framework", 5, true],
     ["django", 5, true]
   ],
+
+  // === TYPE CHECKING / PYLANCE ===
+  "python.analysis.typeCheckingMode": "basic",
+  "python.analysis.diagnosticSeverityOverrides": {
+    "reportOptionalSubscript": "none",
+    "reportOptionalMemberAccess": "none",
+    "reportMissingImports": "none",
+    "reportMissingTypeStubs": "none",
+    "reportIndexIssue": "none",
+    "reportAttributeAccessIssue": "none"
+  },
+
+  // === FORMATTING ===
   "black-formatter.args": ["--line-length=88", "--preview"],
+  "isort.args": ["--profile", "black"],
+
+  // === DJANGO TEMPLATE SUPPORT ===
+  "files.associations": {
+    "**/templates/**/*.html": "django-html",
+    "**/templates/**/*.txt": "django-txt"
+  },
+  "[django-html]": {
+    "editor.defaultFormatter": "monosans.djlint"
+  },
+
+  // === ENVIRONMENT ===
+  "python.envFile": "${workspaceFolder}/.env",
+
+  // === YAML ===
+  "[yaml]": {
+    "editor.defaultFormatter": "redhat.vscode-yaml"
+  },
+
+  // === SQL TOOLS ===
   "sqltools.connections": [
     {
       "previewLimit": 50,
@@ -27,5 +61,7 @@
       "username": "postgres"
     }
   ],
+
+  // === SPELLING EXCEPTIONS ===
   "cSpell.words": ["Shortner"]
 }

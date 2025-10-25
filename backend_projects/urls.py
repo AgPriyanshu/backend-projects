@@ -22,6 +22,7 @@ urlpatterns = [
     path(r"map/", include("map_app.urls")),
     path(r"chats/", include("chat_app.urls")),
     path(r"ai-chat/", include("ai_chat.urls")),
+    path(r"ecom/", include("ecommerce_app.urls")),
     path(
         "expense-app/api-doc/",
         TemplateView.as_view(
