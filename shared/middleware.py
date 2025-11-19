@@ -14,19 +14,19 @@ class LoggingMiddleware:
     def __call__(self, request: HttpRequest) -> HttpResponse:
         start_time = time.time()
 
-        # Log request
-        logger.debug(
-            f"Request: {request.method} {request.path} - Headers: {dict(request.headers)}"
-        )
+        # Log request.
+        # logger.debug(
+        #     f"Request: {request.method} {request.path} - Headers: {dict(request.headers)}"
+        # )
 
         response = self.get_response(request)
 
         # Calculate duration
-        duration = time.time() - start_time
+        time.time() - start_time
 
         # Log response
-        logger.debug(
-            f"Response: {request.method} {request.path} - Status: {response.status_code} - Duration: {duration:.2f}s"
-        )
+        # logger.debug(
+        #     f"Response: {request.method} {request.path} - Status: {response.status_code} - Duration: {duration:.2f}s"
+        # )
 
         return response

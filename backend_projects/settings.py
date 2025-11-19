@@ -23,7 +23,7 @@ CHANNEL_LAYERS = {
         "CONFIG": {
             "hosts": [
                 (
-                    os.environ.get("REDIS_HOST", "127.0.0.1"),
+                    os.environ.get("REDIS_HOST", "redus"),
                     int(os.environ.get("REDIS_PORT", "6379")),
                 )
             ],
@@ -138,6 +138,15 @@ DATABASES = {
     }
 }
 
+CACHES = {
+    "default": {
+        "BACKEND": "django.core.cache.backends.redis.RedisCache",
+        "LOCATION": (
+            f"redis://{os.environ.get('REDIS_HOST','redis')}:{os.environ.get('REDIS_PORT','6379')}"
+        ),
+    }
+}
+
 # Password validation
 # https://docs.djangoproject.com/en/5.1/ref/settings/#auth-password-validators
 
@@ -228,3 +237,6 @@ LOGGING = {
         "level": "DEBUG" if DEBUG else "INFO",
     },
 }
+
+
+DEFAULT_CURRENCY = "INR"

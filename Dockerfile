@@ -1,5 +1,8 @@
-# Use the official Python image as the base
+# Use the official Python image as the base (slim)
 FROM python:3.12-slim
+
+# Avoid prompts during package installs
+ARG DEBIAN_FRONTEND=noninteractive
 
 # Set environment variables
 ENV PYTHONDONTWRITEBYTECODE=1 \
@@ -8,37 +11,52 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
 # Set work directory
 WORKDIR /app
 
-# Install system dependencies including GIS libraries
-RUN apt-get update && apt-get install -y \
-    build-essential \
-    default-jre \
-    libpq-dev \
-    gdal-bin \
-    libgdal-dev \
-    libgeos-dev \
-    libproj-dev \
-    libspatialite-dev \
-    spatialite-bin \
-    && rm -rf /var/lib/apt/lists/*
+# Install system dependencies (build deps are removed afterwards to keep the image small)
+# - --no-install-recommends reduces installed packages
+# - all install, builds, and cleanup happen in a single RUN to avoid extra layers
+RUN set -eux; \
+    apt-get update; \
+    apt-get install -y --no-install-recommends \
+        build-essential \
+        gcc \
+        ca-certificates \
+        libpq-dev \
+        gdal-bin \
+        libgdal-dev \
+        libgeos-dev \
+        libproj-dev \
+        libspatialite-dev \
+        spatialite-bin \
+    ; \
+    rm -rf /var/lib/apt/lists/*;
 
-# Set GDAL environment variables
-ENV CPLUS_INCLUDE_PATH=/usr/include/gdal
-ENV C_INCLUDE_PATH=/usr/include/gdal
+# Copy only requirements first to leverage Docker cache
+COPY requirements.txt ./
 
-# Install Python dependencies
-COPY requirements.txt .
-RUN pip install --upgrade pip \
-    && pip install -r requirements.txt
+# Upgrade pip, install python deps (no cache), install GDAL python wheel matching system GDAL
+# then purge build tools to reduce final image size
+RUN set -eux; \
+    pip install --upgrade pip setuptools wheel --no-cache-dir; \
+    pip install --no-cache-dir -r requirements.txt; \
+    if command -v gdal-config >/dev/null 2>&1; then \
+        GDAL_VERSION=$(gdal-config --version); \
+        pip install --no-cache-dir "GDAL==${GDAL_VERSION}" || true; \
+    fi; \
+    # remove build deps (they are no longer needed after wheels are built/installed)
+    apt-get purge -y --auto-remove build-essential gcc || true; \
+    rm -rf /root/.cache/pip
 
-# Install GDAL Python package matching the system GDAL version
-RUN GDAL_VERSION=$(gdal-config --version) && \
-    pip install GDAL==$GDAL_VERSION
-
-# Copy project files
+# Copy the rest of the project files
 COPY . .
 
+# Create a non-root user and give ownership of the app directory (optional but recommended)
+RUN set -eux; \
+    addgroup --system app && adduser --system --ingroup app app || true; \
+    chown -R app:app /app
+USER app
+
 # Ensure the entrypoint script is executable
-RUN chmod +x ./docker-entrypoint.sh
+RUN [ -f ./docker-entrypoint.sh ] && chmod +x ./docker-entrypoint.sh || true
 
 # Expose port 8000
 EXPOSE 8000

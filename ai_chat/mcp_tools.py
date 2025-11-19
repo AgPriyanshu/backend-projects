@@ -1,11 +1,11 @@
 import logging
-from typing import Dict, List, Optional, Any
-from django.conf import settings
-import httpx
-from map_app.models import Layer, Feature, FeatureAttribute
-from map_app.utils import AttributeManager
+from typing import Any, Dict, List, Optional
 from urllib.parse import quote_plus
-from bs4 import BeautifulSoup
+
+import httpx
+
+from map_app.models import Feature, FeatureAttribute, Layer
+from map_app.utils import AttributeManager
 
 logger = logging.getLogger(__name__)
 
@@ -87,7 +87,9 @@ class DjangoMCPServer:
                 "properties": {
                     "layer_name": {
                         "type": "string",
-                        "description": "Name of the layer to find (case-insensitive partial match)",
+                        "description": (
+                            "Name of the layer to find (case-insensitive partial match)"
+                        ),
                     }
                 },
                 "required": ["layer_name"],
@@ -108,7 +110,9 @@ class DjangoMCPServer:
                     },
                     "layer_name": {
                         "type": "string",
-                        "description": "Name of the layer to analyze (alternative to layer_id)",
+                        "description": (
+                            "Name of the layer to analyze (alternative to layer_id)"
+                        ),
                     },
                 },
             },
@@ -128,15 +132,21 @@ class DjangoMCPServer:
                     },
                     "layer_name": {
                         "type": "string",
-                        "description": "Name of the layer containing population data (alternative to layer_id)",
+                        "description": (
+                            "Name of the layer containing population data (alternative to layer_id)"
+                        ),
                     },
                     "population_field": {
                         "type": "string",
-                        "description": "Name of the field containing population data (e.g., 'population', 'pop_est')",
+                        "description": (
+                            "Name of the field containing population data (e.g., 'population', 'pop_est')"
+                        ),
                     },
                     "threshold": {
                         "type": "number",
-                        "description": "Population threshold for highlighting (optional)",
+                        "description": (
+                            "Population threshold for highlighting (optional)"
+                        ),
                     },
                     "operation": {
                         "type": "string",
@@ -185,11 +195,15 @@ class DjangoMCPServer:
                     },
                     "layer_name": {
                         "type": "string",
-                        "description": "Name of the layer to analyze (alternative to layer_id)",
+                        "description": (
+                            "Name of the layer to analyze (alternative to layer_id)"
+                        ),
                     },
                     "include_statistics": {
                         "type": "boolean",
-                        "description": "Include detailed statistics for numeric attributes",
+                        "description": (
+                            "Include detailed statistics for numeric attributes"
+                        ),
                         "default": True,
                     },
                 },
@@ -204,7 +218,7 @@ class DjangoMCPServer:
         self.tools[name] = MCPTool(
             name=name, description=description, parameters=parameters, handler=handler
         )
-        logger.info(f"Registered MCP tool: {name}")
+        # logger.info(f"Registered MCP tool: {name}")
 
     async def execute_tool(
         self, tool_name: str, arguments: Dict[str, Any]
@@ -312,7 +326,7 @@ class DjangoMCPServer:
             layer = Layer.objects.get(id=layer_id)
             feature_count = Feature.objects.filter(layer=layer).count()
 
-            result = f"Layer Information:\n"
+            result = "Layer Information:\n"
             result += f"ID: {layer.id}\n"
             result += f"Name: {layer.name}\n"
             result += f"Description: {layer.description or 'No description'}\n"
@@ -365,7 +379,7 @@ class DjangoMCPServer:
                 return f"Population field '{population_field}' not found in layer {layer_id}"
 
             # Build result
-            result = f"Population Analysis Results:\n"
+            result = "Population Analysis Results:\n"
             result += f"Layer: {layer.name}\n"
             result += f"Field analyzed: {population_field}\n"
             result += f"Operation: {operation}\n"
@@ -404,7 +418,7 @@ class DjangoMCPServer:
                             continue
 
             if pop_values:
-                result += f"Population Statistics:\n"
+                result += "Population Statistics:\n"
                 result += f"- Min: {min(pop_values):,.0f}\n"
                 result += f"- Max: {max(pop_values):,.0f}\n"
                 result += f"- Average: {sum(pop_values)/len(pop_values):,.0f}\n"
@@ -481,13 +495,13 @@ class DjangoMCPServer:
                     pass
 
             if numeric_values:
-                result += f"Data type: numeric\n"
+                result += "Data type: numeric\n"
                 result += f"Minimum: {min(numeric_values):,.2f}\n"
                 result += f"Maximum: {max(numeric_values):,.2f}\n"
                 result += f"Average: {sum(numeric_values)/len(numeric_values):,.2f}\n"
                 result += f"Sum: {sum(numeric_values):,.2f}\n"
             else:
-                result += f"Data type: text/categorical\n"
+                result += "Data type: text/categorical\n"
 
             # Show unique values (limited)
             unique_values = list(set(values))
@@ -514,10 +528,10 @@ class DjangoMCPServer:
             layer = Layer.objects.get(id=layer_id)
             feature_count = Feature.objects.filter(layer=layer).count()
 
-            result = f"📊 COMPREHENSIVE LAYER ANALYSIS\n"
+            result = "📊 COMPREHENSIVE LAYER ANALYSIS\n"
             result += f"{'='*50}\n\n"
 
-            result += f"🗺️  LAYER INFORMATION:\n"
+            result += "🗺️  LAYER INFORMATION:\n"
             result += f"   Name: {layer.name}\n"
             result += f"   ID: {layer.id}\n"
             result += f"   Description: {layer.description or 'No description'}\n"
@@ -530,7 +544,7 @@ class DjangoMCPServer:
                 summary = AttributeManager.get_layer_attribute_summary(layer)
 
                 if summary:
-                    result += f"📋 ATTRIBUTE ANALYSIS:\n"
+                    result += "📋 ATTRIBUTE ANALYSIS:\n"
                     result += f"   Total Attributes: {len(summary)}\n\n"
 
                     # Categorize attributes by type
@@ -576,14 +590,14 @@ class DjangoMCPServer:
                             result += "\n"
 
                     # Analysis insights
-                    result += f"💡 ANALYSIS INSIGHTS:\n"
+                    result += "💡 ANALYSIS INSIGHTS:\n"
                     if numeric_attrs:
                         result += f"   • Found {len(numeric_attrs)} numeric attribute(s) suitable for statistical analysis\n"
-                        result += f"   • Can perform population analysis, filtering, and visualization\n"
+                        result += "   • Can perform population analysis, filtering, and visualization\n"
                     if text_attrs:
                         result += f"   • Found {len(text_attrs)} text attribute(s) for categorical analysis\n"
 
-                    result += f"\n🔧 SUGGESTED ACTIONS:\n"
+                    result += "\n🔧 SUGGESTED ACTIONS:\n"
                     if numeric_attrs:
                         top_numeric = numeric_attrs[0][0]  # First numeric attribute
                         result += f"   • Try: analyze_population(layer_name='{layer.name}', population_field='{top_numeric}')\n"

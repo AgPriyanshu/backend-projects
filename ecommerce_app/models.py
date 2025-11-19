@@ -1,23 +1,35 @@
 import uuid
 
+from django.contrib.auth.models import User
 from django.db import models
+from djmoney.models.fields import MoneyField
 
 from shared.models import BaseModel
 
 
 class Category(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4)
+    name = models.TextField()
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
-    name = models.TextField()
+
+    class Meta:
+        verbose_name = "category"
+        verbose_name_plural = "categories"
 
 
-class Product(BaseModel):
+class Product(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4)
     name = models.TextField()
     category = models.ForeignKey(Category, on_delete=models.DO_NOTHING)
-    price = models.DecimalField(max_digits=9, decimal_places=2)
-    currency = models.CharField(max_length=3)
+    price = MoneyField(
+        max_digits=9,
+        decimal_places=2,
+    )
     quantity = models.IntegerField(default=0)
+    added_by = models.ForeignKey(User, on_delete=models.DO_NOTHING)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
 
 
 class Cart(BaseModel):
