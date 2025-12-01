@@ -5,11 +5,11 @@ from django.dispatch import receiver
 from .models import Cart, Product
 
 
-@receiver(m2m_changed, sender=Cart.products.through)
+@receiver(m2m_changed, sender=Cart.items.through)
 def update_cart_count(sender, instance, action, *args, **kwargs):
     if action in ("post_add", "post_remove", "post_clear"):
-        instance.count = instance.products.count()
-        instance.save(update_fields=["count"])
+        print("Count updated for cart")
+        instance.count = instance.items.count()
         instance.save(update_fields=["count"])
 
 

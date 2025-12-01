@@ -4,7 +4,7 @@ from django.contrib.auth.models import User
 from django.db import models
 from djmoney.models.fields import MoneyField
 
-from shared.models import BaseModel
+from shared.models import BaseModelWithoutUser
 
 
 class Category(models.Model):
@@ -26,12 +26,21 @@ class Product(models.Model):
         max_digits=9,
         decimal_places=2,
     )
-    quantity = models.IntegerField(default=0)
+    stock = models.IntegerField(default=0)
     added_by = models.ForeignKey(User, on_delete=models.DO_NOTHING)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
 
-class Cart(BaseModel):
-    products = models.ManyToManyField(Product)
+class CartItem(BaseModelWithoutUser):
+    product = models.ForeignKey(Product, on_delete=models.DO_NOTHING)
+    quantity = models.IntegerField(default=0)
+
+
+class Cart(BaseModelWithoutUser):
+    user = models.OneToOneField(User, on_delete=models.DO_NOTHING)
+    items = models.ManyToManyField(
+        CartItem,
+        related_name="cart",
+    )
     count = models.IntegerField(default=0, editable=False)

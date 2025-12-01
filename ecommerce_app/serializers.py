@@ -4,7 +4,7 @@ from rest_framework import serializers
 
 from shared.serializers import BaseModelSerializer
 
-from .models import Category, Product
+from .models import CartItem, Category, Product
 
 
 class MoneyFieldSerializer(serializers.Field):
@@ -37,15 +37,34 @@ class ProductSerializer(BaseModelSerializer):
     class Meta:
         model = Product
         fields = (
+            "id",
             "name",
             "category",
             "quantity",
             "price",
         )
-        read_only_fields = ("added_by",)
+        read_only_fields = (
+            "id",
+            "added_by",
+        )
 
 
 class CategorySerializer(BaseModelSerializer):
     class Meta:
         model = Category
         fields = "__all__"
+
+
+class CartItemSerializer(BaseModelSerializer):
+    class Meta:
+        model = CartItem
+        fields = "__all__"
+
+    def to_representation(self, instance):
+        response = {
+            "product_id": instance.product.id,
+            "product_name": instance.product.name,
+            "quantity": instance.quantity,
+        }
+
+        return response
