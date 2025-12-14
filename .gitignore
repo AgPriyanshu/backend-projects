@@ -35,6 +35,7 @@ ENV/
 # macOS files
 .DS_Store
 
+.ruff_cache
 # pyenv
 .python-version
 
