@@ -1,4 +1,3 @@
-
 from django.utils.decorators import method_decorator
 from django.views.decorators.cache import cache_page
 from rest_framework.permissions import (
@@ -12,7 +11,12 @@ from rest_framework.viewsets import ModelViewSet
 from shared.views import BaseModelViewSet
 
 from .models import Cart, CartItem, Category, Product
-from .serializers import CartItemSerializer, CategorySerializer, ProductSerializer
+from .serializers import (
+    CartItemSerializer,
+    CartSerializer,
+    CategorySerializer,
+    ProductSerializer,
+)
 
 
 class ProductsViewSet(ModelViewSet):
@@ -54,6 +58,7 @@ class CategoriesViewSet(ModelViewSet):
 
 class CartsViewSet(BaseModelViewSet):
     queryset = Cart.objects.all()
+    serializer_class = CartSerializer
     permission_classes = [IsAuthenticated]
 
     def create(self, request, *args, **kwargs):
@@ -62,9 +67,6 @@ class CartsViewSet(BaseModelViewSet):
         serializer.is_valid(raise_exception=True)
 
         queryset = self.get_queryset()
-        # import pdb
-
-        # pdb.set_trace()
 
         if len(queryset) == 0:
             cart = Cart.objects.create(user=request.user)

@@ -4,7 +4,7 @@ from rest_framework import serializers
 
 from shared.serializers import BaseModelSerializer
 
-from .models import CartItem, Category, Product
+from .models import Cart, CartItem, Category, Product
 
 
 class MoneyFieldSerializer(serializers.Field):
@@ -52,6 +52,12 @@ class ProductSerializer(BaseModelSerializer):
 class CategorySerializer(BaseModelSerializer):
     class Meta:
         model = Category
+        fields = "__all__"
+
+
+class CartSerializer(BaseModelSerializer):
+    class Meta:
+        model = Cart
         fields = "__all__"
 
 
