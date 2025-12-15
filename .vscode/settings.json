@@ -63,5 +63,8 @@
   ],
 
   // === SPELLING EXCEPTIONS ===
-  "cSpell.words": ["Shortner"]
+  "cSpell.words": [
+    "Shortner"
+  ],
+  "postman.settings.dotenv-detection-notification-visibility": false
 }

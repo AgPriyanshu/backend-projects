@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-set -euo pipefail
+# set -euo pipefail
 
 echo "🚀 Starting NGINX Gateway setup..."
 
@@ -16,7 +16,7 @@ GATEWAY_NAMESPACE="gateway-system"
 # -----------------------------
 echo "📦 Installing Gateway API CRDs (${GATEWAY_API_VERSION})..."
 
-kubectl apply -f k8s/platform/crds/gateway-api/standard-install.yaml
+kubectl apply -f platform/crds/gateway-api/standard-install.yaml
 
 echo "✅ Gateway API CRDs installed"
 
@@ -25,14 +25,12 @@ echo "✅ Gateway API CRDs installed"
 # -----------------------------
 echo "📦 Installing NGINX Gateway Controller..."
 
-kubectl create namespace ${NGINX_NAMESPACE} --dry-run=client -o yaml | kubectl apply -f -
-
-helm repo add nginx-gateway https://helm.nginx.com/stable
+helm install ngf oci://ghcr.io/nginx/charts/nginx-gateway-fabric --create-namespace -n nginx-gateway
 helm repo update
 
 helm upgrade --install nginx-gateway nginx-gateway/nginx-gateway \
   --namespace ${NGINX_NAMESPACE} \
-  -f k8s/platform/controllers/nginx-gateway/values.yaml
+  -f platform/controllers/nginx-gateway/values.yaml
 
 echo "✅ NGINX Gateway Controller installed"
 
@@ -48,7 +46,7 @@ kubectl create namespace ${GATEWAY_NAMESPACE} --dry-run=client -o yaml | kubectl
 # -----------------------------
 echo "🌐 Installing Gateway and Routes..."
 
-helm upgrade --install platform-gateway k8s/platform/gateway \
+helm upgrade --install platform-gateway platform/gateway \
   --namespace ${GATEWAY_NAMESPACE}
 
 echo "✅ Gateway and Routes installed"

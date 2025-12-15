@@ -1,0 +1,9 @@
+apiVersion: v2
+name: platform-db
+description: Kubernetes Database configuration for platform services
+type: application
+version: 0.1.0
+appVersion: "v1"
+maintainers:
+  - name: AgPriyanshu
+    email: priyanshu81212@gmail.com

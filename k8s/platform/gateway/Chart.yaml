@@ -4,3 +4,6 @@ description: Kubernetes Gateway API configuration for platform ingress
 type: application
 version: 0.1.0
 appVersion: "v1"
+maintainers:
+  - name: AgPriyanshu
+    email: priyanshu81212@gmail.com

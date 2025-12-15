@@ -1,0 +1,9 @@
+apiVersion: v2
+name: backend-app
+description: Backend App configuration for backend-projects django app
+type: application
+version: 0.1.0
+appVersion: "v1"
+maintainers:
+  - name: AgPriyanshu
+    email: priyanshu81212@gmail.com
