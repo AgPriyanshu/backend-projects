@@ -1,0 +1,23 @@
+replicaCount: 1
+
+image:
+  repository: nginx/nginx-gateway-fabric
+  tag: "1.4.0"
+  pullPolicy: IfNotPresent
+
+service:
+  type: LoadBalancer
+  annotations: {}
+  externalTrafficPolicy: Local
+
+resources:
+  requests:
+    cpu: "100m"
+    memory: "128Mi"
+  limits:
+    cpu: "500m"
+    memory: "512Mi"
+
+gatewayClass:
+  name: platform-gateway-class
+
