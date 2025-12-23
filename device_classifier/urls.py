@@ -1,11 +1,11 @@
-from django.urls import include, path
-from rest_framework.routers import DefaultRouter
+# from django.urls import include, path
+# from rest_framework.routers import DefaultRouter
 
-from device_classifier.views import DeviceClassifierViewSet
+# from device_classifier.views import DeviceClassifierViewSet
 
-router = DefaultRouter()
-router.register(r'', DeviceClassifierViewSet, basename='classify')
+# router = DefaultRouter()
+# router.register(r'', DeviceClassifierViewSet, basename='classify')
 
-urlpatterns = [
-    path('', include(router.urls)),
-]
+# urlpatterns = [
+#     path('', include(router.urls)),
+# ]

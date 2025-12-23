@@ -56,8 +56,8 @@ INSTALLED_APPS = [
     "url_shortner_app.apps.UrlShortnerAppConfig",
     "device_classifier.apps.DeviceClassifierConfig",
     "map_app.apps.MapAppConfig",
-    "chat_app.apps.ChatAppConfig",
-    "ai_chat.apps.AiChatConfig",
+    # "chat_app.apps.ChatAppConfig",
+    # "ai_chat.apps.AiChatConfig",
     "ecommerce_app.apps.EcommerceAppConfig",
 ]
 

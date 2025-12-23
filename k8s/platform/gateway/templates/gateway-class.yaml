@@ -1,7 +1,7 @@
-apiVersion: gateway.networking.k8s.io/v1
-kind: GatewayClass
-metadata:
-  name: platform-gateway-class
-  namespace: gateway-system
-spec:
-  controllerName: gateway.nginx.org/nginx-gateway-controller
+# apiVersion: gateway.networking.k8s.io/v1
+# kind: GatewayClass
+# metadata:
+#   name: platform-gateway-class
+#   namespace: gateway-system
+# spec:
+#   controllerName: gateway.nginx.org/nginx-gateway-controller

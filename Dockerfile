@@ -1,5 +1,5 @@
 # Use the official Python image as the base (slim)
-FROM python:3.12-slim
+FROM python:3.13-slim
 
 # Avoid prompts during package installs
 ARG DEBIAN_FRONTEND=noninteractive
@@ -49,12 +49,6 @@ RUN set -eux; \
 # Copy the rest of the project files
 COPY . .
 
-# Create a non-root user and give ownership of the app directory (optional but recommended)
-RUN set -eux; \
-    addgroup --system app && adduser --system --ingroup app app || true; \
-    chown -R app:app /app
-USER app
-
 # Ensure the entrypoint script is executable
 RUN [ -f ./docker-entrypoint.sh ] && chmod +x ./docker-entrypoint.sh || true
 
@@ -62,4 +56,4 @@ RUN [ -f ./docker-entrypoint.sh ] && chmod +x ./docker-entrypoint.sh || true
 EXPOSE 8000
 
 ENTRYPOINT ["./docker-entrypoint.sh"]
-CMD ["uvicorn", "backend_projects.asgi:application", "--host", "0.0.0.0", "--port", "8000", "--log-config", "log_config.yaml"]
+CMD ["uvicorn", "backend_projects.asgi:application", "--host", "0.0.0.0", "--port", "8000", "--workers","8", "--log-config", "log_config.yaml"]

@@ -18,10 +18,10 @@ urlpatterns = [
     path(r"expenses/", include("expense_tracker_app.urls")),
     path(r"notes/", include("note_markdown_app.urls")),
     path(r"urls/", include("url_shortner_app.urls")),
-    path(r"device-classifier/", include("device_classifier.urls")),
+    # path(r"device-classifier/", include("device_classifier.urls")),
     path(r"map/", include("map_app.urls")),
-    path(r"chats/", include("chat_app.urls")),
-    path(r"ai-chat/", include("ai_chat.urls")),
+    # path(r"chats/", include("chat_app.urls")),
+    # path(r"ai-chat/", include("ai_chat.urls")),
     path(r"ecom/", include("ecommerce_app.urls")),
     path(
         "expense-app/api-doc/",

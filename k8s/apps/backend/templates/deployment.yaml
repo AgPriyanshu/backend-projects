@@ -15,18 +15,33 @@ spec:
       labels:
         app: backend-app
     spec:
+      nodeSelector:
+        kubernetes.io/arch: amd64
       containers:
-        - name: hello
-          image: hashicorp/http-echo
-          args:
-            - "-text=Hello Kubernetes!"
+        - name: backend-projects
+          image: backend-projects:latest
+          imagePullPolicy: Never
           resources:
             requests:
-              cpu: 100m
-              memory: 100Mi
+              cpu: 4000m
+              memory: 8000Mi
             limits:
-              cpu: 100m
-              memory: 100Mi
+              cpu: 4000m
+              memory: 8000Mi
           ports:
-            - containerPort: 5678
+            - containerPort: 8000
               name: backend-app
+          env:
+
+            - name: DB_HOST
+              value: "postgres"
+            - name: DB_PORT
+              value: "5432"
+            - name: DB_NAME
+              value: "postgres"
+            - name: DB_USER
+              value: "postgres"
+            - name: DB_PASSWORD
+              value: "postgres"
+            - name: DEBUG
+              value: "1"

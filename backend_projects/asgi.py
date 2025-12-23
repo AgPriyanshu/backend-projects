@@ -21,22 +21,22 @@ os.environ.setdefault("DJANGO_SETTINGS_MODULE", "backend_projects.settings")
 django_asgi_app = get_asgi_application()
 
 # Import routing after Django initialization
-import ai_chat.routing  # noqa: E402
+# import ai_chat.routing  # noqa: E402
 
 application = ProtocolTypeRouter(
     {
         "http": django_asgi_app,
-        "websocket": OriginValidator(
-            AuthMiddlewareStack(URLRouter(ai_chat.routing.websocket_urlpatterns)),
-            (
-                ["*"]
-                if os.environ.get("DEBUG", "0") == "1"
-                else [
-                    "http://localhost:3000",
-                    "http://127.0.0.1:3000",
-                    "https://yourdomain.com",
-                ]
-            ),
-        ),
+        # "websocket": OriginValidator(
+        #     AuthMiddlewareStack(URLRouter(ai_chat.routing.websocket_urlpatterns)),
+        #     (
+        #         ["*"]
+        #         if os.environ.get("DEBUG", "0") == "1"
+        #         else [
+        #             "http://localhost:3000",
+        #             "http://127.0.0.1:3000",
+        #             "https://yourdomain.com",
+        #         ]
+        #     ),
+        # ),
     }
 )

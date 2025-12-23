@@ -18,6 +18,13 @@ spec:
       containers:
         - name: postgres
           image: postgis/postgis:17-3.6-alpine
+          resources:
+            requests:
+              cpu: 4000m
+              memory: 8000Mi
+            limits:
+              cpu: 4000m
+              memory: 8000Mi
           env:
             - name: POSTGRES_DB
               value: "postgres"
@@ -45,8 +52,9 @@ spec:
     - metadata:
         name: postgres-data
       spec:
-        accessModes: ["ReadWriteOnce"]
-        storageClassName: "hostpath"
+        accessModes:
+          - ReadWriteOnce
         resources:
           requests:
-            storage: 1Gi
+            storage: 2Gi
+        storageClassName: standard
