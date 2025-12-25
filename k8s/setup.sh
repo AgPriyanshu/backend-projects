@@ -3,17 +3,11 @@ set -euo pipefail
 
 echo "🚀 Starting NGINX Gateway (Gateway API) setup..."
 
-# -----------------------------
-# Config
-# -----------------------------
-GATEWAY_API_VERSION="v1.1.0"
-NGINX_NAMESPACE="nginx-gateway"
-GATEWAY_NAMESPACE="gateway-system"
 
 # -----------------------------
 # 1. Install Gateway API CRDs
 # -----------------------------
-echo "📦 Installing Gateway API CRDs (${GATEWAY_API_VERSION})..."
+echo "📦 Installing Gateway API CRDs"
 
 kubectl apply -f platform/crds/gateway-api/standard-install.yaml
 kubectl kustomize "https://github.com/nginx/nginx-gateway-fabric/config/crd/gateway-api/standard?ref=v2.2.2" | kubectl apply -f -
@@ -25,15 +19,13 @@ echo "✅ Gateway API CRDs installed"
 # -----------------------------
 echo "📦 Installing NGINX Gateway Fabric..."
 
-# kubectl apply --server-side -f https://raw.githubusercontent.com/nginx/nginx-gateway-fabric/v2.2.2/deploy/crds.yaml
-# kubectl apply -f https://raw.githubusercontent.com/nginx/nginx-gateway-fabric/v2.2.2/deploy/default/deploy.yaml
-
 helm upgrade --install nginx-gateway \
   oci://ghcr.io/nginx/charts/nginx-gateway-fabric \
-  --version 2.2.2 \
-  --namespace ${NGINX_NAMESPACE} \
+  --version 2.2.1 \
+  --namespace nginx-gateway \
   --create-namespace \
   -f platform/controllers/nginx-gateway/values.yaml
+
 echo "✅ NGINX Gateway Fabric installed"
 
 # -----------------------------
@@ -41,7 +33,7 @@ echo "✅ NGINX Gateway Fabric installed"
 # -----------------------------
 echo "📦 Creating Gateway namespace..."
 
-kubectl create namespace ${GATEWAY_NAMESPACE} \
+kubectl create namespace gateway-system \
   --dry-run=client -o yaml | kubectl apply -f -
 
 # -----------------------------
@@ -50,7 +42,7 @@ kubectl create namespace ${GATEWAY_NAMESPACE} \
 echo "📦 Installing Platform Gateway..."
 
 helm upgrade --install platform-gateway platform/gateway \
-  --namespace ${GATEWAY_NAMESPACE}
+  --namespace gateway-system
 
 helm upgrade --install platform-namespaces platform/namespaces
 
@@ -67,6 +59,17 @@ helm upgrade --install platform-db platform/databases/postgres
 echo "📦 Installing Backend Applications..."
 
 helm upgrade --install apps-backend apps/backend
+
+# -----------------------------
+# 7. Install Cloudflare Tunnel
+# -----------------------------
+echo "📦 Installing Cloudflare Tunnel (cloudflared)..."
+
+helm upgrade --install cloudflared platform/cloudflare \
+  --namespace gateway-system \
+  --create-namespace
+
+echo "✅ Cloudflare Tunnel installed"
 
 # # -----------------------------
 # # 7. Install Frontend Applications

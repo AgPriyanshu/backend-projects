@@ -18,10 +18,25 @@ spec:
       containers:
         - name: postgres
           image: postgis/postgis:17-3.6-alpine
+          args:
+            - "-c"
+            - "shared_buffers=2GB"
+            - "-c"
+            - "work_mem=64MB"
+            - "-c"
+            - "maintenance_work_mem=512MB"
+            - "-c"
+            - "effective_cache_size=6GB"
+            - "-c"
+            - "shared_preload_libraries=pg_stat_statements"
+          securityContext:
+            runAsUser: 70
+            runAsGroup: 70
+            fsGroup: 70
           resources:
             requests:
-              cpu: 4000m
-              memory: 8000Mi
+              cpu: 2000m
+              memory: 4000Mi
             limits:
               cpu: 4000m
               memory: 8000Mi
@@ -56,5 +71,5 @@ spec:
           - ReadWriteOnce
         resources:
           requests:
-            storage: 2Gi
+            storage: 20Gi
         storageClassName: standard

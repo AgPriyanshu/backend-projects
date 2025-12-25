@@ -9,7 +9,6 @@ spec:
   selector:
     matchLabels:
       app: backend-app
-  replicas: 1
   template:
     metadata:
       labels:
@@ -24,7 +23,7 @@ spec:
           resources:
             requests:
               cpu: 4000m
-              memory: 8000Mi
+              memory: 4000Mi
             limits:
               cpu: 4000m
               memory: 8000Mi

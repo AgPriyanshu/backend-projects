@@ -7,6 +7,8 @@ spec:
     - name: platform-gateway
       namespace: gateway-system
       sectionName: http
+  # hostnames:
+  #   - "worldofapps.bar"
   rules:
     - matches:
         - path:
@@ -17,4 +19,3 @@ spec:
         - name: backend-service
           port: 80
           namespace: default
-          

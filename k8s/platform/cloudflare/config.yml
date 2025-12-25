@@ -1,0 +1,19 @@
+# apiVersion: v1
+# kind: ConfigMap
+# metadata:
+#   name: cloudflared-config
+#   namespace: gateway-system # <--- Important!
+# data:
+#   # Key must match the 'subPath' in your deployment: config.yml
+#   config.yml: |
+#     tunnel: 458691f4-9827-4ee2-b0df-4ea2deea4a0c
+#     credentials-file: /etc/cloudflared/credentials.json
+#     metrics: 0.0.0.0:2000
+#     no-autoupdate: true
+#     ingress:
+#       # Since Cloudflared is now in the SAME namespace as the gateway,
+#       # we can use the short service name:
+#       - hostname: worldofapps.bar
+#         service: http://platform-gateway-nginx.gateway-system.svc.cluster.local
+
+#       - service: http_status:404

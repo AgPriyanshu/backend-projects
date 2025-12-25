@@ -2,4 +2,8 @@ replicaCount: 1
 
 service:
   type: NodePort
-  externalTrafficPolicy: Local
+  ports:
+    - name: http
+      port: 80
+      targetPort: 80
+      nodePort: 32525 # pin it (important)
