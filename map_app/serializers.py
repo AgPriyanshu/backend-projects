@@ -111,3 +111,4 @@ class ShapefileUploadSerializer(serializers.Serializer):
                 "File must be a ZIP archive containing shapefile components."
             )
         return value
+
