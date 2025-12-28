@@ -2,7 +2,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: cloudflared
-  namespace: gateway-system
+  namespace: gateway-ns
 spec:
   replicas: {{ .Values.replicaCount }}
   selector:
@@ -19,10 +19,10 @@ spec:
           imagePullPolicy: {{ .Values.image.pullPolicy }}
           args:
             - tunnel
-            - run
-            - {{ .Values.tunnel.name }}
             - --config
             - /etc/cloudflared/config.yaml
+            - run
+            - {{ .Values.tunnel.name }}
           resources:
 {{ toYaml .Values.resources | indent 12 }}
           volumeMounts:

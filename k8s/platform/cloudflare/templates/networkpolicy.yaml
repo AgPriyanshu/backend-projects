@@ -1,0 +1,68 @@
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: cloudflared-network-policy
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app: cloudflared
+spec:
+  podSelector:
+    matchLabels:
+      app: cloudflared
+  policyTypes:
+    - Ingress
+    - Egress
+
+  # Ingress: Only allow metrics scraping (optional)
+  ingress:
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: monitoring
+      ports:
+        - protocol: TCP
+          port: 2000
+
+  egress:
+    # 1. Allow DNS resolution (required for service discovery)
+    - to:
+        - namespaceSelector: {}
+          podSelector:
+            matchLabels:
+              k8s-app: kube-dns
+      ports:
+        - protocol: UDP
+          port: 53
+        - protocol: TCP
+          port: 53
+
+    # 2. Allow traffic to NGINX Gateway service in the same namespace
+    - to:
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/instance: nginx-gateway
+      ports:
+        - protocol: TCP
+          port: 80
+        - protocol: TCP
+          port: 443
+
+    # 3. Allow outbound HTTPS to Cloudflare edge (tunnel connection)
+    # This allows only public internet, blocking private network ranges
+    - to:
+        - ipBlock:
+            cidr: 0.0.0.0/0
+            except:
+              # Block all private/internal networks
+              - 10.0.0.0/8
+              - 172.16.0.0/12
+              - 192.168.0.0/16
+              - 169.254.0.0/16
+              - 127.0.0.0/8
+      ports:
+        # HTTPS for tunnel control plane
+        - protocol: TCP
+          port: 443
+        # QUIC for tunnel data plane (faster)
+        - protocol: UDP
+          port: 7844

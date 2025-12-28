@@ -1,1 +1,4 @@
 appName: Backend
+minReplicas: 1
+maxReplicas: 10
+averageUtilization: 50

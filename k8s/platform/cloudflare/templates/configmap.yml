@@ -2,13 +2,15 @@ apiVersion: v1
 kind: ConfigMap
 metadata:
   name: cloudflared-config
-  namespace: gateway-system
+  namespace: {{ .Release.Namespace }}
 data:
   config.yaml: |
     tunnel: {{ .Values.tunnel.name }}
     credentials-file: /etc/cloudflared/creds/credentials.json
 
     ingress:
-      - hostname: {{ .Values.ingress.hostname }}
-        service: {{ .Values.ingress.service }}
+{{- range .Values.ingress }}
+      - hostname: {{ .hostname }}
+        service: {{ .service }}
+{{- end }}
       - service: http_status:404

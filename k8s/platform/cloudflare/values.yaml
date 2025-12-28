@@ -1,4 +1,4 @@
-replicaCount: 2
+replicaCount: 1
 
 image:
   repository: cloudflare/cloudflared
@@ -12,12 +12,14 @@ tunnel:
       "AccountTag": "62042f9fcd5411eb85dc581b38dce3f2",
       "TunnelID": "458691f4-9827-4ee2-b0df-4ea2deea4a0c",
       "TunnelName": "worldofapps",
-      "TunnelSecret": "REPLACE_ME"
+      "TunnelSecret": "eFIcCO80HYOslkijfdkWllqBDRaL+31htz3u9bEk4U4="
     }
 
 ingress:
-  hostname: worldofapps.bar
-  service: http://platform-gateway-nginx.gateway-system.svc.cluster.local:80
+  - hostname: worldofapps.bar
+    service: http://platform-gateway-nginx.gateway-ns.svc.cluster.local
+  - hostname: api.worldofapps.bar
+    service: http://platform-gateway-nginx.gateway-ns.svc.cluster.local
 
 resources:
   requests:

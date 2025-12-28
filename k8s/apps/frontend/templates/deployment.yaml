@@ -1,32 +1,47 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: frontend-app
-  namespace: default
+  name: {{ .Values.appName }}
+  namespace: {{ .Release.Namespace }}
   labels:
-    app: frontend-app
+    app: {{ .Values.appName }}
+    chart: {{ .Chart.Name }}-{{ .Chart.Version }}
+    release: {{ .Release.Name }}
 spec:
   selector:
     matchLabels:
-      app: frontend-app
-  replicas: 1
+      app: {{ .Values.appName }}
+  replicas: {{ .Values.replicaCount }}
   template:
     metadata:
       labels:
-        app: frontend-app
+        app: {{ .Values.appName }}
+        release: {{ .Release.Name }}
     spec:
+      {{- with .Values.nodeSelector }}
       nodeSelector:
-        kubernetes.io/arch: amd64
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
       containers:
-        - name: frontend-app
-          image: nginx:latest
+        - name: {{ .Values.appName }}
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
           resources:
-            requests:
-              cpu: 100m
-              memory: 100Mi
-            limits:
-              cpu: 100m
-              memory: 100Mi
+            {{- toYaml .Values.resources | nindent 12 }}
           ports:
-            - containerPort: 80
-              name: frontend-app
+            - containerPort: {{ .Values.service.targetPort }}
+              name: http
+          {{- if .Values.probes.enabled }}
+          livenessProbe:
+            httpGet:
+              path: {{ .Values.probes.livenessProbe.path }}
+              port: {{ .Values.probes.livenessProbe.port }}
+            initialDelaySeconds: {{ .Values.probes.livenessProbe.initialDelaySeconds }}
+            periodSeconds: {{ .Values.probes.livenessProbe.periodSeconds }}
+          readinessProbe:
+            httpGet:
+              path: {{ .Values.probes.readinessProbe.path }}
+              port: {{ .Values.probes.readinessProbe.port }}
+            initialDelaySeconds: {{ .Values.probes.readinessProbe.initialDelaySeconds }}
+            periodSeconds: {{ .Values.probes.readinessProbe.periodSeconds }}
+          {{- end }}

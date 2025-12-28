@@ -1,1 +1,43 @@
-appName: Frontend
+appName: frontend-app
+
+replicaCount: 1
+
+image:
+  repository: frontend-projects
+  tag: latest
+  pullPolicy: IfNotPresent
+
+# Public backend API URL (used at build time via VITE_API_URL)
+# Build with: docker build --build-arg VITE_API_URL=https://app.worldofapps.bar -t frontend-projects .
+backend:
+  publicUrl: "https://app.worldofapps.bar"
+
+service:
+  type: ClusterIP
+  port: 80
+  targetPort: 80
+
+resources:
+  requests:
+    cpu: 100m
+    memory: 128Mi
+  limits:
+    cpu: 200m
+    memory: 256Mi
+
+nodeSelector:
+  kubernetes.io/arch: amd64
+
+# Liveness and readiness probes
+probes:
+  enabled: true
+  livenessProbe:
+    path: /
+    port: 80
+    initialDelaySeconds: 10
+    periodSeconds: 10
+  readinessProbe:
+    path: /
+    port: 80
+    initialDelaySeconds: 5
+    periodSeconds: 5
