@@ -58,4 +58,4 @@ wandb/
 
 
 # K8s
-./k8s/platform/registry/values.yaml
+k8s/platform/registry/values.yaml
