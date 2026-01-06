@@ -1,0 +1,9 @@
+apiVersion: v2
+name: apps-shared-components
+description: Shared components for Kubernetes applications
+type: application
+version: 0.1.0
+appVersion: "v1"
+maintainers:
+  - name: AgPriyanshu
+    email: priyanshu81212@gmail.com

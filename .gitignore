@@ -55,3 +55,7 @@ data
 wandb/
 *.pkl
 *.pth
+
+
+# K8s
+./k8s/platform/registry/values.yaml

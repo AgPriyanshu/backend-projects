@@ -64,6 +64,16 @@ helm upgrade --install platform-db platform/databases/postgres
 
 echo "✅ Databases installed"
 
+
+helm upgrade --install platform-registry platform/registry \
+  --namespace default
+
+# -----------------------------
+# 6. Install Shared Application Components
+# -----------------------------
+helm upgrade --install apps-shared apps/shared \
+  --namespace default
+
 # -----------------------------
 # 7. Install Backend Application
 # -----------------------------

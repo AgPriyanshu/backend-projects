@@ -16,10 +16,11 @@ spec:
     spec:
       nodeSelector:
         kubernetes.io/arch: amd64
+      serviceAccountName: ghcr-sa
       containers:
         - name: backend-projects
-          image: backend-projects:latest
-          imagePullPolicy: Never
+          image: ghcr.io/agpriyanshu/backend-projects:latest
+          imagePullPolicy: Always
           resources:
             requests:
               cpu: 4000m

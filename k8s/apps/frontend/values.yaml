@@ -3,9 +3,9 @@ appName: frontend-app
 replicaCount: 1
 
 image:
-  repository: frontend-projects
+  repository: ghcr.io/agpriyanshu/frontend-projects
   tag: latest
-  pullPolicy: IfNotPresent
+  pullPolicy: Always
 
 # Public backend API URL (used at build time via VITE_API_URL)
 # Build with: docker build --build-arg VITE_API_URL=https://app.worldofapps.bar -t frontend-projects .
@@ -16,6 +16,10 @@ service:
   type: ClusterIP
   port: 80
   targetPort: 80
+
+serviceAccount:
+  create: false
+  name: ghcr-sa
 
 resources:
   requests:
