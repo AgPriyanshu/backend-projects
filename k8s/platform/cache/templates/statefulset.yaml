@@ -1,0 +1,92 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: redis
+  namespace: default
+spec:
+  selector:
+    matchLabels:
+      app: redis
+  serviceName: "redis"
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: redis
+    spec:
+      terminationGracePeriodSeconds: 10
+      # Security context at pod level
+      securityContext:
+        fsGroup: 999
+      # Init container to fix permissions
+      initContainers:
+        - name: init-permissions
+          image: busybox:1.36
+          command:
+            - sh
+            - -c
+            - |
+              mkdir -p /data
+              chown -R 999:999 /data
+              chmod 755 /data
+          securityContext:
+            runAsUser: 0
+          volumeMounts:
+            - name: redis-data
+              mountPath: /data
+      containers:
+        - name: redis
+          image: redis:7.4-alpine
+          command:
+            - redis-server
+          args:
+            - "--appendonly"
+            - "yes"
+            - "--maxmemory"
+            - "2gb"
+            - "--maxmemory-policy"
+            - "allkeys-lru"
+            - "--save"
+            - "900 1"
+            - "--save"
+            - "300 10"
+            - "--save"
+            - "60 10000"
+          securityContext:
+            runAsUser: 999
+            runAsGroup: 999
+          resources:
+            requests:
+              cpu: 500m
+              memory: 1Gi
+            limits:
+              cpu: 2000m
+              memory: 3Gi
+          ports:
+            - containerPort: 6379
+              name: redis
+          livenessProbe:
+            tcpSocket:
+              port: 6379
+            initialDelaySeconds: 30
+            periodSeconds: 10
+          readinessProbe:
+            exec:
+              command:
+                - redis-cli
+                - ping
+            initialDelaySeconds: 5
+            periodSeconds: 5
+          volumeMounts:
+            - name: redis-data
+              mountPath: /data
+  volumeClaimTemplates:
+    - metadata:
+        name: redis-data
+      spec:
+        accessModes:
+          - ReadWriteOnce
+        resources:
+          requests:
+            storage: 10Gi
+        storageClassName: standard

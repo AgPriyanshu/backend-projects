@@ -23,7 +23,7 @@ CHANNEL_LAYERS = {
         "CONFIG": {
             "hosts": [
                 (
-                    os.environ.get("REDIS_HOST", "redus"),
+                    os.environ.get("REDIS_HOST", "redis"),
                     int(os.environ.get("REDIS_PORT", "6379")),
                 )
             ],
@@ -142,8 +142,22 @@ CACHES = {
     "default": {
         "BACKEND": "django.core.cache.backends.redis.RedisCache",
         "LOCATION": (
-            f"redis://{os.environ.get('REDIS_HOST','redis')}:{os.environ.get('REDIS_PORT','6379')}"
+            f"redis://{os.environ.get('REDIS_HOST','redis')}:{os.environ.get('REDIS_PORT','6379')}/0"
         ),
+        "OPTIONS": {
+            "CLIENT_CLASS": "django_redis.client.DefaultClient",
+            "CONNECTION_POOL_KWARGS": {
+                "max_connections": 50,
+                "retry_on_timeout": True,
+            },
+            "SOCKET_CONNECT_TIMEOUT": 5,  # seconds
+            "SOCKET_TIMEOUT": 5,  # seconds
+            "COMPRESSOR": "django_redis.compressors.zlib.ZlibCompressor",
+            "IGNORE_EXCEPTIONS": not DEBUG,  # Fail silently in production
+        },
+        "KEY_PREFIX": "backend_projects",
+        "VERSION": 1,
+        "TIMEOUT": 300,  # Default cache timeout: 5 minutes
     }
 }
 

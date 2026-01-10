@@ -64,6 +64,15 @@ helm upgrade --install platform-db platform/databases/postgres
 
 echo "✅ Databases installed"
 
+# -----------------------------
+# 7. Install Cache (Redis)
+# -----------------------------
+echo "📦 Installing Redis Cache..."
+
+helm upgrade --install platform-cache platform/cache
+
+echo "✅ Redis Cache installed"
+
 
 helm upgrade --install platform-registry platform/registry \
   --namespace default
@@ -119,6 +128,7 @@ echo "  ✅ NGINX Gateway Fabric"
 echo "  ✅ Platform Gateway (gateway-ns)"
 echo "  ✅ Platform Namespaces"
 echo "  ✅ PostgreSQL Database"
+echo "  ✅ Redis Cache"
 echo "  ✅ Backend Application (default)"
 echo "  ✅ Frontend Application (default)"
 echo "  ✅ Cloudflare Tunnel"

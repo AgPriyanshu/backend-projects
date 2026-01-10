@@ -9,12 +9,9 @@ class Task(BaseModel):
     is_completed = models.BooleanField(default=False)
     completed_at = models.DateTimeField(null=True, blank=True)
 
-    def mark_done(self):
-        self.is_completed = True
-        self.completed_at = timezone.now()
-        self.save()
-
-    def mark_undone(self):
-        self.is_completed = False
-        self.completed_at = None
-        self.save()
+    def save(self, *args, **kwargs):
+        if self.is_completed and not self.completed_at:
+            self.completed_at = timezone.now()
+        elif not self.is_completed and self.completed_at:
+            self.completed_at = None
+        super().save(*args, **kwargs)
