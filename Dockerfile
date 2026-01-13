@@ -56,4 +56,4 @@ RUN [ -f ./docker-entrypoint.sh ] && chmod +x ./docker-entrypoint.sh || true
 EXPOSE 8000
 
 ENTRYPOINT ["./docker-entrypoint.sh"]
-CMD uvicorn backend_projects.asgi:application --host 0.0.0.0 --port 8000 --workers ${WORKERS:-3} --log-config log_config.yaml
+CMD uvicorn backend_projects.asgi:application --host 0.0.0.0 --port 8000 --workers 9 --log-config log_config.yaml
