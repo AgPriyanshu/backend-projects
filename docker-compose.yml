@@ -1,7 +1,6 @@
 version: "3.4"
 services:
   web:
-    # image: backendprojects
     build: .
     container_name: django_app
     command: uvicorn backend_projects.asgi:application --host 0.0.0.0 --port 8000 --log-config log_config.yaml --reload
@@ -15,16 +14,6 @@ services:
         condition: service_healthy
       redis:
         condition: service_started
-    environment:
-      - LLM_SERVER_URL=http://host.docker.internal:8001
-      - DEBUG=1
-      - DB_NAME=postgres
-      - DB_USER=postgres
-      - DB_PASSWORD=postgres
-      - DB_HOST=db
-      - DB_PORT=5432
-      - REDIS_HOST=redis
-      - REDIS_PORT=6379
     env_file: ./.env
 
   db:
@@ -49,6 +38,11 @@ services:
   redis:
     image: redis:latest
     container_name: redis_cache
+    command: >
+      redis-server
+      --loglevel verbose
+      --slowlog-log-slower-than 0
+      --slowlog-max-len 1000
     ports:
       - "6379:6379"
     volumes:
