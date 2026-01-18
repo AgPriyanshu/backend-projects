@@ -21,6 +21,7 @@ spec:
         - name: backend-projects
           image: ghcr.io/agpriyanshu/backend-projects:latest
           imagePullPolicy: Always
+
           resources:
             requests:
               cpu: 4000m
@@ -28,11 +29,12 @@ spec:
             limits:
               cpu: 4000m
               memory: 8000Mi
+
           ports:
             - containerPort: 8000
               name: backend-app
-          env:
 
+          env:
             - name: DB_HOST
               value: "postgres"
             - name: DB_PORT
@@ -43,11 +45,9 @@ spec:
               value: "postgres"
             - name: DB_PASSWORD
               value: "postgres"
-
             - name: REDIS_HOST
               value: "redis"
             - name: REDIS_PORT
               value: "6379"
-
             - name: DEBUG
               value: "1"
