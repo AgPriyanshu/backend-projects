@@ -223,20 +223,5 @@ LLM_SERVER_CONFIG = {
     "ENABLE_TOOLS": os.environ.get("LLM_ENABLE_TOOLS", "true").lower() == "true",
 }
 
-# Update logging settings
-LOGGING = {
-    "version": 1,
-    "disable_existing_loggers": False,
-    "handlers": {
-        "console": {
-            "class": "logging.StreamHandler",
-        },
-    },
-    "root": {
-        "handlers": ["console"],
-        "level": "DEBUG" if DEBUG else "INFO",
-    },
-}
-
 
 DEFAULT_CURRENCY = "INR"

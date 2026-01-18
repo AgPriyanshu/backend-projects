@@ -47,7 +47,12 @@ loggers:
     handlers: [request_handler]
     level: DEBUG
     propagate: true
-  # Suppress watchfiles debug logs for git changes
+  django.db.backends:
+    handlers: [console]
+    level: INFO # Set to INFO to suppress SQL query logs, DEBUG to see them
+    propagate: false
+
+    # Suppress watchfiles debug logs for git changes
   watchfiles:
     level: WARNING
     handlers: [console]

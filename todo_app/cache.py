@@ -19,9 +19,11 @@ def get_user_cache_version(user_id):
     """Get the current cache version for a user."""
     version_key = f"{VERSION_KEY_PREFIX}:user_{user_id}"
     version = cache.get(version_key)
+
     if version is None:
         version = 1
         cache.set(version_key, version, timeout=None)  # Never expire version keys
+
     return version
 
 
