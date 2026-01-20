@@ -1,0 +1,72 @@
+# MinIO Configuration Values
+
+# MinIO image configuration
+image:
+  repository: minio/minio
+  tag: latest
+  pullPolicy: IfNotPresent
+
+# Number of MinIO replicas (for distributed mode, use 4+)
+replicas: 1
+
+# MinIO mode: standalone or distributed
+mode: standalone
+
+# MinIO root credentials
+rootUser: minioadmin
+rootPassword: minioadmin123
+
+# Resource limits and requests
+resources:
+  requests:
+    cpu: 500m
+    memory: 512Mi
+  limits:
+    cpu: 1000m
+    memory: 1Gi
+
+# Persistent storage configuration
+persistence:
+  enabled: true
+  storageClass: "standard"
+  size: 50Gi
+  accessMode: ReadWriteOnce
+
+# Service configuration
+service:
+  type: ClusterIP
+  port: 9000
+  consolePort: 9001
+
+# MinIO server configuration
+minioConfig:
+  # Browser/Console access
+  browserEnabled: true
+  # Region (optional)
+  region: ap-south-1
+
+# Pod annotations
+podAnnotations: {}
+
+# Pod security context
+podSecurityContext:
+  fsGroup: 1000
+  runAsUser: 1000
+  runAsNonRoot: true
+
+# Container security context
+securityContext:
+  allowPrivilegeEscalation: false
+  capabilities:
+    drop:
+      - ALL
+  readOnlyRootFilesystem: false
+
+# Node selector
+nodeSelector: {}
+
+# Tolerations
+tolerations: []
+
+# Affinity
+affinity: {}

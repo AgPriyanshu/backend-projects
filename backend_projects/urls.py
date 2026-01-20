@@ -20,6 +20,7 @@ urlpatterns = [
     # path(r"device-classifier/", include("device_classifier.urls")),
     # path(r"chats/", include("chat_app.urls")),
     # path(r"ai-chat/", include("ai_chat.urls")),
+    path(r"web-gis/", include("web_gis_app.urls")),
     path(r"ecom/", include("ecommerce_app.urls")),
     path(
         "expense-app/api-doc/",

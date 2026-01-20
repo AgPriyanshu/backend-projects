@@ -6,6 +6,7 @@ repos:
     hooks:
       - id: isort
         args: ["--profile", "black"] # To work well with Black's formatting
+        exclude: ^k8s/
 
   # autoflake: Removes unused imports and variables
   - repo: https://github.com/PyCQA/autoflake
@@ -39,6 +40,7 @@ repos:
 
       # checks yaml files for parseable syntax.
       - id: check-yaml
+        exclude: ^k8s/
 
       # General quality checks
       # trims trailing whitespace.

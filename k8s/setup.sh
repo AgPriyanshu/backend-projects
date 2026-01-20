@@ -73,6 +73,15 @@ helm upgrade --install platform-cache platform/cache
 
 echo "✅ Redis Cache installed"
 
+# -----------------------------
+# 8. Install MinIO Object Storage
+# -----------------------------
+echo "📦 Installing MinIO Object Storage..."
+
+helm upgrade --install  platform/storage/object \
+  --namespace default
+
+echo "✅ MinIO Object Storage installed"
 
 helm upgrade --install platform-registry platform/registry \
   --namespace default
@@ -129,6 +138,7 @@ echo "  ✅ Platform Gateway (gateway-ns)"
 echo "  ✅ Platform Namespaces"
 echo "  ✅ PostgreSQL Database"
 echo "  ✅ Redis Cache"
+echo "  ✅ MinIO Object Storage"
 echo "  ✅ Backend Application (default)"
 echo "  ✅ Frontend Application (default)"
 echo "  ✅ Cloudflare Tunnel"

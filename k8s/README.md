@@ -1,5 +1,0 @@
-Gateway Controller
-      ↓
-    Gateway
-      ↓
-    HTTRoute

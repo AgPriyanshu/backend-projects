@@ -1,27 +1,27 @@
+from django.db.models import TextChoices
+
 from shared.constants import BaseEnum
 
 
-class DatasetNodeType(BaseEnum):
-    Folder = "folder"
-    Dataset = "dataset"
+class DatasetNodeType(TextChoices):
+    FOLDER = "folder"
+    DATASET = "dataset"
 
 
 class DatasetType(BaseEnum):
-    Vector = "vector"
-    Raster = "raster"
-    GeoPDF = "geo_pdf"
-    Document = "document"
+    VECTOR = "vector"
+    RASTER = "raster"
 
 
-class FileFormat(BaseEnum):
+class FileFormat(TextChoices):
     # Vector formats
-    GeoJSON = "geojson"
-    Shapefile = "shapefile"
+    GEOJSON = "geojson"
+    SHAPEFILE = "shapefile"
     KML = "kml"
-    GeoPackage = "gpkg"
+    GEOPACKAGE = "gpkg"
 
     # Raster formats
-    GeoTIFF = "geotiff"
+    GEOTIFF = "geotiff"
     COG = "cog"  # Cloud Optimized GeoTIFF
     PNG = "png"
     JPEG = "jpeg"

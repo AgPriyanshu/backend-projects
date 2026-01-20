@@ -58,6 +58,7 @@ class Dataset(BaseModel):
         choices=DatasetType.choices(),
         help_text="Dataset type: vector, raster, geo_pdf, or document",
     )
+
     format = models.CharField(
         max_length=20,
         choices=FileFormat.choices(),
