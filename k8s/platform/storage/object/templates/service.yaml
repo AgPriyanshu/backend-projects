@@ -3,14 +3,17 @@
 apiVersion: v1
 kind: Service
 metadata:
-  name: {{ include "minio.fullname" . }}-headless
+  name: {{ .Release.Name }}-minio-headless
   labels:
-    {{- include "minio.labels" . | nindent 4 }}
+    app.kubernetes.io/name: minio
+    app.kubernetes.io/instance: {{ .Release.Name }}
+    app.kubernetes.io/managed-by: {{ .Release.Service }}
 spec:
   clusterIP: None
   publishNotReadyAddresses: true
   selector:
-    {{- include "minio.selectorLabels" . | nindent 4 }}
+    app.kubernetes.io/name: minio
+    app.kubernetes.io/instance: {{ .Release.Name }}
   ports:
   - name: http
     port: {{ .Values.service.port }}
@@ -22,13 +25,16 @@ spec:
 apiVersion: v1
 kind: Service
 metadata:
-  name: {{ include "minio.fullname" . }}
+  name: {{ .Release.Name }}-minio
   labels:
-    {{- include "minio.labels" . | nindent 4 }}
+    app.kubernetes.io/name: minio
+    app.kubernetes.io/instance: {{ .Release.Name }}
+    app.kubernetes.io/managed-by: {{ .Release.Service }}
 spec:
   type: {{ .Values.service.type }}
   selector:
-    {{- include "minio.selectorLabels" . | nindent 4 }}
+    app.kubernetes.io/name: minio
+    app.kubernetes.io/instance: {{ .Release.Name }}
   ports:
   - name: http
     port: {{ .Values.service.port }}
@@ -40,13 +46,16 @@ spec:
 apiVersion: v1
 kind: Service
 metadata:
-  name: {{ include "minio.fullname" . }}-console
+  name: {{ .Release.Name }}-minio-console
   labels:
-    {{- include "minio.labels" . | nindent 4 }}
+    app.kubernetes.io/name: minio
+    app.kubernetes.io/instance: {{ .Release.Name }}
+    app.kubernetes.io/managed-by: {{ .Release.Service }}
 spec:
   type: {{ .Values.service.type }}
   selector:
-    {{- include "minio.selectorLabels" . | nindent 4 }}
+    app.kubernetes.io/name: minio
+    app.kubernetes.io/instance: {{ .Release.Name }}
   ports:
   - name: console
     port: {{ .Values.service.consolePort }}

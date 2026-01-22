@@ -1,24 +1,27 @@
 apiVersion: apps/v1
 kind: StatefulSet
 metadata:
-  name: {{ include "minio.fullname" . }}
+  name: {{ .Release.Name }}-minio
   labels:
-    {{- include "minio.labels" . | nindent 4 }}
+    app.kubernetes.io/name: minio
+    app.kubernetes.io/instance: {{ .Release.Name }}
+    app.kubernetes.io/managed-by: {{ .Release.Service }}
 spec:
-  serviceName: {{ include "minio.fullname" . }}-headless
+  serviceName: {{ .Release.Name }}-minio-headless
   replicas: {{ .Values.replicas }}
   selector:
     matchLabels:
-      {{- include "minio.selectorLabels" . | nindent 6 }}
+      app.kubernetes.io/name: minio
+      app.kubernetes.io/instance: {{ .Release.Name }}
   template:
     metadata:
       annotations:
-        checksum/secret: {{ include (print $.Template.BasePath "/secret.yaml") . | sha256sum }}
         {{- with .Values.podAnnotations }}
         {{- toYaml . | nindent 8 }}
         {{- end }}
       labels:
-        {{- include "minio.selectorLabels" . | nindent 8 }}
+        app.kubernetes.io/name: minio
+        app.kubernetes.io/instance: {{ .Release.Name }}
     spec:
       {{- with .Values.podSecurityContext }}
       securityContext:
@@ -37,12 +40,12 @@ spec:
         - name: MINIO_ROOT_USER
           valueFrom:
             secretKeyRef:
-              name: {{ include "minio.fullname" . }}
+              name: {{ .Release.Name }}-minio
               key: rootUser
         - name: MINIO_ROOT_PASSWORD
           valueFrom:
             secretKeyRef:
-              name: {{ include "minio.fullname" . }}
+              name: {{ .Release.Name }}-minio
               key: rootPassword
         {{- if .Values.minioConfig.region }}
         - name: MINIO_REGION
