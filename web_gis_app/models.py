@@ -16,7 +16,7 @@ class DatasetNode(BaseModel):
     )
     type = models.CharField(
         max_length=20,
-        choices=DatasetNodeType.choices(),
+        choices=DatasetNodeType.choices,
         help_text="Node type: folder for organization, dataset for actual data",
     )
 
@@ -55,13 +55,13 @@ class Dataset(BaseModel):
     # Dataset type and format
     type = models.CharField(
         max_length=20,
-        choices=DatasetType.choices(),
+        choices=DatasetType.choices,
         help_text="Dataset type: vector, raster, geo_pdf, or document",
     )
 
     format = models.CharField(
         max_length=20,
-        choices=FileFormat.choices(),
+        choices=FileFormat.choices,
         help_text="File format: geojson, shapefile, geotiff, etc.",
     )
 

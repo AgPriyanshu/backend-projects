@@ -7,7 +7,7 @@ formatters:
   uvicorn:
     format: "%(asctime)s | %(levelname)s | %(name)s | %(message)s"
   request:
-    format: "[%(asctime)s] %(levelname)s [%(name)s] %(message)s - %(request)s - %(status)d"
+    format: "[%(asctime)s] %(levelname)s [%(name)s] %(message)s"
 
 handlers:
   console:
