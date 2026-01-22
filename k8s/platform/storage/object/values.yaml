@@ -1,20 +1,13 @@
-# MinIO Configuration Values
+# SeaweedFS Configuration Values
 
-# MinIO image configuration
+# SeaweedFS image configuration
 image:
-  repository: minio/minio
+  repository: chrislusf/seaweedfs
   tag: latest
   pullPolicy: IfNotPresent
 
-# Number of MinIO replicas (for distributed mode, use 4+)
+# Number of SeaweedFS replicas
 replicas: 1
-
-# MinIO mode: standalone or distributed
-mode: standalone
-
-# MinIO root credentials
-rootUser: minioadmin
-rootPassword: minioadmin123
 
 # Resource limits and requests
 resources:
@@ -27,46 +20,21 @@ resources:
 
 # Persistent storage configuration
 persistence:
-  enabled: true
-  storageClass: "standard"
   size: 50Gi
-  accessMode: ReadWriteOnce
 
 # Service configuration
 service:
   type: ClusterIP
-  port: 9000
-  consolePort: 9001
+  masterPort: 9333
+  volumePort: 8080
+  s3Port: 8333
+  filerPort: 8888
 
-# MinIO server configuration
-minioConfig:
-  # Browser/Console access
-  browserEnabled: true
-  # Region (optional)
-  region: ap-south-1
-
-# Pod annotations
-podAnnotations: {}
-
-# Pod security context
-podSecurityContext:
-  fsGroup: 1000
-  runAsUser: 1000
-  runAsNonRoot: true
-
-# Container security context
-securityContext:
-  allowPrivilegeEscalation: false
-  capabilities:
-    drop:
-      - ALL
-  readOnlyRootFilesystem: false
-
-# Node selector
-nodeSelector: {}
-
-# Tolerations
-tolerations: []
-
-# Affinity
-affinity: {}
+# SeaweedFS server configuration
+seaweedfsConfig:
+  # Enable S3 API
+  s3Enabled: true
+  # Enable Filer (file system interface with UI)
+  filerEnabled: true
+  # Data center name (optional)
+  dataCenter: "dc1"

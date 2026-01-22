@@ -1,0 +1,24 @@
+apiVersion: v1
+data:
+  config.json: |
+    {
+      "identities": [
+        {
+          "name": "backend-app",
+          "credentials": [
+            {
+              "accessKey": "EEQb7fnFvvDsoHdr3qZh",
+              "secretKey": "PpuxU5kwQkt6mkqrde3k"
+            }
+          ],
+          "actions": [
+            "Admin",
+            "Read",
+            "Write"
+          ]
+        }
+      ]
+    }
+kind: ConfigMap
+metadata:
+  name: seaweedfs-s3-config

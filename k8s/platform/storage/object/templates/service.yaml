@@ -3,61 +3,90 @@
 apiVersion: v1
 kind: Service
 metadata:
-  name: {{ .Release.Name }}-minio-headless
+  name: seaweedfs-headless
   labels:
-    app.kubernetes.io/name: minio
-    app.kubernetes.io/instance: {{ .Release.Name }}
-    app.kubernetes.io/managed-by: {{ .Release.Service }}
+    app: seaweedfs
 spec:
   clusterIP: None
   publishNotReadyAddresses: true
   selector:
-    app.kubernetes.io/name: minio
-    app.kubernetes.io/instance: {{ .Release.Name }}
+    app: seaweedfs
   ports:
-  - name: http
-    port: {{ .Values.service.port }}
-    targetPort: http
-    protocol: TCP
+  - name: master
+    port: {{ .Values.service.masterPort }}
+    targetPort: master
+  - name: volume
+    port: {{ .Values.service.volumePort }}
+    targetPort: volume
 
 ---
-# Main MinIO API service
+# Master server service
 apiVersion: v1
 kind: Service
 metadata:
-  name: {{ .Release.Name }}-minio
+  name: seaweedfs-master
   labels:
-    app.kubernetes.io/name: minio
-    app.kubernetes.io/instance: {{ .Release.Name }}
-    app.kubernetes.io/managed-by: {{ .Release.Service }}
+    app: seaweedfs
 spec:
   type: {{ .Values.service.type }}
   selector:
-    app.kubernetes.io/name: minio
-    app.kubernetes.io/instance: {{ .Release.Name }}
+    app: seaweedfs
   ports:
-  - name: http
-    port: {{ .Values.service.port }}
-    targetPort: http
-    protocol: TCP
+  - name: master
+    port: {{ .Values.service.masterPort }}
+    targetPort: master
 
 ---
-# MinIO Console service
+# Volume server service
 apiVersion: v1
 kind: Service
 metadata:
-  name: {{ .Release.Name }}-minio-console
+  name: seaweedfs-volume
   labels:
-    app.kubernetes.io/name: minio
-    app.kubernetes.io/instance: {{ .Release.Name }}
-    app.kubernetes.io/managed-by: {{ .Release.Service }}
+    app: seaweedfs
 spec:
   type: {{ .Values.service.type }}
   selector:
-    app.kubernetes.io/name: minio
-    app.kubernetes.io/instance: {{ .Release.Name }}
+    app: seaweedfs
   ports:
-  - name: console
-    port: {{ .Values.service.consolePort }}
-    targetPort: console
-    protocol: TCP
+  - name: volume
+    port: {{ .Values.service.volumePort }}
+    targetPort: volume
+
+{{- if .Values.seaweedfsConfig.s3Enabled }}
+---
+# S3 API service
+apiVersion: v1
+kind: Service
+metadata:
+  name: seaweedfs-s3
+  labels:
+    app: seaweedfs
+spec:
+  type: {{ .Values.service.type }}
+  selector:
+    app: seaweedfs
+  ports:
+  - name: s3
+    port: {{ .Values.service.s3Port }}
+    targetPort: s3
+{{- end }}
+
+{{- if .Values.seaweedfsConfig.filerEnabled }}
+---
+# Filer service (UI and file system)
+apiVersion: v1
+kind: Service
+metadata:
+  name: seaweedfs-filer
+  labels:
+    app: seaweedfs
+spec:
+  type: {{ .Values.service.type }}
+  selector:
+    app: seaweedfs
+  ports:
+  - name: filer
+    port: {{ .Values.service.filerPort }}
+    targetPort: filer
+{{- end }}
