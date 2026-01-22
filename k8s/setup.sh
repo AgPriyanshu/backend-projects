@@ -78,7 +78,7 @@ echo "✅ Redis Cache installed"
 # -----------------------------
 echo "📦 Installing MinIO Object Storage..."
 
-helm upgrade --install  platform/storage/object \
+helm upgrade --install  object-storage platform/storage/object \
   --namespace default
 
 echo "✅ MinIO Object Storage installed"
