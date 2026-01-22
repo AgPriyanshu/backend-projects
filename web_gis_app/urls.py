@@ -5,3 +5,5 @@ from .views import DatasetViewSet
 router = DefaultRouter()
 
 router.register(r"datasets", DatasetViewSet, basename="datasets")
+
+urlpatterns = router.urls
