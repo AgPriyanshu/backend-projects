@@ -9,16 +9,25 @@ continue_after:
   mode: probe
   timeout: 60
 
+include_path:
+  - /app
+  - /usr/local/lib/python3.13/site-packages
+  - /usr/local/bin/python
+  - /usr/local/bin/python3
+  - /usr/local/bin/python3.13
+
 include_path_file:
   - /app/manage.py
   - /app/backend_projects/
   - /app/*/migrations/
   - /app/static/
   - /app/templates/
+  - /app/docker-entrypoint.sh
 
 preserve_path:
   - /tmp
   - /var/log
+  - /usr/local/lib/python3.13
 
 keep_tmp_artifacts: false
 
@@ -29,6 +38,7 @@ exclude_pattern:
   - ".git"
   - ".pytest_cache"
   - ".ruff_cache"
+  - "*.egg-info"
 
 target:
   env:
