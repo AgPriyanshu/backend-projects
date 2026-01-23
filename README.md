@@ -43,19 +43,86 @@ The projects are primarily built using:
 ## How to Use
 
 1. Clone the repository:
-    ```bash
-    git clone https://github.com/AgPriyanshu/backend-projects.git
-    ```
+   ```bash
+   git clone https://github.com/AgPriyanshu/backend-projects.git
+   ```
 2. Navigate to the project folder and follow the specific setup instructions for each project, which are included in the respective directories.
 
 3. Run the projects locally using:
-    ```bash
-    python manage.py runserver
-    ```
+   ```bash
+   python manage.py runserver
+   ```
 
 ## Contributing
 
 Contributions are welcome! Feel free to open issues or submit pull requests to improve the projects or add new ones.
+
+## Docker Image Optimization
+
+This project uses [SlimToolkit](https://github.com/slimtoolkit/slim) to automatically optimize Docker images in the CI/CD pipeline, reducing image sizes by up to 90% while maintaining full functionality.
+
+### Automated Optimization (CI/CD)
+
+When you push to the `master` branch, GitHub Actions automatically:
+
+1. Builds the Docker image
+2. Optimizes it with SlimToolkit
+3. Pushes the optimized image to GitHub Container Registry
+4. Reports size reduction in the workflow summary
+
+### Local Optimization
+
+To optimize images locally:
+
+#### Install SlimToolkit
+
+**macOS:**
+
+```bash
+brew install slimtoolkit/tap/slim
+```
+
+**Linux:**
+
+```bash
+curl -L -o slim.tar.gz https://github.com/slimtoolkit/slim/releases/download/1.40.11/dist_linux.tar.gz
+tar -xvf slim.tar.gz
+sudo mv dist_linux/slim /usr/local/bin/
+sudo mv dist_linux/slim-sensor /usr/local/bin/
+```
+
+#### Build and Optimize
+
+```bash
+# Build the original image
+docker build -t backend-projects:original .
+
+# Optimize with SlimToolkit
+slim build \
+  --target backend-projects:original \
+  --tag backend-projects:slim \
+  --http-probe=true \
+  --http-probe-cmd='http://localhost:8000/health/' \
+  --continue-after=60
+
+# Compare sizes
+docker images | grep backend-projects
+```
+
+#### Run Optimized Image
+
+```bash
+docker run -p 8000:8000 --env-file .env backend-projects:slim
+```
+
+### Configuration
+
+SlimToolkit settings are defined in `.slimtoolkit.yaml`. The configuration includes:
+
+- HTTP probes to test Django endpoints during optimization
+- Path preservation for required files and directories
+- Environment variable preservation
+- Exclusion patterns for unnecessary files
 
 ## License
 

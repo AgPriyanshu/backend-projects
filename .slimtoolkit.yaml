@@ -1,0 +1,38 @@
+http_probes:
+  - protocol: http
+    method: GET
+    resource: /health/
+    port: 8000
+    crawl: false
+
+continue_after:
+  mode: probe
+  timeout: 60
+
+include_path_file:
+  - /app/manage.py
+  - /app/backend_projects/
+  - /app/*/migrations/
+  - /app/static/
+  - /app/templates/
+
+preserve_path:
+  - /tmp
+  - /var/log
+
+keep_tmp_artifacts: false
+
+exclude_pattern:
+  - "*.pyc"
+  - "__pycache__"
+  - "*.pyo"
+  - ".git"
+  - ".pytest_cache"
+  - ".ruff_cache"
+
+target:
+  env:
+    - PYTHONDONTWRITEBYTECODE=1
+    - PYTHONUNBUFFERED=1
+  expose:
+    - 8000/tcp
