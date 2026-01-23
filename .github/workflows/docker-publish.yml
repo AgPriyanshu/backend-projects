@@ -49,8 +49,9 @@ jobs:
         run: |
           curl -L -o slim.tar.gz https://github.com/slimtoolkit/slim/releases/download/1.40.11/dist_linux.tar.gz
           tar -xvf slim.tar.gz
-          sudo mv dist_linux/slim /usr/local/bin/
-          sudo mv dist_linux/slim-sensor /usr/local/bin/
+          # Find and move the binaries (handle different archive structures)
+          find . -name "slim" -type f -executable -exec sudo mv {} /usr/local/bin/ \;
+          find . -name "slim-sensor" -type f -executable -exec sudo mv {} /usr/local/bin/ \;
           slim --version
 
       - name: Optimize image with SlimToolkit
