@@ -17,6 +17,11 @@ include_path:
   - /usr/local/bin/python3.13
   - /lib
   - /usr/lib
+  - /usr/bin/gdal*
+  - /usr/lib/x86_64-linux-gnu/libgdal*
+  - /usr/lib/x86_64-linux-gnu/libgeos*
+  - /usr/lib/x86_64-linux-gnu/libproj*
+  - /usr/lib/x86_64-linux-gnu/libspatialite*
 
 include_path_file:
   - /app/manage.py
