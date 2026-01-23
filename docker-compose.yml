@@ -14,6 +14,8 @@ services:
         condition: service_healthy
       redis:
         condition: service_started
+      seaweedfs:
+        condition: service_healthy
     env_file: ./.env
 
   db:
@@ -47,3 +49,34 @@ services:
       - "6379:6379"
     volumes:
       - ./data/redis:/data
+
+  seaweedfs:
+    image: chrislusf/seaweedfs:latest
+    container_name: seaweedfs
+    command: >
+      server
+      -s3
+      -s3.port=8333
+      -dir=/data
+      -volume.max=0
+    ports:
+      - "9333:9333" # Master server
+      - "8080:8080" # Volume server (filer)
+      - "8333:8333" # S3 API
+    volumes:
+      - ./data/seaweedfs:/data
+    environment:
+      - WEED_MASTER_VOLUME_GROWTH_COPY_1=1
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "wget",
+          "-q",
+          "--spider",
+          "http://localhost:9333/cluster/status",
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s

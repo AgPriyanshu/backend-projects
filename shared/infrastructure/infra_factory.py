@@ -16,7 +16,7 @@ class InfraManagerFactory:
 
     @staticmethod
     def create(
-        provider: ProviderType = EnvVariable.INFRA_PROVIDER,
+        provider: ProviderType = EnvVariable.INFRA_PROVIDER.value,
     ) -> InfraManagerAbstract:
         """
         Get the infrastructure manager instance for the specified provider.

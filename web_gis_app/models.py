@@ -1,6 +1,6 @@
 from django.db import models
 
-from shared.models import BaseModel
+from shared.models import BaseModel, BaseModelWithoutUser
 
 from .constants import DatasetNodeType, DatasetType, FileFormat
 
@@ -21,11 +21,12 @@ class DatasetNode(BaseModel):
     )
 
 
-class DatasetClosure(BaseModel):
+class DatasetClosure(BaseModelWithoutUser):
     ancestor = models.ForeignKey(
         DatasetNode,
         on_delete=models.CASCADE,
         help_text="Ancestor node in the hierarchy",
+        related_name="ancestor_closures",
     )
     descendant = models.ForeignKey(
         DatasetNode,
@@ -41,7 +42,7 @@ class DatasetClosure(BaseModel):
         unique_together = [("ancestor", "descendant")]
 
 
-class Dataset(BaseModel):
+class Dataset(BaseModelWithoutUser):
     dataset_node = models.OneToOneField(
         DatasetNode, on_delete=models.CASCADE, related_name="dataset"
     )
@@ -75,6 +76,7 @@ class Dataset(BaseModel):
     srid = models.IntegerField(
         null=True, blank=True, help_text="Spatial Reference System ID (EPSG code)"
     )
+
     bbox = models.JSONField(
         null=True,
         blank=True,
@@ -97,7 +99,7 @@ class Dataset(BaseModel):
         return f"{self.name} ({self.get_type_display()})"
 
 
-class DatasetFile(BaseModel):
+class DatasetFile(BaseModelWithoutUser):
     """
     Individual files within a dataset.
     For single-file formats (GeoJSON, GeoTIFF): one entry

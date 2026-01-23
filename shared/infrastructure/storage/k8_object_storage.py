@@ -1,160 +1,197 @@
 import io
 import os
-from datetime import timedelta
 from typing import Any, BinaryIO, Dict, Optional
 
-from minio import Minio
-from minio.error import S3Error
+import boto3
+from botocore.client import Config
+from botocore.exceptions import ClientError
 
 from .base import ObjectStorageAbstract
 
 
 class K8sObjectStorage(ObjectStorageAbstract):
     """
-    Kubernetes object storage implementation using MinIO or S3-compatible storage.
+    Kubernetes object storage implementation using boto3 with SeaweedFS.
     Configuration is loaded from environment variables.
     """
 
     def __init__(self):
-        """Initialize MinIO client from environment variables."""
-        endpoint = os.getenv("MINIO_ENDPOINT", "minio:9000")
-        access_key = os.getenv("MINIO_ACCESS_KEY", "minioadmin")
-        secret_key = os.getenv("MINIO_SECRET_KEY", "minioadmin123")
+        """Initialize boto3 S3 client for SeaweedFS from environment variables."""
+        # Get environment variables with error checking
+        try:
+            endpoint = os.environ["S3_ENDPOINT"]
+            access_key = os.environ["S3_ACCESS_KEY"]
+            secret_key = os.environ["S3_SECRET_KEY"]
+            region = os.environ["S3_REGION"]
+            self.default_bucket = os.environ["S3_BUCKET"]
+        except KeyError as e:
+            raise RuntimeError(
+                f"Missing required environment variable: {e}. "
+                "Please ensure all S3 configuration variables are set in your .env file."
+            )
 
-        # Determine if we should use secure connection (HTTPS)
-        secure = os.getenv("MINIO_SECURE", "false").lower() == "true"
+        if not self.default_bucket:
+            raise RuntimeError("S3_BUCKET environment variable is empty")
 
-        # Initialize MinIO client
-        self.client = Minio(
-            endpoint, access_key=access_key, secret_key=secret_key, secure=secure
+        self.client = boto3.client(
+            "s3",
+            endpoint_url=endpoint,
+            aws_access_key_id=access_key,
+            aws_secret_access_key=secret_key,
+            region_name=region,
+            config=Config(signature_version="s3v4"),
         )
 
     def upload_object(
         self,
         file: BinaryIO,
-        bucket: str,
         key: str,
+        bucket: Optional[str] = None,
         metadata: Optional[Dict[str, str]] = None,
     ) -> Dict[str, Any]:
-        """Upload an object to MinIO storage."""
+        """Upload an object to S3-compatible storage."""
+        # Use default bucket if not specified
+        upload_bucket = bucket if bucket is not None else self.default_bucket
+
         try:
             # Ensure bucket exists
-            if not self.client.bucket_exists(bucket):
-                self.client.make_bucket(bucket)
+            try:
+                self.client.head_bucket(Bucket=upload_bucket)
+            except ClientError:
+                self.client.create_bucket(Bucket=upload_bucket)
 
             # Get file size
             file.seek(0, io.SEEK_END)
             file_size = file.tell()
             file.seek(0)
 
+            upload_bucket = bucket or self.default_bucket
+
             # Upload object
-            result = self.client.put_object(
-                bucket, key, file, length=file_size, metadata=metadata or {}
+            response = self.client.put_object(
+                Bucket=upload_bucket,
+                Key=key,
+                Body=file,
+                Metadata=metadata or {},
             )
 
             return {
-                "bucket": result.bucket_name,
-                "key": result.object_name,
-                "etag": result.etag,
-                "version_id": result.version_id,
+                "bucket": upload_bucket,
+                "key": key,
+                "etag": response.get("ETag", "").strip('"'),
+                "version_id": response.get("VersionId"),
                 "size": file_size,
             }
-        except S3Error as e:
+        except ClientError as e:
             raise RuntimeError(f"Failed to upload object: {e}")
 
     def download_object(self, bucket: str, key: str) -> BinaryIO:
-        """Download an object from MinIO storage."""
+        """Download an object from S3-compatible storage."""
         try:
-            response = self.client.get_object(bucket, key)
+            response = self.client.get_object(Bucket=bucket, Key=key)
 
-            # Read the response into a BytesIO object
-            data = io.BytesIO(response.read())
-            response.close()
-            response.release_conn()
+            # Read the response body into a BytesIO object
+            data = io.BytesIO(response["Body"].read())
 
             # Reset to beginning for reading
             data.seek(0)
             return data
-        except S3Error as e:
+        except ClientError as e:
             raise RuntimeError(f"Failed to download object: {e}")
 
     def get_object_info(self, bucket: str, key: str) -> Dict[str, Any]:
-        """Get object metadata from MinIO."""
+        """Get object metadata from S3-compatible storage."""
         try:
-            stat = self.client.stat_object(bucket, key)
+            response = self.client.head_object(Bucket=bucket, Key=key)
 
             return {
-                "bucket": stat.bucket_name,
-                "key": stat.object_name,
-                "size": stat.size,
-                "etag": stat.etag,
-                "content_type": stat.content_type,
-                "last_modified": stat.last_modified.isoformat()
-                if stat.last_modified
+                "bucket": bucket,
+                "key": key,
+                "size": response.get("ContentLength"),
+                "etag": response.get("ETag", "").strip('"'),
+                "content_type": response.get("ContentType"),
+                "last_modified": response.get("LastModified").isoformat()
+                if response.get("LastModified")
                 else None,
-                "metadata": stat.metadata,
-                "version_id": stat.version_id,
+                "metadata": response.get("Metadata", {}),
+                "version_id": response.get("VersionId"),
             }
-        except S3Error as e:
+        except ClientError as e:
             raise RuntimeError(f"Failed to get object info: {e}")
 
     def generate_presigned_url(
         self, bucket: str, key: str, expiration: int = 3600, method: str = "GET"
     ) -> str:
-        """Generate a presigned URL for MinIO object."""
+        """Generate a presigned URL for S3-compatible storage object."""
         try:
-            if method.upper() == "GET":
-                url = self.client.presigned_get_object(
-                    bucket, key, expires=timedelta(seconds=expiration)
-                )
-            elif method.upper() == "PUT":
-                url = self.client.presigned_put_object(
-                    bucket, key, expires=timedelta(seconds=expiration)
-                )
+            method_upper = method.upper()
+            if method_upper == "GET":
+                client_method = "get_object"
+            elif method_upper == "PUT":
+                client_method = "put_object"
             else:
                 raise ValueError(f"Unsupported method: {method}. Use 'GET' or 'PUT'")
 
+            url = self.client.generate_presigned_url(
+                ClientMethod=client_method,
+                Params={"Bucket": bucket, "Key": key},
+                ExpiresIn=expiration,
+            )
+
             return url
-        except S3Error as e:
+        except ClientError as e:
             raise RuntimeError(f"Failed to generate presigned URL: {e}")
 
     def delete_object(self, bucket: str, key: str) -> bool:
-        """Delete an object from MinIO."""
+        """Delete an object from S3-compatible storage."""
         try:
-            self.client.remove_object(bucket, key)
+            self.client.delete_object(Bucket=bucket, Key=key)
             return True
-        except S3Error as e:
+        except ClientError as e:
             raise RuntimeError(f"Failed to delete object: {e}")
 
     def list_objects(
         self, bucket: str, prefix: Optional[str] = None, max_results: int = 1000
     ) -> list[Dict[str, Any]]:
-        """List objects in a MinIO bucket."""
+        """List objects in an S3-compatible storage bucket."""
         try:
             objects = []
+            continuation_token = None
 
-            # List objects with optional prefix
-            for obj in self.client.list_objects(
-                bucket, prefix=prefix or "", recursive=True
-            ):
-                objects.append(
-                    {
-                        "key": obj.object_name,
-                        "size": obj.size,
-                        "etag": obj.etag,
-                        "last_modified": obj.last_modified.isoformat()
-                        if obj.last_modified
-                        else None,
-                        "is_dir": obj.is_dir,
-                        "content_type": obj.content_type,
-                        "metadata": obj.metadata,
-                    }
-                )
+            while len(objects) < max_results:
+                # Prepare list_objects_v2 parameters
+                params = {
+                    "Bucket": bucket,
+                    "MaxKeys": min(max_results - len(objects), 1000),
+                }
+                if prefix:
+                    params["Prefix"] = prefix
+                if continuation_token:
+                    params["ContinuationToken"] = continuation_token
 
-                # Limit results
-                if len(objects) >= max_results:
+                # List objects
+                response = self.client.list_objects_v2(**params)
+
+                # Process contents
+                for obj in response.get("Contents", []):
+                    objects.append(
+                        {
+                            "key": obj.get("Key"),
+                            "size": obj.get("Size"),
+                            "etag": obj.get("ETag", "").strip('"'),
+                            "last_modified": obj.get("LastModified").isoformat()
+                            if obj.get("LastModified")
+                            else None,
+                            "storage_class": obj.get("StorageClass"),
+                        }
+                    )
+
+                # Check if there are more results
+                if not response.get("IsTruncated"):
                     break
 
+                continuation_token = response.get("NextContinuationToken")
+
             return objects
-        except S3Error as e:
+        except ClientError as e:
             raise RuntimeError(f"Failed to list objects: {e}")

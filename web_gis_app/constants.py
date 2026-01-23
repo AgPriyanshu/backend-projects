@@ -1,16 +1,15 @@
 from django.db.models import TextChoices
 
-from shared.constants import BaseEnum
-
 
 class DatasetNodeType(TextChoices):
     FOLDER = "folder"
     DATASET = "dataset"
 
 
-class DatasetType(BaseEnum):
+class DatasetType(TextChoices):
     VECTOR = "vector"
     RASTER = "raster"
+    TEXT = "text"
 
 
 class FileFormat(TextChoices):
@@ -22,9 +21,10 @@ class FileFormat(TextChoices):
 
     # Raster formats
     GEOTIFF = "geotiff"
-    COG = "cog"  # Cloud Optimized GeoTIFF
+    COG = "cog"
     PNG = "png"
     JPEG = "jpeg"
 
     # Document formats
     PDF = "pdf"
+    TXT = "txt"
