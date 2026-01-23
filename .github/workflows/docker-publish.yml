@@ -55,8 +55,8 @@ jobs:
 
       - name: Tag optimized image
         run: |
-          docker tag ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:build.slim ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
-          docker tag ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:build.slim ${{ steps.meta.outputs.tags }}
+          docker tag ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:slim ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
+          docker tag ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:slim ${{ steps.meta.outputs.tags }}
 
       - name: Push optimized images
         run: |
