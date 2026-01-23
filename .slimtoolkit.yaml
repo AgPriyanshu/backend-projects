@@ -1,7 +1,7 @@
 http_probes:
   - protocol: http
     method: GET
-    resource: /health/
+    resource: /ping/
     port: 8000
     crawl: false
 
@@ -11,10 +11,12 @@ continue_after:
 
 include_path:
   - /app
-  - /usr/local/lib/python3.13/site-packages
+  - /usr/local/lib/python3.13
   - /usr/local/bin/python
   - /usr/local/bin/python3
   - /usr/local/bin/python3.13
+  - /lib
+  - /usr/lib
 
 include_path_file:
   - /app/manage.py

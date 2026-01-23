@@ -49,7 +49,7 @@ jobs:
         uses: kitabisa/docker-slim-action@v1
         env:
           DSLIM_HTTP_PROBE: false
-          DSLIM_INCLUDE_PATH: "/app,/usr/local/lib/python3.13/site-packages"
+          DSLIM_INCLUDE_PATH: "/app,/usr/local/lib/python3.13,/usr/local/bin/python,/usr/local/bin/python3,/usr/local/bin/python3.13,/lib,/usr/lib"
         with:
           target: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:build
           tag: "slim"
