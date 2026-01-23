@@ -36,30 +36,11 @@ jobs:
           tags: type=sha,format=long
 
       - name: Build and push Docker image
-        id: docker_build
         uses: docker/build-push-action@v6
         with:
           context: .
-          push: false
-          load: true
-          tags: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:build
+          push: true
+          tags: |
+            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
+            ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
-
-      - name: Optimize image with SlimToolkit
-        uses: kitabisa/docker-slim-action@v1
-        env:
-          DSLIM_HTTP_PROBE: false
-          DSLIM_INCLUDE_PATH: "/app,/usr/local/lib/python3.13,/usr/local/bin/python,/usr/local/bin/python3,/usr/local/bin/python3.13,/lib,/usr/lib,/usr/bin/gdal*,/usr/lib/x86_64-linux-gnu/libgdal*,/usr/lib/x86_64-linux-gnu/libgeos*,/usr/lib/x86_64-linux-gnu/libproj*,/usr/lib/x86_64-linux-gnu/libspatialite*"
-        with:
-          target: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:build
-          tag: "slim"
-
-      - name: Tag optimized image
-        run: |
-          docker tag ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:slim ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
-          docker tag ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:slim ${{ steps.meta.outputs.tags }}
-
-      - name: Push optimized images
-        run: |
-          docker push ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
-          docker push ${{ steps.meta.outputs.tags }}
