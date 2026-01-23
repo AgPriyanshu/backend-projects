@@ -45,46 +45,18 @@ jobs:
           tags: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:build
           labels: ${{ steps.meta.outputs.labels }}
 
-      - name: Install SlimToolkit
-        run: |
-          curl -L -o slim.tar.gz https://github.com/slimtoolkit/slim/releases/download/1.40.11/dist_linux.tar.gz
-          tar -xvf slim.tar.gz
-          # Find and move the binaries (handle different archive structures)
-          find . -name "slim" -type f -executable -exec sudo mv {} /usr/local/bin/ \;
-          find . -name "slim-sensor" -type f -executable -exec sudo mv {} /usr/local/bin/ \;
-          slim --version
-
       - name: Optimize image with SlimToolkit
-        run: |
-          # Get original image size
-          ORIGINAL_SIZE=$(docker images ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:build --format "{{.Size}}")
-          echo "Original image size: $ORIGINAL_SIZE"
-
-          # Run SlimToolkit optimization
-          slim build \
-            --target ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:build \
-            --tag ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:slim \
-            --http-probe=true \
-            --http-probe-cmd='http://localhost:8000/health/' \
-            --continue-after=60 \
-            --show-clogs
-
-          # Get optimized image size
-          SLIM_SIZE=$(docker images ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:slim --format "{{.Size}}")
-          echo "Optimized image size: $SLIM_SIZE"
-
-          # Calculate size reduction
-          echo "### 📦 Image Size Comparison" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "| Image | Size |" >> $GITHUB_STEP_SUMMARY
-          echo "|-------|------|" >> $GITHUB_STEP_SUMMARY
-          echo "| Original | $ORIGINAL_SIZE |" >> $GITHUB_STEP_SUMMARY
-          echo "| Optimized | $SLIM_SIZE |" >> $GITHUB_STEP_SUMMARY
+        uses: kitabisa/docker-slim-action@v1
+        env:
+          DSLIM_HTTP_PROBE: false
+        with:
+          target: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:build
+          tag: "slim"
 
       - name: Tag optimized image
         run: |
-          docker tag ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:slim ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
-          docker tag ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:slim ${{ steps.meta.outputs.tags }}
+          docker tag ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:build.slim ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
+          docker tag ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:build.slim ${{ steps.meta.outputs.tags }}
 
       - name: Push optimized images
         run: |
