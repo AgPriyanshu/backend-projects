@@ -6,103 +6,154 @@ from rest_framework.viewsets import ModelViewSet
 
 from shared.infrastructure import InfraManager
 
-from .models import Dataset, DatasetFile, DatasetNode
+from .constants import DatasetNodeType
+from .models import Dataset, DatasetNode
 from .serializers import (
+    DatasetNodeSerializer,
     DatasetNodeTreeSerializer,
     DatasetSerializer,
     DatasetUploadSerializer,
 )
 
 
-class DatasetViewSet(ModelViewSet):
-    queryset = Dataset.objects.all()
-    serializer_class = DatasetSerializer
+class DatasetNodeViewSet(ModelViewSet):
+    """
+    ViewSet for managing the dataset tree structure.
+    Handles both folders and datasets (nodes with associated data files).
+    """
+
+    queryset = DatasetNode.objects.all()
+    serializer_class = DatasetNodeSerializer
     permission_classes = [IsAuthenticated]
+
+    def get_serializer_class(self):
+        """Use tree serializer for list view"""
+        if self.action == "list":
+            return DatasetNodeTreeSerializer
+        return DatasetNodeSerializer
 
     def list(self, request):
         """Get all root nodes with their children in a nested tree structure"""
-        # Get all root nodes (nodes without a parent)
         root_nodes = DatasetNode.objects.filter(parent__isnull=True).select_related(
             "dataset"
         )
-
-        # Serialize with nested children
-        serializer = DatasetNodeTreeSerializer(root_nodes, many=True)
+        serializer = self.get_serializer(root_nodes, many=True)
         return Response(serializer.data)
 
     @transaction.atomic
     def create(self, request):
-        parent_id = request.data.get("parent_id")
+        """Create a folder or dataset node"""
         node_type = request.data.get("type")
+
+        if node_type == DatasetNodeType.FOLDER.value:
+            return self._create_folder(request)
+        elif node_type == DatasetNodeType.DATASET.value:
+            return self._create_dataset(request)
+        else:
+            return Response(
+                {"error": "Invalid type. Must be 'folder' or 'dataset'"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+    @transaction.atomic
+    def destroy(self, request, *args, **kwargs):
+        """Delete node and cleanup associated files. If folder, deletes full hierarchy."""
+        node = self.get_object()
+
+        # Use closure table to efficiently get all descendants (including self)
+        # This gets all nodes where the current node is an ancestor
+        descendant_ids = node.ancestor_closures.values_list('descendant_id', flat=True)
+        nodes_to_process = DatasetNode.objects.filter(id__in=descendant_ids).select_related('dataset')
+
+        # Clean up files from object storage for all nodes with datasets
+        for node_to_delete in nodes_to_process:
+            if hasattr(node_to_delete, "dataset") and node_to_delete.dataset:
+                dataset = node_to_delete.dataset
+
+                # Delete the file
+                if dataset.cloud_storage_path:
+                    try:
+                        InfraManager.object_storage.delete_object(
+                            key=dataset.cloud_storage_path
+                        )
+                    except Exception as e:
+                        print(f"Error deleting file {dataset.cloud_storage_path}: {e}")
+
+        # Delete the node (will cascade to all children, datasets, and dataset files in DB)
+        return super().destroy(request, *args, **kwargs)
+
+    def _create_folder(self, request):
+        """Create a simple folder node"""
+        serializer = DatasetNodeSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        serializer.save(user=request.user, type=DatasetNodeType.FOLDER.value)
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+    def _create_dataset(self, request):
+        """Create a dataset node with associated file"""
         files = request.FILES.getlist("files")
 
+        # Ensure only one file is uploaded
+        if len(files) != 1:
+            return Response(
+                {"error": "Exactly one file must be uploaded per dataset"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        file = files[0]
+
+        # Validate the upload data
         serializer = DatasetUploadSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
 
         dataset_node = DatasetNode.objects.create(
-            parent_id=parent_id,
-            type=node_type,
+            name=serializer.validated_data.get("name"),
+            parent=serializer.validated_data.get("parent"),
+            type=DatasetNodeType.DATASET.value,
             user=request.user
         )
 
-        # Exclude fields that are not part of Dataset model
-        dataset_data = serializer.validated_data.copy()
-        dataset_data.pop('files', None)  # Remove files field
-        dataset_data.pop('type', None)  # Remove node type field (it's for DatasetNode)
+        # Create the dataset
+        dataset = Dataset.objects.create(
+            dataset_node=dataset_node,
+            description=serializer.validated_data.get("description", ""),
+            type=serializer.validated_data.get("dataset_type"),
+            format=serializer.validated_data.get("format"),
+            srid=serializer.validated_data.get("srid"),
+            bbox=serializer.validated_data.get("bbox"),
+            metadata=serializer.validated_data.get("metadata", {}),
+            file_name="",  # Will be set below
+            file_size=0,  # Will be set below
+            cloud_storage_path="",  # Will be set below
+        )
 
-        dataset = Dataset.objects.create(dataset_node=dataset_node, **dataset_data)
+        # Upload file
+        file_extension = file.name.split(".")[-1] if "." in file.name else ""
+        cloud_storage_path = (
+            f"datasets/{dataset.id}/file.{file_extension}"
+            if file_extension
+            else f"datasets/{dataset.id}/file"
+        )
 
-        uploaded_files = []
+        # Upload to object storage
+        upload_result = InfraManager.object_storage.upload_object(
+            file=file,
+            key=cloud_storage_path,
+            metadata={
+                "dataset_id": str(dataset.id),
+                "original_filename": file.name,
+                "content_type": file.content_type or "application/octet-stream",
+            },
+        )
 
-        for file in files:
-            # Get file extension
-            file_extension = file.name.split(".")[-1] if "." in file.name else ""
+        # Save file info
+        dataset.file_name = file.name
+        dataset.file_size = upload_result["size"]
+        dataset.cloud_storage_path = cloud_storage_path
+        dataset.save(update_fields=["file_name", "file_size", "cloud_storage_path"])
 
-            # Create DatasetFile record first to get the ID
-            dataset_file = DatasetFile.objects.create(
-                dataset=dataset,
-                cloud_storage_path="",  # Temporary, will update after upload
-                file_name=file.name,
-                file_size=0,  # Temporary, will update after upload
-                mime_type=file.content_type or "application/octet-stream",
-                role="main" if len(files) == 1 else "additional",
-            )
-
-            # Generate cloud storage path using DatasetFile ID
-            cloud_storage_path = (
-                f"datasets/{dataset.id}/{dataset_file.id}.{file_extension}"
-                if file_extension
-                else f"datasets/{dataset.id}/{dataset_file.id}"
-            )
-
-            # Upload to object storage
-            upload_result = InfraManager.object_storage.upload_object(
-                file=file,
-                key=cloud_storage_path,
-                metadata={
-                    "dataset_id": str(dataset.id),
-                    "dataset_file_id": str(dataset_file.id),
-                    "original_filename": file.name,
-                    "content_type": file.content_type or "application/octet-stream",
-                },
-            )
-
-            # Update DatasetFile with actual cloud path and size
-            dataset_file.cloud_storage_path = cloud_storage_path
-            dataset_file.file_size = upload_result["size"]
-            dataset_file.save(update_fields=["cloud_storage_path", "file_size"])
-
-            uploaded_files.append(dataset_file)
-
-        response_data = DatasetSerializer(dataset).data
-        response_data["files"] = [
-            {
-                "id": f.id,
-                "file_name": f.file_name,
-                "file_size": f.file_size,
-                "cloud_storage_path": f.cloud_storage_path,
-            }
-            for f in uploaded_files
-        ]
+        # Build response with node and dataset data
+        response_data = DatasetNodeSerializer(dataset_node).data
+        response_data["dataset"] = DatasetSerializer(dataset).data
 
         return Response(response_data, status=status.HTTP_201_CREATED)
