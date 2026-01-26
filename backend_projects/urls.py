@@ -9,19 +9,19 @@ from .settings import BASE_DIR, STATIC_ROOT, STATIC_URL
 from .views import ping
 
 urlpatterns = [
-    path(r"admin/", admin.site.urls),
-    path(r"auth/", include("auth_app.urls")),
-    path(r"blogs/", include("blogs_app.urls")),
-    path(r"weather/", include("weather_app.urls")),
-    path(r"tasks/", include("todo_app.urls")),
-    path(r"expenses/", include("expense_tracker_app.urls")),
-    path(r"notes/", include("note_markdown_app.urls")),
-    path(r"urls/", include("url_shortner_app.urls")),
-    # path(r"device-classifier/", include("device_classifier.urls")),
-    # path(r"chats/", include("chat_app.urls")),
-    # path(r"ai-chat/", include("ai_chat.urls")),
-    path(r"web-gis/", include("web_gis_app.urls")),
-    path(r"ecom/", include("ecommerce_app.urls")),
+    path("admin/", admin.site.urls),
+    path("auth/", include("auth_app.urls")),
+    path("blogs/", include("blogs_app.urls")),
+    path("weather/", include("weather_app.urls")),
+    path("tasks/", include("todo_app.urls")),
+    path("expenses/", include("expense_tracker_app.urls")),
+    path("notes/", include("note_markdown_app.urls")),
+    path("urls/", include("url_shortner_app.urls")),
+    # path("device-classifier/", include("device_classifier.urls")),
+    # path("chats/", include("chat_app.urls")),
+    # path("ai-chat/", include("ai_chat.urls")),
+    path("web-gis/", include("web_gis_app.urls")),
+    path("ecom/", include("ecommerce_app.urls")),
     path(
         "expense-app/api-doc/",
         TemplateView.as_view(

@@ -48,11 +48,6 @@ class Dataset(BaseModelWithoutUser):
         DatasetNode, on_delete=models.CASCADE, related_name="dataset"
     )
 
-    # Basic information
-    description = models.TextField(
-        blank=True, help_text="Detailed description of the dataset content and purpose"
-    )
-
     # Dataset type and format
     type = models.CharField(
         max_length=20,

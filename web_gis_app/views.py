@@ -1,9 +1,12 @@
 from django.db import transaction
+from django.http import FileResponse
 from rest_framework import status
+from rest_framework.decorators import action
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.viewsets import ModelViewSet
 
+from backend_projects.logger import logger
 from shared.infrastructure import InfraManager
 
 from .constants import DatasetNodeType
@@ -14,6 +17,7 @@ from .serializers import (
     DatasetSerializer,
     DatasetUploadSerializer,
 )
+from .utils import detect_dataset_info
 
 
 class DatasetNodeViewSet(ModelViewSet):
@@ -43,7 +47,10 @@ class DatasetNodeViewSet(ModelViewSet):
     @transaction.atomic
     def create(self, request):
         """Create a folder or dataset node"""
-        node_type = request.data.get("type")
+        # For multipart/form-data (file uploads), use request.POST for form fields
+        # For JSON requests, use request.data
+        data_source = request.POST if request.FILES else request.data
+        node_type = data_source.get("type")
 
         if node_type == DatasetNodeType.FOLDER.value:
             return self._create_folder(request)
@@ -102,6 +109,15 @@ class DatasetNodeViewSet(ModelViewSet):
 
         file = files[0]
 
+        # Auto-detect dataset type and format from file extension
+        try:
+            dataset_type, file_format = detect_dataset_info(file.name)
+        except ValueError as e:
+            return Response(
+                {"error": str(e)},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
         # Validate the upload data
         serializer = DatasetUploadSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
@@ -116,9 +132,8 @@ class DatasetNodeViewSet(ModelViewSet):
         # Create the dataset
         dataset = Dataset.objects.create(
             dataset_node=dataset_node,
-            description=serializer.validated_data.get("description", ""),
-            type=serializer.validated_data.get("dataset_type"),
-            format=serializer.validated_data.get("format"),
+            type=dataset_type,
+            format=file_format,
             srid=serializer.validated_data.get("srid"),
             bbox=serializer.validated_data.get("bbox"),
             metadata=serializer.validated_data.get("metadata", {}),
@@ -157,3 +172,51 @@ class DatasetNodeViewSet(ModelViewSet):
         response_data["dataset"] = DatasetSerializer(dataset).data
 
         return Response(response_data, status=status.HTTP_201_CREATED)
+
+    @action(methods=["GET"], detail=True, url_path="download", url_name="download")
+    def download(self, request, pk):
+        """Download the dataset file from object storage"""
+        dataset_node = self.get_object()
+
+        # Check if this node has an associated dataset
+        if not hasattr(dataset_node, "dataset") or not dataset_node.dataset:
+            return Response(
+                {"error": "This node does not have an associated dataset file"},
+                status=status.HTTP_404_NOT_FOUND
+            )
+
+        dataset = dataset_node.dataset
+
+        # Check if the dataset has a cloud storage path
+        if not dataset.cloud_storage_path:
+            return Response(
+                {"error": "Dataset file not found in storage"},
+                status=status.HTTP_404_NOT_FOUND
+            )
+
+        try:
+            # Download the file from object storage
+            # The K8sObjectStorage uses a default bucket, so we need to pass it
+            file_data = InfraManager.object_storage.download_object(
+                key=dataset.cloud_storage_path
+            )
+
+            # Create a FileResponse with the downloaded file
+            response = FileResponse(
+                file_data,
+                as_attachment=True,
+                filename=dataset.file_name
+            )
+
+            # Set content type if available
+            if dataset.metadata and dataset.metadata.get("content_type"):
+                response["Content-Type"] = dataset.metadata["content_type"]
+
+            return response
+
+        except Exception as e:
+            logger.error(f"Error downloading dataset {dataset.id}: {str(e)}")
+            return Response(
+                {"error": f"Failed to download file: {str(e)}"},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )

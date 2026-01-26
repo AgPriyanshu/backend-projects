@@ -5,6 +5,7 @@ from typing import Callable
 
 from django.http import HttpRequest, HttpResponse
 
+from backend_projects.env_variables import EnvVariable
 from backend_projects.logger import logger
 
 
@@ -28,8 +29,10 @@ class LoggingMiddleware:
 
         start_time = time.time()
 
+        env = EnvVariable.ENV.value
+
         # Log request details
-        self._log_request(request)
+        env != 'local' and self._log_request(request)
 
         # Process the request
         response = self.get_response(request)
@@ -38,7 +41,7 @@ class LoggingMiddleware:
         duration = (time.time() - start_time) * 1000  # Convert to milliseconds
 
         # Log response details
-        self._log_response(request, response, duration)
+        env != 'local' and self._log_response(request, response, duration)
 
         return response
 

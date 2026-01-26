@@ -3,6 +3,7 @@ from enum import Enum
 
 
 class EnvVariable(Enum):
+    ENV = os.environ["ENV"]
     DEBUG = os.environ["DEBUG"]
     DB_NAME = os.environ["DB_NAME"]
     DB_USER = os.environ["DB_USER"]

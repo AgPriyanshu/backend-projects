@@ -19,7 +19,6 @@ class DatasetSerializer(BaseModelSerializer):
         fields = (
             "id",
             "dataset_node",
-            "description",
             "type",
             "file_name",
             "file_size",
@@ -40,9 +39,6 @@ class DatasetUploadSerializer(serializers.Serializer):
     )
 
     # Dataset information
-    description = serializers.CharField(required=False, allow_blank=True)
-    dataset_type = serializers.CharField(max_length=20)
-    format = serializers.CharField(max_length=20)
     srid = serializers.IntegerField(required=False, allow_null=True)
     bbox = serializers.JSONField(required=False, allow_null=True)
     metadata = serializers.JSONField(required=False, default=dict)
@@ -98,5 +94,5 @@ class DatasetNodeTreeSerializer(BaseModelSerializer):
 
     def get_children(self, obj):
         """Get direct children of this node"""
-        children = DatasetNode.objects.filter(parent=obj).select_related("dataset")
+        children = DatasetNode.objects.filter(parent=obj).select_related("dataset").order_by("name")
         return DatasetNodeTreeSerializer(children, many=True).data

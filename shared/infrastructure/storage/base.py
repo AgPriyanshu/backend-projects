@@ -32,13 +32,13 @@ class ObjectStorageAbstract(ABC):
         raise NotImplementedError
 
     @abstractmethod
-    def download_object(self, bucket: str, key: str) -> BinaryIO:
+    def download_object(self, key: str, bucket: Optional[str] = None) -> BinaryIO:
         """
         Download an object from storage.
 
         Args:
-            bucket: Bucket/container name
             key: Object key/path
+            bucket: Optional bucket/container name (uses default if not specified)
 
         Returns:
             File-like object containing the downloaded data
@@ -46,13 +46,13 @@ class ObjectStorageAbstract(ABC):
         raise NotImplementedError
 
     @abstractmethod
-    def get_object_info(self, bucket: str, key: str) -> Dict[str, Any]:
+    def get_object_info(self, key: str, bucket: Optional[str] = None) -> Dict[str, Any]:
         """
         Get metadata and information about an object.
 
         Args:
-            bucket: Bucket/container name
             key: Object key/path
+            bucket: Optional bucket/container name (uses default if not specified)
 
         Returns:
             Dict containing object metadata
@@ -61,14 +61,14 @@ class ObjectStorageAbstract(ABC):
 
     @abstractmethod
     def generate_presigned_url(
-        self, bucket: str, key: str, expiration: int = 3600, method: str = "GET"
+        self, key: str, bucket: Optional[str] = None, expiration: int = 3600, method: str = "GET"
     ) -> str:
         """
         Generate a presigned URL for temporary access to an object.
 
         Args:
-            bucket: Bucket/container name
             key: Object key/path
+            bucket: Optional bucket/container name (uses default if not specified)
             expiration: URL expiration time in seconds
             method: HTTP method (GET, PUT, etc.)
 
@@ -78,13 +78,13 @@ class ObjectStorageAbstract(ABC):
         raise NotImplementedError
 
     @abstractmethod
-    def delete_object(self, bucket: str, key: str) -> bool:
+    def delete_object(self, key: str, bucket: Optional[str] = None) -> bool:
         """
         Delete an object from storage.
 
         Args:
-            bucket: Bucket/container name
             key: Object key/path
+            bucket: Optional bucket/container name (uses default if not specified)
 
         Returns:
             True if deletion was successful
@@ -93,14 +93,14 @@ class ObjectStorageAbstract(ABC):
 
     @abstractmethod
     def list_objects(
-        self, bucket: str, prefix: Optional[str] = None, max_results: int = 1000
+        self, prefix: Optional[str] = None, bucket: Optional[str] = None, max_results: int = 1000
     ) -> list[Dict[str, Any]]:
         """
         List objects in a bucket.
 
         Args:
-            bucket: Bucket/container name
             prefix: Optional prefix to filter objects
+            bucket: Optional bucket/container name (uses default if not specified)
             max_results: Maximum number of results to return
 
         Returns:

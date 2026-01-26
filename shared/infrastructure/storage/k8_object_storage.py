@@ -85,10 +85,11 @@ class K8sObjectStorage(ObjectStorageAbstract):
         except ClientError as e:
             raise RuntimeError(f"Failed to upload object: {e}")
 
-    def download_object(self, bucket: str, key: str) -> BinaryIO:
+    def download_object(self, key: str, bucket: Optional[str] = None) -> BinaryIO:
         """Download an object from S3-compatible storage."""
+        download_bucket = bucket if bucket is not None else self.default_bucket
         try:
-            response = self.client.get_object(Bucket=bucket, Key=key)
+            response = self.client.get_object(Bucket=download_bucket, Key=key)
 
             # Read the response body into a BytesIO object
             data = io.BytesIO(response["Body"].read())
@@ -99,13 +100,14 @@ class K8sObjectStorage(ObjectStorageAbstract):
         except ClientError as e:
             raise RuntimeError(f"Failed to download object: {e}")
 
-    def get_object_info(self, bucket: str, key: str) -> Dict[str, Any]:
+    def get_object_info(self, key: str, bucket: Optional[str] = None) -> Dict[str, Any]:
         """Get object metadata from S3-compatible storage."""
+        info_bucket = bucket if bucket is not None else self.default_bucket
         try:
-            response = self.client.head_object(Bucket=bucket, Key=key)
+            response = self.client.head_object(Bucket=info_bucket, Key=key)
 
             return {
-                "bucket": bucket,
+                "bucket": info_bucket,
                 "key": key,
                 "size": response.get("ContentLength"),
                 "etag": response.get("ETag", "").strip('"'),
@@ -120,9 +122,10 @@ class K8sObjectStorage(ObjectStorageAbstract):
             raise RuntimeError(f"Failed to get object info: {e}")
 
     def generate_presigned_url(
-        self, bucket: str, key: str, expiration: int = 3600, method: str = "GET"
+        self, key: str, bucket: Optional[str] = None, expiration: int = 3600, method: str = "GET"
     ) -> str:
         """Generate a presigned URL for S3-compatible storage object."""
+        presigned_bucket = bucket if bucket is not None else self.default_bucket
         try:
             method_upper = method.upper()
             if method_upper == "GET":
@@ -134,7 +137,7 @@ class K8sObjectStorage(ObjectStorageAbstract):
 
             url = self.client.generate_presigned_url(
                 ClientMethod=client_method,
-                Params={"Bucket": bucket, "Key": key},
+                Params={"Bucket": presigned_bucket, "Key": key},
                 ExpiresIn=expiration,
             )
 
@@ -142,18 +145,20 @@ class K8sObjectStorage(ObjectStorageAbstract):
         except ClientError as e:
             raise RuntimeError(f"Failed to generate presigned URL: {e}")
 
-    def delete_object(self, bucket: str, key: str) -> bool:
+    def delete_object(self, key: str, bucket: Optional[str] = None) -> bool:
         """Delete an object from S3-compatible storage."""
+        delete_bucket = bucket if bucket is not None else self.default_bucket
         try:
-            self.client.delete_object(Bucket=bucket, Key=key)
+            self.client.delete_object(Bucket=delete_bucket, Key=key)
             return True
         except ClientError as e:
             raise RuntimeError(f"Failed to delete object: {e}")
 
     def list_objects(
-        self, bucket: str, prefix: Optional[str] = None, max_results: int = 1000
+        self, prefix: Optional[str] = None, bucket: Optional[str] = None, max_results: int = 1000
     ) -> list[Dict[str, Any]]:
         """List objects in an S3-compatible storage bucket."""
+        list_bucket = bucket if bucket is not None else self.default_bucket
         try:
             objects = []
             continuation_token = None
@@ -161,7 +166,7 @@ class K8sObjectStorage(ObjectStorageAbstract):
             while len(objects) < max_results:
                 # Prepare list_objects_v2 parameters
                 params = {
-                    "Bucket": bucket,
+                    "Bucket": list_bucket,
                     "MaxKeys": min(max_results - len(objects), 1000),
                 }
                 if prefix:
