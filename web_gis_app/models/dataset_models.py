@@ -2,7 +2,7 @@ from django.db import models
 
 from shared.models import BaseModel, BaseModelWithoutUser
 
-from .constants import DatasetNodeType, DatasetType, FileFormat
+from ..constants import DatasetNodeType, DatasetType, FileFormat
 
 
 class DatasetNode(BaseModel):

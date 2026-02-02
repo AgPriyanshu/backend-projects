@@ -6,7 +6,6 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.viewsets import ModelViewSet
 
-from backend_projects.logger import logger
 from shared.infrastructure import InfraManager
 
 from .constants import DatasetNodeType
@@ -66,11 +65,12 @@ class DatasetNodeViewSet(ModelViewSet):
     def destroy(self, request, *args, **kwargs):
         """Delete node and cleanup associated files. If folder, deletes full hierarchy."""
         node = self.get_object()
-
         # Use closure table to efficiently get all descendants (including self)
         # This gets all nodes where the current node is an ancestor
-        descendant_ids = node.ancestor_closures.values_list('descendant_id', flat=True)
-        nodes_to_process = DatasetNode.objects.filter(id__in=descendant_ids).select_related('dataset')
+        descendant_ids = node.ancestor_closures.values_list("descendant_id", flat=True)
+        nodes_to_process = DatasetNode.objects.filter(
+            id__in=descendant_ids
+        ).select_related("dataset")
 
         # Clean up files from object storage for all nodes with datasets
         for node_to_delete in nodes_to_process:
@@ -126,7 +126,7 @@ class DatasetNodeViewSet(ModelViewSet):
             name=serializer.validated_data.get("name"),
             parent=serializer.validated_data.get("parent"),
             type=DatasetNodeType.DATASET.value,
-            user=request.user
+            user=request.user,
         )
 
         # Create the dataset
@@ -182,7 +182,7 @@ class DatasetNodeViewSet(ModelViewSet):
         if not hasattr(dataset_node, "dataset") or not dataset_node.dataset:
             return Response(
                 {"error": "This node does not have an associated dataset file"},
-                status=status.HTTP_404_NOT_FOUND
+                status=status.HTTP_404_NOT_FOUND,
             )
 
         dataset = dataset_node.dataset
@@ -191,7 +191,7 @@ class DatasetNodeViewSet(ModelViewSet):
         if not dataset.cloud_storage_path:
             return Response(
                 {"error": "Dataset file not found in storage"},
-                status=status.HTTP_404_NOT_FOUND
+                status=status.HTTP_404_NOT_FOUND,
             )
 
         try:
@@ -203,20 +203,20 @@ class DatasetNodeViewSet(ModelViewSet):
 
             # Create a FileResponse with the downloaded file
             response = FileResponse(
-                file_data,
-                as_attachment=True,
-                filename=dataset.file_name
+                file_data, as_attachment=True, filename=dataset.file_name
             )
 
             # Set content type if available
             if dataset.metadata and dataset.metadata.get("content_type"):
                 response["Content-Type"] = dataset.metadata["content_type"]
 
+            # logger.debug()
+
             return response
 
         except Exception as e:
-            logger.error(f"Error downloading dataset {dataset.id}: {str(e)}")
+            # logger.error(f"Error downloading dataset {dataset.id}: {str(e)}")
             return Response(
                 {"error": f"Failed to download file: {str(e)}"},
-                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
             )

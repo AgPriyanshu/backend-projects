@@ -1,33 +1,3 @@
 {
-  "postman.settings.dotenv-detection-notification-visibility": false,
-
-  // Python Language Server Settings
-  "python.analysis.autoImportCompletions": true,
-  "python.analysis.completeFunctionParens": true,
-  "python.analysis.typeCheckingMode": "basic",
-  "python.analysis.autoSearchPaths": true,
-  "python.analysis.diagnosticMode": "workspace",
-  "python.analysis.indexing": true,
-
-  // Enable auto-imports from all packages
-  "python.analysis.packageIndexDepths": [
-    {
-      "name": "rest_framework",
-      "depth": 10
-    },
-    {
-      "name": "django",
-      "depth": 10
-    }
-  ],
-
-  // IntelliSense settings
-  "editor.quickSuggestions": {
-    "other": true,
-    "comments": false,
-    "strings": false
-  },
-  "editor.suggest.showModules": true,
-  "editor.suggest.showClasses": true,
-  "editor.suggest.showFunctions": true
+  "postman.settings.dotenv-detection-notification-visibility": false
 }
