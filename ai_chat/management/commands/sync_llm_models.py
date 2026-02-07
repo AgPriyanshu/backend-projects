@@ -1,8 +1,8 @@
-from django.core.management.base import BaseCommand
-from django.utils import timezone
 from asgiref.sync import async_to_sync
-from ai_chat.services import ChatService
+from django.core.management.base import BaseCommand
+
 from ai_chat.models import LLMModel
+from ai_chat.services import ChatService
 
 
 class Command(BaseCommand):
@@ -55,14 +55,14 @@ class Command(BaseCommand):
                 default_model_name = options['set_default']
                 try:
                     model = LLMModel.objects.get(name=default_model_name, is_available=True)
-                    
+
                     # Clear existing default
                     LLMModel.objects.filter(is_default=True).update(is_default=False)
-                    
+
                     # Set new default
                     model.is_default = True
                     model.save()
-                    
+
                     self.stdout.write(
                         self.style.SUCCESS(
                             f'Set {model.display_name} as the default model'
@@ -82,7 +82,7 @@ class Command(BaseCommand):
                     first_model = available_models.first()
                     first_model.is_default = True
                     first_model.save()
-                    
+
                     self.stdout.write(
                         self.style.WARNING(
                             f'No default model set. Automatically set {first_model.display_name} as default'
@@ -99,4 +99,4 @@ class Command(BaseCommand):
             self.stdout.write(
                 self.style.ERROR(f'Error syncing models: {str(e)}')
             )
-            raise 
+            raise

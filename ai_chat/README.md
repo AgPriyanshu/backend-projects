@@ -141,7 +141,7 @@ ws://localhost:8000/ws/ai-chat/sessions/?token={auth_token}
   "type": "ai_message_complete",
   "message": {
     "id": "uuid",
-    "role": "assistant", 
+    "role": "assistant",
     "content": "Hello! How can I help you today?",
     "created_at": "2024-01-01T12:00:01Z"
   }
@@ -172,7 +172,7 @@ ws.send(JSON.stringify({
 // Handle responses
 ws.onmessage = (event) => {
   const data = JSON.parse(event.data);
-  
+
   switch (data.type) {
     case 'user_message':
       // Add user message to chat
@@ -264,7 +264,7 @@ DB_PASSWORD=your_password
 - Debug logging enabled
 - SQLite/PostgreSQL local database
 
-### Production  
+### Production
 - Restrict WebSocket origins to your domains
 - Use production Redis cluster
 - Configure proper logging
@@ -296,4 +296,4 @@ curl -H "Authorization: Token your_token" \
 
 ---
 
-**Next Steps**: Update your frontend to use the new WebSocket endpoints for real-time chat experience! 
+**Next Steps**: Update your frontend to use the new WebSocket endpoints for real-time chat experience!

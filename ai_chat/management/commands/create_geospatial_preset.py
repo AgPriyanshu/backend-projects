@@ -1,5 +1,6 @@
-from django.core.management.base import BaseCommand
 from django.contrib.auth.models import User
+from django.core.management.base import BaseCommand
+
 from ai_chat.models import ChatPreset
 
 
@@ -27,7 +28,7 @@ class Command(BaseCommand):
 
 Available Geospatial Tools:
 - list_layers: List all available geospatial layers
-- find_layer_by_name: Find layers by name (supports partial matching)  
+- find_layer_by_name: Find layers by name (supports partial matching)
 - analyze_layer_attributes: Comprehensive analysis of layer attributes and data types
 - get_layer_info: Get detailed information about a specific layer
 - analyze_population: Analyze numeric attributes with thresholds and statistical operations
@@ -58,4 +59,4 @@ Always be specific about the data you're analyzing and provide context for your 
         else:
             self.stdout.write(
                 self.style.WARNING(f'Preset "{preset.name}" already exists')
-            ) 
+            )

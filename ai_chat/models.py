@@ -1,6 +1,8 @@
-from django.db import models
-from django.contrib.auth.models import User
 import uuid
+
+from django.contrib.auth.models import User
+from django.db import models
+
 
 class ChatSession(models.Model):
     """Model to represent a chat session"""

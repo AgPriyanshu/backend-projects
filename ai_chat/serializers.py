@@ -1,6 +1,7 @@
-from rest_framework import serializers
 from django.contrib.auth.models import User
-from .models import ChatSession, ChatMessage, LLMModel, ChatPreset
+from rest_framework import serializers
+
+from .models import ChatMessage, ChatPreset, ChatSession, LLMModel
 
 
 class UserSerializer(serializers.ModelSerializer):
@@ -13,7 +14,7 @@ class ChatMessageSerializer(serializers.ModelSerializer):
     class Meta:
         model = ChatMessage
         fields = [
-            'id', 'role', 'content', 'tool_calls', 'tool_call_id', 
+            'id', 'role', 'content', 'tool_calls', 'tool_call_id',
             'metadata', 'created_at', 'token_count'
         ]
         read_only_fields = ['id', 'created_at']
@@ -28,7 +29,7 @@ class ChatSessionSerializer(serializers.ModelSerializer):
     class Meta:
         model = ChatSession
         fields = [
-            'id', 'user', 'title', 'model_name', 'temperature', 
+            'id', 'user', 'title', 'model_name', 'temperature',
             'max_tokens', 'enable_tools', 'created_at', 'updated_at',
             'is_active', 'messages', 'message_count', 'last_message_time'
         ]
@@ -44,7 +45,7 @@ class ChatSessionListSerializer(serializers.ModelSerializer):
     class Meta:
         model = ChatSession
         fields = [
-            'id', 'user', 'title', 'model_name', 'temperature', 
+            'id', 'user', 'title', 'model_name', 'temperature',
             'max_tokens', 'enable_tools', 'created_at', 'updated_at',
             'is_active', 'message_count', 'last_message_time'
         ]
@@ -57,7 +58,7 @@ class CreateChatSessionSerializer(serializers.ModelSerializer):
     class Meta:
         model = ChatSession
         fields = [
-            'title', 'model_name', 'temperature', 'max_tokens', 
+            'title', 'model_name', 'temperature', 'max_tokens',
             'enable_tools', 'system_prompt'
         ]
 
@@ -126,4 +127,4 @@ class ChatPresetListSerializer(serializers.ModelSerializer):
             'id', 'name', 'description', 'model_name', 'is_public',
             'created_by', 'created_at', 'updated_at'
         ]
-        read_only_fields = ['id', 'created_by', 'created_at', 'updated_at'] 
+        read_only_fields = ['id', 'created_by', 'created_at', 'updated_at']
