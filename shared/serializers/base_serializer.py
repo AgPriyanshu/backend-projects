@@ -11,7 +11,7 @@ class BaseModelSerializer(serializers.ModelSerializer):
     def validate(self, attrs):
         # Check if any read-only fields are being updated.
         if hasattr(self.Meta, "read_only_fields"):
-            for field in self.Meta.read_only_fields:
+            for field in self.Meta.read_only_fields:  # type: ignore
                 if field in self.initial_data:
                     raise ValidationError(
                         {field: f"{field} is a read-only field and cannot be updated."}

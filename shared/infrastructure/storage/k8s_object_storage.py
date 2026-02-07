@@ -122,7 +122,11 @@ class K8sObjectStorage(ObjectStorageAbstract):
             raise RuntimeError(f"Failed to get object info: {e}")
 
     def generate_presigned_url(
-        self, key: str, bucket: Optional[str] = None, expiration: int = 3600, method: str = "GET"
+        self,
+        key: str,
+        bucket: Optional[str] = None,
+        expiration: int = 3600,
+        method: str = "GET",
     ) -> str:
         """Generate a presigned URL for S3-compatible storage object."""
         presigned_bucket = bucket if bucket is not None else self.default_bucket
@@ -155,7 +159,10 @@ class K8sObjectStorage(ObjectStorageAbstract):
             raise RuntimeError(f"Failed to delete object: {e}")
 
     def list_objects(
-        self, prefix: Optional[str] = None, bucket: Optional[str] = None, max_results: int = 1000
+        self,
+        prefix: Optional[str] = None,
+        bucket: Optional[str] = None,
+        max_results: int = 1000,
     ) -> list[Dict[str, Any]]:
         """List objects in an S3-compatible storage bucket."""
         list_bucket = bucket if bucket is not None else self.default_bucket

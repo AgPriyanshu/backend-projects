@@ -5,6 +5,10 @@ This document provides guidelines for AI agents working on this codebase.
 ## General Guidelines
 
 - Every comment should end with a full stop.
+- Do not add unnecessary comments.
+- Use code block division with a blank line for best readability.
+- Add a blank line before each `if` or `for` loop for readability.
+- Do not create tests, examples, or run scripts without asking the user first.
 
 ## Technology Stack
 

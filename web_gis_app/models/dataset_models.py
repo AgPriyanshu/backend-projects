@@ -1,3 +1,5 @@
+from typing import TYPE_CHECKING
+
 from django.db import models
 
 from shared.models import BaseModel, BaseModelWithoutUser
@@ -6,7 +8,7 @@ from ..constants import DatasetNodeType, DatasetType, FileFormat
 
 
 class DatasetNode(BaseModel):
-    name = models.TextField(help_text="Name of the node",default="New Folder")
+    name = models.TextField(help_text="Name of the node", default="New Folder")
     parent = models.ForeignKey(
         "self",
         on_delete=models.CASCADE,
@@ -20,6 +22,9 @@ class DatasetNode(BaseModel):
         choices=DatasetNodeType.choices,
         help_text="Node type: folder for organization, dataset for actual data",
     )
+
+    if TYPE_CHECKING:
+        dataset: "Dataset"
 
 
 class DatasetClosure(BaseModelWithoutUser):
@@ -61,31 +66,12 @@ class Dataset(BaseModelWithoutUser):
         help_text="File format: geojson, shapefile, geotiff, etc.",
     )
 
-    # Primary file information
-    file_name = models.CharField(
-        max_length=255,
-        help_text="Primary file name"
-    )
-    file_size = models.BigIntegerField(
-        help_text="Primary file size in bytes"
-    )
+    file_name = models.CharField(max_length=255, help_text="Primary file name")
+    file_size = models.BigIntegerField(help_text="Primary file size in bytes")
     cloud_storage_path = models.CharField(
-        max_length=500,
-        help_text="Cloud storage path for the primary file"
+        max_length=500, help_text="Cloud storage path for the primary file"
     )
 
-    # Geospatial metadata
-    srid = models.IntegerField(
-        null=True, blank=True, help_text="Spatial Reference System ID (EPSG code)"
-    )
-
-    bbox = models.JSONField(
-        null=True,
-        blank=True,
-        help_text="Bounding box [minx, miny, maxx, maxy]",
-    )
-
-    # Additional metadata (flexible JSON for format-specific data)
     metadata = models.JSONField(
         default=dict,
         blank=True,
@@ -96,6 +82,3 @@ class Dataset(BaseModelWithoutUser):
         db_table = "dataset"
         verbose_name = "Dataset"
         verbose_name_plural = "Datasets"
-
-    def __str__(self):
-        return f"{self.dataset_node.name} ({self.get_type_display()})"

@@ -8,7 +8,7 @@ from environment variables.
 
 from .base import InfraManagerAbstract
 from .batch.k8s_batch_compute import K8sBatchCompute
-from .storage.k8_object_storage import K8sObjectStorage
+from .storage.k8s_object_storage import K8sObjectStorage
 
 
 class K8sInfraManager(InfraManagerAbstract):

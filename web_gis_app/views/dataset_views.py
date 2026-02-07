@@ -1,3 +1,6 @@
+import json
+
+from django.contrib.gis.geos import GEOSGeometry
 from django.db import transaction
 from django.http import FileResponse
 from rest_framework import status
@@ -8,15 +11,15 @@ from rest_framework.viewsets import ModelViewSet
 
 from shared.infrastructure import InfraManager
 
-from .constants import DatasetNodeType
-from .models import Dataset, DatasetNode
-from .serializers import (
+from ..constants import DatasetNodeType, DatasetType
+from ..models import Dataset, DatasetNode, Feature
+from ..serializers.dataset_serializers import (
     DatasetNodeSerializer,
     DatasetNodeTreeSerializer,
     DatasetSerializer,
     DatasetUploadSerializer,
 )
-from .utils import detect_dataset_info
+from ..utils import detect_dataset_info
 
 
 class DatasetNodeViewSet(ModelViewSet):
@@ -129,17 +132,22 @@ class DatasetNodeViewSet(ModelViewSet):
             user=request.user,
         )
 
-        # Create the dataset
+        # Build metadata with optional srid and bbox.
+        metadata = serializer.validated_data.get("metadata", {})
+        if srid := serializer.validated_data.get("srid"):
+            metadata["srid"] = srid
+        if bbox := serializer.validated_data.get("bbox"):
+            metadata["bbox"] = bbox
+
+        # Create the dataset.
         dataset = Dataset.objects.create(
             dataset_node=dataset_node,
             type=dataset_type,
             format=file_format,
-            srid=serializer.validated_data.get("srid"),
-            bbox=serializer.validated_data.get("bbox"),
-            metadata=serializer.validated_data.get("metadata", {}),
-            file_name="",  # Will be set below
-            file_size=0,  # Will be set below
-            cloud_storage_path="",  # Will be set below
+            metadata=metadata,
+            file_name="",  # Will be set below.
+            file_size=0,  # Will be set below.
+            cloud_storage_path="",  # Will be set below.
         )
 
         # Upload file
@@ -161,17 +169,70 @@ class DatasetNodeViewSet(ModelViewSet):
             },
         )
 
-        # Save file info
+        # Save file info.
         dataset.file_name = file.name
         dataset.file_size = upload_result["size"]
         dataset.cloud_storage_path = cloud_storage_path
         dataset.save(update_fields=["file_name", "file_size", "cloud_storage_path"])
 
-        # Build response with node and dataset data
+        # Parse GeoJSON and store features in PostGIS.
+        if dataset_type == DatasetType.VECTOR and file_format == "geojson":
+            self._parse_and_store_geojson_features(file, dataset)
+
+        # Build response with node and dataset data.
         response_data = DatasetNodeSerializer(dataset_node).data
         response_data["dataset"] = DatasetSerializer(dataset).data
 
         return Response(response_data, status=status.HTTP_201_CREATED)
+
+    def _parse_and_store_geojson_features(self, file, dataset: Dataset):
+        """
+        Parse GeoJSON file and store features in PostGIS.
+        """
+        try:
+            # Reset file pointer to beginning.
+            file.seek(0)
+            geojson_data = json.load(file)
+
+            features_to_create = []
+
+            if geojson_data.get("type") == "FeatureCollection":
+                geojson_features = geojson_data.get("features", [])
+            elif geojson_data.get("type") == "Feature":
+                geojson_features = [geojson_data]
+            else:
+                # Assume it's a geometry directly.
+                geojson_features = [{"type": "Feature", "geometry": geojson_data, "properties": {}}]
+
+            for feature in geojson_features:
+                geometry_json = feature.get("geometry")
+                if not geometry_json:
+                    continue
+
+                try:
+                    geometry = GEOSGeometry(json.dumps(geometry_json), srid=4326)
+                    properties = feature.get("properties", {}) or {}
+
+                    features_to_create.append(
+                        Feature(
+                            dataset=dataset,
+                            geometry=geometry,
+                            properties=properties,
+                        )
+                    )
+                except Exception as e:
+                    print(f"Error creating geometry for feature: {e}")
+                    continue
+
+            # Bulk create features.
+            if features_to_create:
+                Feature.objects.bulk_create(features_to_create, batch_size=1000)
+                print(f"Created {len(features_to_create)} features for dataset {dataset.id}")
+
+        except json.JSONDecodeError as e:
+            print(f"Error parsing GeoJSON: {e}")
+        except Exception as e:
+            print(f"Error storing features: {e}")
 
     @action(methods=["GET"], detail=True, url_path="download", url_name="download")
     def download(self, request, pk):

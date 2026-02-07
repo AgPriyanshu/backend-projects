@@ -13,8 +13,8 @@ class ObjectStorageAbstract(ABC):
     def upload_object(
         self,
         file: BinaryIO,
-        bucket: str,
         key: str,
+        bucket: Optional[str] = None,
         metadata: Optional[Dict[str, str]] = None,
     ) -> Dict[str, Any]:
         """
@@ -61,7 +61,11 @@ class ObjectStorageAbstract(ABC):
 
     @abstractmethod
     def generate_presigned_url(
-        self, key: str, bucket: Optional[str] = None, expiration: int = 3600, method: str = "GET"
+        self,
+        key: str,
+        bucket: Optional[str] = None,
+        expiration: int = 3600,
+        method: str = "GET",
     ) -> str:
         """
         Generate a presigned URL for temporary access to an object.
@@ -93,7 +97,10 @@ class ObjectStorageAbstract(ABC):
 
     @abstractmethod
     def list_objects(
-        self, prefix: Optional[str] = None, bucket: Optional[str] = None, max_results: int = 1000
+        self,
+        prefix: Optional[str] = None,
+        bucket: Optional[str] = None,
+        max_results: int = 1000,
     ) -> list[Dict[str, Any]]:
         """
         List objects in a bucket.
