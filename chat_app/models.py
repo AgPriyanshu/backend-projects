@@ -1,7 +1,7 @@
 from django.contrib.auth.models import User
 from django.db import models
 
-from shared.models import BaseModel
+from shared.models.base_models import BaseModel
 
 
 class Message(BaseModel):

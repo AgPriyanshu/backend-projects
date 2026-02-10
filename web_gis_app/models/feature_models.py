@@ -1,7 +1,7 @@
 from django.contrib.gis.db import models as gis_models
 from django.db import models
 
-from shared.models import BaseModelWithoutUser
+from shared.models.base_models import BaseModelWithoutUser
 
 from .dataset_models import Dataset
 

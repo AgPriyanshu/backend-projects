@@ -3,7 +3,7 @@ import uuid
 
 from django.db import models
 
-from shared.models import BaseModel
+from shared.models.base_models import BaseModel
 
 
 def generate_base62_slug():

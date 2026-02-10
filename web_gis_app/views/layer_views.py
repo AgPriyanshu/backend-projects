@@ -32,11 +32,13 @@ class LayerViewSet(BaseModelViewSet):
 
         features = []
         for feature in dataset.features.all():
-            features.append({
-                "type": "Feature",
-                "geometry": json.loads(feature.geometry.json),
-                "properties": feature.properties,
-            })
+            features.append(
+                {
+                    "type": "Feature",
+                    "geometry": json.loads(feature.geometry.json),
+                    "properties": feature.properties,
+                }
+            )
 
         return JsonResponse(
             {"type": "FeatureCollection", "features": features},

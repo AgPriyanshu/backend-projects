@@ -1,7 +1,7 @@
 from django.db import models
 from django.utils import timezone
 
-from shared.models import BaseModel
+from shared.models.base_models import BaseModel
 
 
 class Task(BaseModel):

@@ -4,7 +4,7 @@ from django.contrib.auth.models import User
 from django.db import models
 from djmoney.models.fields import MoneyField
 
-from shared.models import BaseModelWithoutUser
+from shared.models.base_models import BaseModelWithoutUser
 
 
 class Category(models.Model):

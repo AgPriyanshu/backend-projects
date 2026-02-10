@@ -2,7 +2,7 @@ from typing import TYPE_CHECKING
 
 from django.db import models
 
-from shared.models import BaseModel, BaseModelWithoutUser
+from shared.models.base_models import BaseModel, BaseModelWithoutUser
 
 from ..constants import DatasetNodeType, DatasetType, FileFormat
 

@@ -9,6 +9,7 @@ from .settings import BASE_DIR, STATIC_ROOT, STATIC_URL
 from .views import ping
 
 urlpatterns = [
+    path("", include("shared.urls")),
     path("admin/", admin.site.urls),
     path("auth/", include("auth_app.urls")),
     path("blogs/", include("blogs_app.urls")),

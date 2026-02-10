@@ -1,6 +1,6 @@
 from django.db.models import FileField
 
-from shared.models import BaseModel
+from shared.models.base_models import BaseModel
 
 
 class Note(BaseModel):

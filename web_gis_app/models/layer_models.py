@@ -1,6 +1,6 @@
 from django.db import models
 
-from shared.models import BaseModel
+from shared.models.base_models import BaseModel
 
 from .dataset_models import Dataset
 

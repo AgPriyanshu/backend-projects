@@ -17,6 +17,7 @@ ALLOWED_HOSTS = ["*"]
 
 CORS_ALLOWED_ORIGINS = ["http://localhost:3000"]
 ASGI_APPLICATION = "backend_projects.asgi.application"
+
 CHANNEL_LAYERS = {
     "default": {
         "BACKEND": "channels_redis.core.RedisChannelLayer",
@@ -142,6 +143,9 @@ CACHES = {
     "default": {
         "BACKEND": "django.core.cache.backends.redis.RedisCache",
         "LOCATION": f"redis://{os.environ['REDIS_HOST']}:{os.environ['REDIS_PORT']}/0",
+        "OPTIONS": {
+            "CLIENT_CLASS": "django_redis.client.DefaultClient",
+        },
         "KEY_PREFIX": "backend_projects",
         "TIMEOUT": 300,
     },

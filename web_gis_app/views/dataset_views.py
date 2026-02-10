@@ -202,7 +202,9 @@ class DatasetNodeViewSet(ModelViewSet):
                 geojson_features = [geojson_data]
             else:
                 # Assume it's a geometry directly.
-                geojson_features = [{"type": "Feature", "geometry": geojson_data, "properties": {}}]
+                geojson_features = [
+                    {"type": "Feature", "geometry": geojson_data, "properties": {}}
+                ]
 
             for feature in geojson_features:
                 geometry_json = feature.get("geometry")
@@ -227,7 +229,9 @@ class DatasetNodeViewSet(ModelViewSet):
             # Bulk create features.
             if features_to_create:
                 Feature.objects.bulk_create(features_to_create, batch_size=1000)
-                print(f"Created {len(features_to_create)} features for dataset {dataset.id}")
+                print(
+                    f"Created {len(features_to_create)} features for dataset {dataset.id}"
+                )
 
         except json.JSONDecodeError as e:
             print(f"Error parsing GeoJSON: {e}")
@@ -270,8 +274,6 @@ class DatasetNodeViewSet(ModelViewSet):
             # Set content type if available
             if dataset.metadata and dataset.metadata.get("content_type"):
                 response["Content-Type"] = dataset.metadata["content_type"]
-
-            # logger.debug()
 
             return response
 
