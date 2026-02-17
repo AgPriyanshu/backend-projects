@@ -10,6 +10,5 @@ class BaseEnum(StrEnum):
 
 
 class AppName(TextChoices):
-    WEB_GIS_APP = "web_gis_app"
-    EXPENSE_TRACKER_APP = "expense_tracker_app"
-    BACKEND_PROJECTS = "backend_projects"
+    WEB_GIS = "web_gis_app"
+    MAIN = "backend_projects"

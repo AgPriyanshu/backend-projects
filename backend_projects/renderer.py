@@ -9,18 +9,23 @@ class CustomJSONRenderer(JSONRenderer):
     charset = "utf-8"
 
     def render(self, data, accepted_media_type=None, renderer_context=None):
-        response = renderer_context.get("response", None)
+        response = None
 
-        # 🚨 IMPORTANT: 204 must not have a body
+        if renderer_context:
+            response = renderer_context.get("response", None)
+
         if response and response.status_code == status.HTTP_204_NO_CONTENT:
             return b""
 
         message = ""
         response_data_body = {}
 
+        if response and hasattr(response, "data") and isinstance(response.data, dict):
+            message = response.data.pop("message", "")
+            data = response.data
+
         if isinstance(data, dict):
             response_data_body = data.get("data", data)
-            message = data.get("message", "")
         else:
             response_data_body = data
 

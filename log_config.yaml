@@ -20,9 +20,6 @@ handlers:
     level: DEBUG
 
 loggers:
-  "": # Root logger
-    handlers: [console]
-    level: DEBUG
   uvicorn:
     level: INFO
     handlers: [console]
