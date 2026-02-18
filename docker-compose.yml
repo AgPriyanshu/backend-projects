@@ -18,6 +18,22 @@ services:
         condition: service_healthy
     env_file: ./.env
 
+  worker:
+    build: .
+    container_name: celery_worker
+    command: celery -A backend_projects worker -l info
+    volumes:
+      - .:/app
+    entrypoint: ""
+    depends_on:
+      redis:
+        condition: service_started
+      db:
+        condition: service_healthy
+      seaweedfs:
+        condition: service_healthy
+    env_file: ./.env
+
   db:
     platform: linux/amd64
     image: postgis/postgis:17-3.6-alpine

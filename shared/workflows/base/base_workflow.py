@@ -13,6 +13,7 @@ class Workflow(ABC):
         """Create a workflow with name-keyed payloads."""
         self.payloads = self._build_payloads(payload)
         self.outputs = {}
+        self.ctx = {}
 
     def _build_payloads(self, payload):
         """Build operation payloads from a name-keyed mapping."""
@@ -81,6 +82,7 @@ class Workflow(ABC):
 
             operation_instance = operation(payload)
             operation_instance.outputs = self.outputs
+            operation_instance.ctx = self.ctx
 
             operation_output = operation_instance.execute(*args, **kwargs)
             operation_name = operation.name or operation.__name__

@@ -4,6 +4,7 @@ from shared.serializers import BaseModelSerializer
 
 from ..constants import DatasetNodeType
 from ..models import Dataset, DatasetNode
+from .tileset_serializers import TileSetSerializer
 
 
 class DatasetNodeSerializer(BaseModelSerializer):
@@ -14,6 +15,8 @@ class DatasetNodeSerializer(BaseModelSerializer):
 
 
 class DatasetSerializer(BaseModelSerializer):
+    tileset = TileSetSerializer(read_only=True)
+
     class Meta:
         model = Dataset
         fields = (
@@ -25,6 +28,7 @@ class DatasetSerializer(BaseModelSerializer):
             "file_size",
             "cloud_storage_path",
             "metadata",
+            "tileset",
             "created_at",
         )
         read_only_fields = (
@@ -102,3 +106,44 @@ class DatasetNodeTreeSerializer(BaseModelSerializer):
             .order_by("name")
         )
         return DatasetNodeTreeSerializer(children, many=True).data
+
+
+class DatasetMultipartInitSerializer(serializers.Serializer):
+    """Serializer for initiating a multipart upload"""
+
+    name = serializers.CharField(max_length=255)
+    type = serializers.ChoiceField(choices=DatasetNodeType.choices, required=True)
+    parent = serializers.PrimaryKeyRelatedField(
+        queryset=DatasetNode.objects.all(), required=False, allow_null=True
+    )
+    metadata = serializers.DictField(required=False, default={})
+
+    def validate(self, attrs):
+        """Cross-field validation"""
+        node_type = attrs.get("type")
+        parent = attrs.get("parent")
+
+        if node_type == DatasetNodeType.DATASET.value and parent is not None:
+            if parent.type == DatasetNodeType.DATASET.value:
+                raise serializers.ValidationError(
+                    "A dataset node cannot have another dataset as its parent. Parent must be a folder."
+                )
+        return attrs
+
+
+class DatasetMultipartSignSerializer(serializers.Serializer):
+    """Serializer for getting a presigned URL for a part"""
+
+    upload_id = serializers.CharField()
+    key = serializers.CharField()
+    part_number = serializers.IntegerField(min_value=1, max_value=10000)
+
+
+class DatasetMultipartCompleteSerializer(serializers.Serializer):
+    """Serializer for completing a multipart upload"""
+
+    upload_id = serializers.CharField()
+    key = serializers.CharField()
+    parts = serializers.ListField(
+        child=serializers.DictField()
+    )  # List of {ETag: str, PartNumber: int}

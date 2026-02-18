@@ -151,6 +151,17 @@ CACHES = {
     },
 }
 
+# Celery Configuration
+CELERY_BROKER_URL = (
+    f"redis://{os.environ.get('REDIS_HOST', 'redis')}"
+    f":{os.environ.get('REDIS_PORT', '6379')}/1"
+)
+CELERY_RESULT_BACKEND = CELERY_BROKER_URL
+CELERY_ACCEPT_CONTENT = ["json"]
+CELERY_TASK_SERIALIZER = "json"
+CELERY_RESULT_SERIALIZER = "json"
+CELERY_TIMEZONE = "UTC"
+
 # Password validation
 # https://docs.djangoproject.com/en/5.1/ref/settings/#auth-password-validators
 

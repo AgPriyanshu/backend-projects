@@ -45,6 +45,7 @@ class Operation(ABC, Generic[PayloadT, OutputT]):
     def __init__(self, payload: PayloadT):
         self.payload = payload
         self.outputs = {}
+        self.ctx = {}
 
     @abstractmethod
     def execute(self, *args, **kwargs) -> OutputT:

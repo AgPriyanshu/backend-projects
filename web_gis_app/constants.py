@@ -28,3 +28,16 @@ class FileFormat(TextChoices):
     # Document formats
     PDF = "pdf"
     TXT = "txt"
+
+
+class TileSetStatus(TextChoices):
+    PENDING = "pending"
+    PROCESSING = "processing"
+    READY = "ready"
+    FAILED = "failed"
+
+
+class DatasetStatus(TextChoices):
+    PENDING = "pending"
+    UPLOADED = "uploaded"
+    FAILED = "failed"

@@ -3,6 +3,7 @@ import os
 from typing import Any, BinaryIO, Dict, Optional
 
 import boto3
+from botocore import UNSIGNED
 from botocore.client import Config
 from botocore.exceptions import ClientError
 
@@ -17,30 +18,44 @@ class K8sObjectStorage(ObjectStorageAbstract):
 
     def __init__(self):
         """Initialize boto3 S3 client for SeaweedFS from environment variables."""
-        # Get environment variables with error checking
-        try:
-            endpoint = os.environ["S3_ENDPOINT"]
-            access_key = os.environ["S3_ACCESS_KEY"]
-            secret_key = os.environ["S3_SECRET_KEY"]
-            region = os.environ["S3_REGION"]
-            self.default_bucket = os.environ["S3_BUCKET"]
-        except KeyError as e:
-            raise RuntimeError(
-                f"Missing required environment variable: {e}. "
-                "Please ensure all S3 configuration variables are set in your .env file."
+        # Get environment variables
+        endpoint = os.environ.get("S3_ENDPOINT")
+        region = os.environ.get("S3_REGION")
+        self.default_bucket = os.environ.get("S3_BUCKET")
+
+        # Check for unsigned mode
+        use_unsigned = os.environ.get("S3_USE_UNSIGNED", "false").lower() == "true"
+
+        if not endpoint or not self.default_bucket:
+             raise RuntimeError(
+                "Missing required S3 configuration. S3_ENDPOINT and S3_BUCKET are required."
             )
 
-        if not self.default_bucket:
-            raise RuntimeError("S3_BUCKET environment variable is empty")
+        if use_unsigned:
+            self.client = boto3.client(
+                "s3",
+                endpoint_url=endpoint,
+                region_name=region,
+                config=Config(signature_version=UNSIGNED),
+            )
+        else:
+            # Standard auth mode
+            access_key = os.environ.get("S3_ACCESS_KEY")
+            secret_key = os.environ.get("S3_SECRET_KEY")
 
-        self.client = boto3.client(
-            "s3",
-            endpoint_url=endpoint,
-            aws_access_key_id=access_key,
-            aws_secret_access_key=secret_key,
-            region_name=region,
-            config=Config(signature_version="s3v4"),
-        )
+            if not access_key or not secret_key:
+                 raise RuntimeError(
+                    "S3_ACCESS_KEY and S3_SECRET_KEY are required unless S3_USE_UNSIGNED=true."
+                )
+
+            self.client = boto3.client(
+                "s3",
+                endpoint_url=endpoint,
+                aws_access_key_id=access_key,
+                aws_secret_access_key=secret_key,
+                region_name=region,
+                config=Config(signature_version="s3v4"),
+            )
 
     def upload_object(
         self,
@@ -127,6 +142,7 @@ class K8sObjectStorage(ObjectStorageAbstract):
         bucket: Optional[str] = None,
         expiration: int = 3600,
         method: str = "GET",
+        **kwargs,
     ) -> str:
         """Generate a presigned URL for S3-compatible storage object."""
         presigned_bucket = bucket if bucket is not None else self.default_bucket
@@ -135,15 +151,31 @@ class K8sObjectStorage(ObjectStorageAbstract):
             if method_upper == "GET":
                 client_method = "get_object"
             elif method_upper == "PUT":
-                client_method = "put_object"
+                if "UploadId" in kwargs and "PartNumber" in kwargs:
+                    client_method = "upload_part"
+                else:
+                    client_method = "put_object"
             else:
                 raise ValueError(f"Unsupported method: {method}. Use 'GET' or 'PUT'")
 
+            params = {"Bucket": presigned_bucket, "Key": key}
+            if "UploadId" in kwargs:
+                params["UploadId"] = kwargs["UploadId"]
+            if "PartNumber" in kwargs:
+                params["PartNumber"] = kwargs["PartNumber"]
+
             url = self.client.generate_presigned_url(
                 ClientMethod=client_method,
-                Params={"Bucket": presigned_bucket, "Key": key},
+                Params=params,
                 ExpiresIn=expiration,
             )
+
+            # If a public endpoint is configured, replace the internal endpoint in the URL
+            public_endpoint = os.environ.get("S3_PUBLIC_ENDPOINT")
+            internal_endpoint = os.environ.get("S3_ENDPOINT")
+
+            if public_endpoint and internal_endpoint and internal_endpoint in url:
+                url = url.replace(internal_endpoint, public_endpoint)
 
             return url
         except ClientError as e:
@@ -207,3 +239,71 @@ class K8sObjectStorage(ObjectStorageAbstract):
             return objects
         except ClientError as e:
             raise RuntimeError(f"Failed to list objects: {e}")
+
+    def create_multipart_upload(
+        self,
+        key: str,
+        content_type: Optional[str] = None,
+        bucket: Optional[str] = None,
+        metadata: Optional[Dict[str, str]] = None,
+    ) -> str:
+        """Initiate a multipart upload."""
+        upload_bucket = bucket if bucket is not None else self.default_bucket
+        try:
+            params = {
+                "Bucket": upload_bucket,
+                "Key": key,
+                "Metadata": metadata or {},
+            }
+            if content_type:
+                params["ContentType"] = content_type
+
+            response = self.client.create_multipart_upload(**params)
+            return response["UploadId"]
+        except ClientError as e:
+            raise RuntimeError(f"Failed to initiate multipart upload: {e}")
+
+    def complete_multipart_upload(
+        self,
+        key: str,
+        upload_id: str,
+        parts: list[Dict[str, Any]],
+        bucket: Optional[str] = None,
+    ) -> Dict[str, Any]:
+        """Complete a multipart upload."""
+        upload_bucket = bucket if bucket is not None else self.default_bucket
+        try:
+            # Sort parts by PartNumber as required by S3
+            sorted_parts = sorted(parts, key=lambda p: p["PartNumber"])
+
+            response = self.client.complete_multipart_upload(
+                Bucket=upload_bucket,
+                Key=key,
+                UploadId=upload_id,
+                MultipartUpload={"Parts": sorted_parts},
+            )
+            return {
+                "bucket": response.get("Bucket"),
+                "key": response.get("Key"),
+                "etag": response.get("ETag", "").strip('"'),
+            }
+        except ClientError as e:
+            raise RuntimeError(f"Failed to complete multipart upload: {e}")
+
+    def abort_multipart_upload(
+        self,
+        key: str,
+        upload_id: str,
+        bucket: Optional[str] = None,
+    ) -> bool:
+        """Abort a multipart upload."""
+        upload_bucket = bucket if bucket is not None else self.default_bucket
+        try:
+            self.client.abort_multipart_upload(
+                Bucket=upload_bucket,
+                Key=key,
+                UploadId=upload_id,
+            )
+            return True
+        except ClientError as e:
+            raise RuntimeError(f"Failed to abort multipart upload: {e}")

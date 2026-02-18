@@ -4,7 +4,7 @@ from django.db import models
 
 from shared.models.base_models import BaseModel, BaseModelWithoutUser
 
-from ..constants import DatasetNodeType, DatasetType, FileFormat
+from ..constants import DatasetNodeType, DatasetStatus, DatasetType, FileFormat
 
 
 class DatasetNode(BaseModel):
@@ -76,6 +76,13 @@ class Dataset(BaseModelWithoutUser):
         default=dict,
         blank=True,
         help_text="Additional format-specific metadata (resolution, bands, CRS details, etc.)",
+    )
+
+    status = models.CharField(
+        max_length=20,
+        choices=DatasetStatus.choices,
+        default=DatasetStatus.UPLOADED,
+        help_text="Upload status of the dataset file",
     )
 
     class Meta:

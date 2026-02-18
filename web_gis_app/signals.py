@@ -1,7 +1,9 @@
 from django.db.models.signals import post_save, pre_save
 from django.dispatch import receiver
 
-from .models import DatasetClosure, DatasetNode
+from .constants import DatasetStatus, DatasetType
+from .models import Dataset, DatasetClosure, DatasetNode
+from .tasks import generate_cog_task
 
 # Cache to store old parent values before save
 _old_parent_cache = {}
@@ -108,5 +110,25 @@ def rebuild_descendant_closures(node):
         # Create new closures based on current parent (node)
         create_ancestor_closures(child)
 
+
         # Recursively rebuild for this child's descendants
         rebuild_descendant_closures(child)
+
+
+@receiver(post_save, sender=Dataset)
+def trigger_dataset_processing(sender, instance, created, **kwargs):
+    """
+    Trigger background processing tasks when a dataset is successfully uploaded.
+    """
+    if instance.status == DatasetStatus.UPLOADED and instance.type == DatasetType.RASTER:
+        # Avoid triggering if just created in PENDING state (which happens during multipart init).
+        # We only want to trigger when it transitions to UPLOADED.
+        # Note: If created directly as UPLOADED (e.g. single file upload), this WILL trigger, which is correct.
+
+        # If we want to be strict about transition:
+        # We could use pre_save to check old status, but post_save is safer for firing tasks.
+        # If 'created' is True and status is UPLOADED, it's a direct upload -> Trigger.
+        # If 'created' is False and status is UPLOADED, it's a multipart completion -> Trigger.
+
+        print(f"Signal: Dataset {instance.id} is UPLOADED RASTER. Triggering COG task.")
+        generate_cog_task.delay(str(instance.id))

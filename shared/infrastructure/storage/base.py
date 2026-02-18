@@ -114,3 +114,67 @@ class ObjectStorageAbstract(ABC):
             List of object metadata dictionaries
         """
         raise NotImplementedError
+
+    @abstractmethod
+    def create_multipart_upload(
+        self,
+        key: str,
+        content_type: Optional[str] = None,
+        bucket: Optional[str] = None,
+        metadata: Optional[Dict[str, str]] = None,
+    ) -> str:
+        """
+        Initiate a multipart upload.
+
+        Args:
+            key: Object key/path
+            content_type: MIME type of the content
+            bucket: Optional bucket/container name
+            metadata: Optional metadata
+
+        Returns:
+            Upload ID string
+        """
+        raise NotImplementedError
+
+    @abstractmethod
+    def complete_multipart_upload(
+        self,
+        key: str,
+        upload_id: str,
+        parts: list[Dict[str, Any]],
+        bucket: Optional[str] = None,
+    ) -> Dict[str, Any]:
+        """
+        Complete a multipart upload.
+
+        Args:
+            key: Object key/path
+            upload_id: ID of the upload to complete
+            parts: List of parts (ETag and PartNumber)
+            bucket: Optional bucket/container name
+
+        Returns:
+            Result dictionary
+        """
+        raise NotImplementedError
+
+    @abstractmethod
+    def abort_multipart_upload(
+        self,
+        key: str,
+        upload_id: str,
+        bucket: Optional[str] = None,
+    ) -> bool:
+        """
+        Abort a multipart upload.
+
+        Args:
+            key: Object key/path
+            upload_id: ID of the upload to abort
+            bucket: Optional bucket/container name
+
+        Returns:
+            True if aborted successfully
+        """
+        raise NotImplementedError

@@ -7,7 +7,7 @@ from .dataset_models import Dataset
 
 class Layer(BaseModel):
     name = models.TextField()
-    source = models.ForeignKey(Dataset, on_delete=models.DO_NOTHING)
+    source = models.ForeignKey(Dataset, on_delete=models.CASCADE)
     style = models.JSONField(
         default=dict,
         blank=True,
