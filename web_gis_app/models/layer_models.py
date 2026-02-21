@@ -61,5 +61,14 @@ class Layer(BaseModel):
                     "raster-opacity": 1,
                 },
             }
+        elif source_type == DatasetType.RASTER_DEM:
+            return {
+                "type": "hillshade",
+                "paint": {
+                    "hillshade-shadow-color": "#474747",
+                    "hillshade-highlight-color": "#ffffff",
+                    "hillshade-accent-color": "#000000",
+                },
+            }
 
         return {}

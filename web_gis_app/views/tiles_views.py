@@ -14,7 +14,7 @@ from rio_tiler.io import Reader
 
 from shared.infrastructure import InfraManager
 
-from ..constants import TileSetStatus
+from ..constants import DatasetType, TileSetStatus
 from ..models import TileSet
 
 logger = logging.getLogger(__name__)
@@ -64,8 +64,40 @@ class DatasetTileView(APIView):
 
             with rasterio.Env(session=session, **rio_env):
                 with Reader(storage_url) as src:
-                    tile_data = src.tile(x, y, z)
-                    content = tile_data.render(img_format="PNG")
+                    # For DEM, we need float32 data to encode into RGB.
+                    if tileset.dataset.type == DatasetType.RASTER_DEM:
+                        import numpy as np
+                        from rio_rgbify.encoders import data_to_rgb
+                        from rio_tiler.models import ImageData
+
+                        # Fetch raw float data, bilinear is better for continuous elevation
+                        tile_data = src.tile(x, y, z, resampling_method="bilinear")
+                        data = tile_data.data.astype(np.float32)
+
+                        # Handle no-data / NaNs
+                        data = np.nan_to_num(data, nan=-10000.0)
+
+                        # rio_rgbify expects a 2D array for a single band DEM.
+                        if data.ndim == 3 and data.shape[0] == 1:
+                            data_2d = data[0]
+                        else:
+                            data_2d = data
+
+                        # Encode using Mapbox baseval=-10000, interval=0.1
+                        rgb_array = data_to_rgb(data_2d, baseval=-10000.0, interval=0.1)
+
+                        # Create new ImageData to render
+                        rgb_tile = ImageData(
+                            rgb_array,
+                            tile_data.mask,
+                            assets=tile_data.assets,
+                            bounds=tile_data.bounds,
+                            crs=tile_data.crs
+                        )
+                        content = rgb_tile.render(img_format="PNG")
+                    else:
+                        tile_data = src.tile(x, y, z)
+                        content = tile_data.render(img_format="PNG")
 
             return HttpResponse(content, content_type="image/png")
 

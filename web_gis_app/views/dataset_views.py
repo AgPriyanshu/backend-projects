@@ -1,6 +1,4 @@
-import json
 
-from django.contrib.gis.geos import GEOSGeometry
 from django.db import transaction
 from django.http import FileResponse
 from rest_framework import status
@@ -12,7 +10,7 @@ from rest_framework.viewsets import ModelViewSet
 from shared.infrastructure import InfraManager
 
 from ..constants import DatasetNodeType, DatasetStatus, DatasetType
-from ..models import Dataset, DatasetNode, Feature
+from ..models import Dataset, DatasetNode
 from ..serializers.dataset_serializers import (
     DatasetMultipartCompleteSerializer,
     DatasetMultipartInitSerializer,
@@ -133,18 +131,25 @@ class DatasetNodeViewSet(ModelViewSet):
 
         file = files[0]
 
-        # Auto-detect dataset type and format from file extension
-        try:
-            dataset_type, file_format = detect_dataset_info(file.name)
-        except ValueError as e:
-            return Response(
-                {"error": str(e)},
-                status=status.HTTP_400_BAD_REQUEST,
-            )
-
         # Validate the upload data
         serializer = DatasetUploadSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
+        explicit_dataset_type = serializer.validated_data.get("dataset_type")
+
+        # Auto-detect dataset type and format from file extension
+        try:
+            dataset_type, file_format = detect_dataset_info(file.name)
+            if explicit_dataset_type:
+                dataset_type = explicit_dataset_type
+        except ValueError as e:
+            if explicit_dataset_type:
+                dataset_type = explicit_dataset_type
+                file_format = file.name.split(".")[-1] if "." in file.name else "bin"
+            else:
+                return Response(
+                    {"error": str(e)},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
 
         dataset_node = DatasetNode.objects.create(
             name=serializer.validated_data.get("name"),
@@ -198,8 +203,7 @@ class DatasetNodeViewSet(ModelViewSet):
         dataset.save(update_fields=["file_name", "file_size", "cloud_storage_path", "status"])
 
         # Parse GeoJSON and store features in PostGIS.
-        if dataset_type == DatasetType.VECTOR and file_format == "geojson":
-            self._parse_and_store_geojson_features(file, dataset)
+        # GeoJSON parsing is disabled as per user request.
 
         # COG generation for raster datasets is now handled by the post_save signal on status=UPLOADED.
         # if dataset_type == DatasetType.RASTER:
@@ -224,18 +228,24 @@ class DatasetNodeViewSet(ModelViewSet):
             user=request.user,
         )
 
+        explicit_dataset_type = serializer.validated_data.get("dataset_type")
+
         # Determine type/format
         # Note: In multipart init, we don't have the file to check extension/magic bytes easily.
         # We rely on the name or explicit type passed.
         filename = serializer.validated_data.get("name", "unknown")
         try:
             dataset_type, file_format = detect_dataset_info(filename)
-            # Override if type is explicitly passed? unique logic might be needed.
-            # But here we trust detect_dataset_info or default.
+            if explicit_dataset_type:
+                dataset_type = explicit_dataset_type
         except ValueError:
-            # Fallback or error?
-            dataset_type = DatasetType.RASTER # Default? Or error.
-            file_format = "tif" # Default
+            if explicit_dataset_type:
+                dataset_type = explicit_dataset_type
+                file_format = filename.split(".")[-1] if "." in filename else "bin"
+            else:
+                # Fallback to raster tif
+                dataset_type = DatasetType.RASTER
+                file_format = "tif"
 
         # Build metadata
         metadata = serializer.validated_data.get("metadata", {})
@@ -347,13 +357,6 @@ class DatasetNodeViewSet(ModelViewSet):
 
                 # Post-processing
                 if dataset.type == DatasetType.VECTOR and dataset.format == "geojson":
-                    # We need to download and parse?
-                    # This might be heavy for synchronous.
-                    # Should queue a task.
-                    # For now, let's skip automatic parsing for multipart uploads
-                    # OR queue a task. existing logic does inline parsing.
-                    # Verify task usage. "generate_cog_task" exists.
-                    # Maybe create "process_vector_task"?
                     pass
 
                 # RASTER COG generation is now handled by the signal.
@@ -408,58 +411,7 @@ class DatasetNodeViewSet(ModelViewSet):
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
 
-    def _parse_and_store_geojson_features(self, file, dataset: Dataset):
-        """
-        Parse GeoJSON file and store features in PostGIS.
-        """
-        try:
-            # Reset file pointer to beginning.
-            file.seek(0)
-            geojson_data = json.load(file)
 
-            features_to_create = []
-
-            if geojson_data.get("type") == "FeatureCollection":
-                geojson_features = geojson_data.get("features", [])
-            elif geojson_data.get("type") == "Feature":
-                geojson_features = [geojson_data]
-            else:
-                # Assume it's a geometry directly.
-                geojson_features = [
-                    {"type": "Feature", "geometry": geojson_data, "properties": {}}
-                ]
-
-            for feature in geojson_features:
-                geometry_json = feature.get("geometry")
-                if not geometry_json:
-                    continue
-
-                try:
-                    geometry = GEOSGeometry(json.dumps(geometry_json), srid=4326)
-                    properties = feature.get("properties", {}) or {}
-
-                    features_to_create.append(
-                        Feature(
-                            dataset=dataset,
-                            geometry=geometry,
-                            properties=properties,
-                        )
-                    )
-                except Exception as e:
-                    print(f"Error creating geometry for feature: {e}")
-                    continue
-
-            # Bulk create features.
-            if features_to_create:
-                Feature.objects.bulk_create(features_to_create, batch_size=1000)
-                print(
-                    f"Created {len(features_to_create)} features for dataset {dataset.id}"
-                )
-
-        except json.JSONDecodeError as e:
-            print(f"Error parsing GeoJSON: {e}")
-        except Exception as e:
-            print(f"Error storing features: {e}")
 
     @action(methods=["GET"], detail=True, url_path="download", url_name="download")
     def download(self, request, pk):

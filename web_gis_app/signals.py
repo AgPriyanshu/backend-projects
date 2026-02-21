@@ -120,7 +120,10 @@ def trigger_dataset_processing(sender, instance, created, **kwargs):
     """
     Trigger background processing tasks when a dataset is successfully uploaded.
     """
-    if instance.status == DatasetStatus.UPLOADED and instance.type == DatasetType.RASTER:
+    if instance.status == DatasetStatus.UPLOADED and instance.type in [
+        DatasetType.RASTER,
+        DatasetType.RASTER_DEM,
+    ]:
         # Avoid triggering if just created in PENDING state (which happens during multipart init).
         # We only want to trigger when it transitions to UPLOADED.
         # Note: If created directly as UPLOADED (e.g. single file upload), this WILL trigger, which is correct.

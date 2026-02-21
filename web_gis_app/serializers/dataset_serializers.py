@@ -2,7 +2,7 @@ from rest_framework import serializers
 
 from shared.serializers import BaseModelSerializer
 
-from ..constants import DatasetNodeType
+from ..constants import DatasetNodeType, DatasetType
 from ..models import Dataset, DatasetNode
 from .tileset_serializers import TileSetSerializer
 
@@ -45,6 +45,9 @@ class DatasetUploadSerializer(serializers.Serializer):
         queryset=DatasetNode.objects.all(), required=False, allow_null=True
     )  # type: ignore
     type = serializers.ChoiceField(choices=DatasetNodeType.choices, required=True)
+    dataset_type = serializers.ChoiceField(
+        choices=DatasetType.choices, required=False, allow_null=True
+    )
 
     files = serializers.ListField(
         child=serializers.FileField(), required=True, allow_empty=False
@@ -115,6 +118,9 @@ class DatasetMultipartInitSerializer(serializers.Serializer):
     type = serializers.ChoiceField(choices=DatasetNodeType.choices, required=True)
     parent = serializers.PrimaryKeyRelatedField(
         queryset=DatasetNode.objects.all(), required=False, allow_null=True
+    )
+    dataset_type = serializers.ChoiceField(
+        choices=DatasetType.choices, required=False, allow_null=True
     )
     metadata = serializers.DictField(required=False, default={})
 

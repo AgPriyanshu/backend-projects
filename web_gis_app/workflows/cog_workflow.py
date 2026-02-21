@@ -51,9 +51,18 @@ class GenerateCOG(Operation[GenerateCOGPayload, dict]):
             quiet=True,
         )
 
+        from rasterio.warp import transform_bounds
+
         # Extract metadata from the generated COG.
         with rasterio.open(output_path) as src:
-            bounds = list(src.bounds)
+            # Reproject bounds to EPSG:4326 (WGS84 Lng/Lat) for frontend consumption.
+            src_crs = src.crs
+            if src_crs and src_crs.to_string() != "EPSG:4326":
+                bounds_4326 = transform_bounds(src_crs, "EPSG:4326", *src.bounds)
+                bounds = list(bounds_4326)
+            else:
+                bounds = list(src.bounds)
+
             file_size = os.path.getsize(output_path)
 
             # Estimate zoom levels from resolution.

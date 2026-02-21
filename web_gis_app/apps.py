@@ -5,4 +5,4 @@ class WebGisAppConfig(AppConfig):
     name = 'web_gis_app'
 
     def ready(self):
-        pass
+        import web_gis_app.signals  # noqa
