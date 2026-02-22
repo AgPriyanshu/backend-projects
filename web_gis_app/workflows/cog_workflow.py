@@ -64,6 +64,8 @@ class GenerateCOG(Operation[GenerateCOGPayload, dict]):
                 bounds = list(src.bounds)
 
             file_size = os.path.getsize(output_path)
+            band_count = src.count
+            raster_kind = self._infer_raster_kind(band_count)
 
             # Estimate zoom levels from resolution.
             res = src.res[0]
@@ -76,6 +78,8 @@ class GenerateCOG(Operation[GenerateCOGPayload, dict]):
             "bounds": bounds,
             "min_zoom": min_zoom,
             "max_zoom": max_zoom,
+            "band_count": band_count,
+            "raster_kind": raster_kind,
         }
 
 
@@ -86,6 +90,16 @@ class GenerateCOG(Operation[GenerateCOGPayload, dict]):
             return 18
         zoom = math.log2(360.0 / (resolution_degrees * 256))
         return min(22, max(0, int(zoom)))
+
+    @staticmethod
+    def _infer_raster_kind(band_count: int) -> str:
+        # Product decision:
+        # 1 band -> elevation; 3 or 4 bands -> orthophoto (RGB/RGBA); otherwise generic raster.
+        if band_count == 1:
+            return "elevation"
+        if band_count in (3, 4):
+            return "ortho"
+        return "raster"
 
 
 class UpdateTileSet(Operation[UpdateTileSetPayload, dict]):
@@ -104,6 +118,13 @@ class UpdateTileSet(Operation[UpdateTileSetPayload, dict]):
         tileset.min_zoom = tileset_metadata.get("min_zoom", 0)
         tileset.max_zoom = tileset_metadata.get("max_zoom", 22)
         tileset.save()
+
+        dataset = tileset.dataset
+        dataset_metadata = dict(dataset.metadata or {})
+        dataset_metadata["band_count"] = tileset_metadata.get("band_count", 0)
+        dataset_metadata["raster_kind"] = tileset_metadata.get("raster_kind", "raster")
+        dataset.metadata = dataset_metadata
+        dataset.save(update_fields=["metadata"])
 
         # Send notification to the user.
         user = tileset.dataset.dataset_node.user

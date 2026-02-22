@@ -1,12 +1,13 @@
 from django.db.models.signals import post_save, pre_save
 from django.dispatch import receiver
 
-from .constants import DatasetStatus, DatasetType
+from .constants import DatasetStatus, DatasetType, TileSetStatus
 from .models import Dataset, DatasetClosure, DatasetNode
 from .tasks import generate_cog_task
 
 # Cache to store old parent values before save
 _old_parent_cache = {}
+_old_dataset_status_cache = {}
 
 
 def create_ancestor_closures(node):
@@ -47,6 +48,22 @@ def cache_old_parent(sender, instance, **kwargs):
             _old_parent_cache[instance.pk] = None
     else:
         _old_parent_cache[instance.pk] = None
+
+
+@receiver(pre_save, sender=Dataset)
+def cache_old_dataset_status(sender, instance, **kwargs):
+    """
+    Cache previous Dataset.status before save to detect UPLOADED transitions.
+    """
+    if not instance.pk:
+        _old_dataset_status_cache[instance.pk] = None
+        return
+
+    try:
+        old_instance = Dataset.objects.get(pk=instance.pk)
+        _old_dataset_status_cache[instance.pk] = old_instance.status
+    except Dataset.DoesNotExist:
+        _old_dataset_status_cache[instance.pk] = None
 
 
 @receiver(post_save, sender=DatasetNode)
@@ -120,18 +137,32 @@ def trigger_dataset_processing(sender, instance, created, **kwargs):
     """
     Trigger background processing tasks when a dataset is successfully uploaded.
     """
-    if instance.status == DatasetStatus.UPLOADED and instance.type in [
-        DatasetType.RASTER,
-        DatasetType.RASTER_DEM,
-    ]:
-        # Avoid triggering if just created in PENDING state (which happens during multipart init).
-        # We only want to trigger when it transitions to UPLOADED.
-        # Note: If created directly as UPLOADED (e.g. single file upload), this WILL trigger, which is correct.
+    try:
+        if instance.type != DatasetType.RASTER:
+            return
 
-        # If we want to be strict about transition:
-        # We could use pre_save to check old status, but post_save is safer for firing tasks.
-        # If 'created' is True and status is UPLOADED, it's a direct upload -> Trigger.
-        # If 'created' is False and status is UPLOADED, it's a multipart completion -> Trigger.
+        if instance.status != DatasetStatus.UPLOADED:
+            return
 
-        print(f"Signal: Dataset {instance.id} is UPLOADED RASTER. Triggering COG task.")
+        update_fields = kwargs.get("update_fields")
+        if update_fields is not None and "status" not in update_fields and not created:
+            return
+
+        old_status = _old_dataset_status_cache.get(instance.pk)
+        transitioned_to_uploaded = created or old_status != DatasetStatus.UPLOADED
+
+        if not transitioned_to_uploaded:
+            return
+
+        # Do not enqueue duplicates while a tileset is already being processed or is ready.
+        if hasattr(instance, "tileset"):
+            try:
+                if instance.tileset.status in {TileSetStatus.PROCESSING, TileSetStatus.READY}:
+                    return
+            except instance.tileset.RelatedObjectDoesNotExist:
+                pass
+
+        print(f"Signal: Dataset {instance.id} transitioned to UPLOADED RASTER. Triggering COG task.")
         generate_cog_task.delay(str(instance.id))
+    finally:
+        _old_dataset_status_cache.pop(instance.pk, None)

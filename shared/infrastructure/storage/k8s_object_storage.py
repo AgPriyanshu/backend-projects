@@ -27,7 +27,7 @@ class K8sObjectStorage(ObjectStorageAbstract):
         use_unsigned = os.environ.get("S3_USE_UNSIGNED", "false").lower() == "true"
 
         if not endpoint or not self.default_bucket:
-             raise RuntimeError(
+            raise RuntimeError(
                 "Missing required S3 configuration. S3_ENDPOINT and S3_BUCKET are required."
             )
 
@@ -44,7 +44,7 @@ class K8sObjectStorage(ObjectStorageAbstract):
             secret_key = os.environ.get("S3_SECRET_KEY")
 
             if not access_key or not secret_key:
-                 raise RuntimeError(
+                raise RuntimeError(
                     "S3_ACCESS_KEY and S3_SECRET_KEY are required unless S3_USE_UNSIGNED=true."
                 )
 
@@ -146,8 +146,10 @@ class K8sObjectStorage(ObjectStorageAbstract):
     ) -> str:
         """Generate a presigned URL for S3-compatible storage object."""
         presigned_bucket = bucket if bucket is not None else self.default_bucket
+
         try:
             method_upper = method.upper()
+
             if method_upper == "GET":
                 client_method = "get_object"
             elif method_upper == "PUT":
@@ -159,6 +161,7 @@ class K8sObjectStorage(ObjectStorageAbstract):
                 raise ValueError(f"Unsupported method: {method}. Use 'GET' or 'PUT'")
 
             params = {"Bucket": presigned_bucket, "Key": key}
+
             if "UploadId" in kwargs:
                 params["UploadId"] = kwargs["UploadId"]
             if "PartNumber" in kwargs:

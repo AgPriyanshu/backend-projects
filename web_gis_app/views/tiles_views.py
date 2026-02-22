@@ -2,6 +2,7 @@
 
 import logging
 import os
+from typing import Optional
 
 import rasterio
 from django.http import HttpResponse
@@ -14,7 +15,7 @@ from rio_tiler.io import Reader
 
 from shared.infrastructure import InfraManager
 
-from ..constants import DatasetType, TileSetStatus
+from ..constants import TileSetStatus
 from ..models import TileSet
 
 logger = logging.getLogger(__name__)
@@ -64,8 +65,22 @@ class DatasetTileView(APIView):
 
             with rasterio.Env(session=session, **rio_env):
                 with Reader(storage_url) as src:
-                    # For DEM, we need float32 data to encode into RGB.
-                    if tileset.dataset.type == DatasetType.RASTER_DEM:
+                    # Optional API override:
+                    # terrain=true (or raster_dem=true / visualization=terrain)
+                    # forces Terrain-RGB encoding for this tile request.
+                    force_terrain = self._get_terrain_override(request)
+
+                    is_elevation = force_terrain
+                    if is_elevation is None:
+                        is_elevation = self._is_elevation_raster(tileset)
+                    if is_elevation is None:
+                        preview_tile = src.tile(x, y, z, resampling_method="bilinear")
+                        is_elevation = (
+                            preview_tile.data.ndim == 3 and preview_tile.data.shape[0] == 1
+                        )
+
+                    # Elevation rasters (single-band) are encoded as Terrain-RGB.
+                    if is_elevation:
                         import numpy as np
                         from rio_rgbify.encoders import data_to_rgb
                         from rio_tiler.models import ImageData
@@ -162,3 +177,48 @@ class DatasetTileView(APIView):
             # Ensure GDAL knows we are treating this as S3
             "CPL_VSIL_CURL_ALLOWED_EXTENSIONS": ".tif,.tiff",
         }
+
+    @staticmethod
+    def _is_elevation_raster(tileset: TileSet) -> Optional[bool]:
+        dataset_metadata = tileset.dataset.metadata or {}
+        raster_kind = dataset_metadata.get("raster_kind")
+        band_count = dataset_metadata.get("band_count")
+
+        if raster_kind in {"elevation", "ortho"}:
+            return raster_kind == "elevation"
+
+        if isinstance(band_count, int):
+            return band_count == 1
+
+        return None
+
+    @staticmethod
+    def _get_terrain_override(request) -> Optional[bool]:
+        """
+        Parse optional terrain override query params.
+
+        Supported:
+        - ?terrain=true|false
+        - ?raster_dem=true|false
+        - ?visualization=terrain|terrain-rgb|raster
+        """
+        visualization = request.query_params.get("visualization")
+        if visualization:
+            value = visualization.strip().lower()
+            if value in {"terrain", "terrain-rgb", "raster-dem"}:
+                return True
+            if value in {"raster", "rgb"}:
+                return False
+
+        for key in ("terrain", "raster_dem"):
+            raw = request.query_params.get(key)
+            if raw is None:
+                continue
+
+            value = raw.strip().lower()
+            if value in {"1", "true", "yes", "on"}:
+                return True
+            if value in {"0", "false", "no", "off"}:
+                return False
+
+        return None

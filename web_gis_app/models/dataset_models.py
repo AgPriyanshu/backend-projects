@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from typing import TYPE_CHECKING
 
 from django.db import models
@@ -7,7 +9,34 @@ from shared.models.base_models import BaseModel, BaseModelWithoutUser
 from ..constants import DatasetNodeType, DatasetStatus, DatasetType, FileFormat
 
 
+class DatasetNodeQuerySet(models.QuerySet["DatasetNode"]):
+    def descendants_of(self, node: DatasetNode) -> DatasetNodeQuerySet:
+        return self.filter(descendant_closures__ancestor=node)
+
+    def with_dataset(self) -> DatasetNodeQuerySet:
+        return self.select_related("dataset")
+
+    def descendants_with_dataset(self, node: DatasetNode) -> DatasetNodeQuerySet:
+        return self.descendants_of(node).with_dataset()
+
+
+class DatasetNodeManager(models.Manager.from_queryset(DatasetNodeQuerySet)):
+    def get_queryset(self) -> DatasetNodeQuerySet:
+        return DatasetNodeQuerySet(self.model, using=self._db)
+
+    def descendants_of(self, node: DatasetNode) -> DatasetNodeQuerySet:
+        return self.get_queryset().descendants_of(node)
+
+    def with_dataset(self) -> DatasetNodeQuerySet:
+        return self.get_queryset().with_dataset()
+
+    def descendants_with_dataset(self, node: DatasetNode) -> DatasetNodeQuerySet:
+        return self.get_queryset().descendants_with_dataset(node)
+
+
 class DatasetNode(BaseModel):
+    objects: DatasetNodeManager = DatasetNodeManager()
+
     name = models.TextField(help_text="Name of the node", default="New Folder")
     parent = models.ForeignKey(
         "self",
@@ -53,7 +82,6 @@ class Dataset(BaseModelWithoutUser):
         DatasetNode, on_delete=models.CASCADE, related_name="dataset"
     )
 
-    # Dataset type and format
     type = models.CharField(
         max_length=20,
         choices=DatasetType.choices,

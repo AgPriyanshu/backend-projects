@@ -9,12 +9,24 @@ from .tileset_serializers import TileSetSerializer
 class LayerSerializer(BaseModelSerializer):
     bbox = serializers.SerializerMethodField()
     dataset_type = serializers.SerializerMethodField()
+    raster_kind = serializers.SerializerMethodField()
+    band_count = serializers.SerializerMethodField()
     tileset = serializers.SerializerMethodField()
 
     class Meta:
         model = Layer
-        fields = ("id", "name", "source", "style", "bbox", "dataset_type", "tileset")
-        read_only_fields = ("id", "bbox", "dataset_type", "tileset")
+        fields = (
+            "id",
+            "name",
+            "source",
+            "style",
+            "bbox",
+            "dataset_type",
+            "raster_kind",
+            "band_count",
+            "tileset",
+        )
+        read_only_fields = ("id", "bbox", "dataset_type", "raster_kind", "band_count", "tileset")
 
     def get_bbox(self, obj):
         """
@@ -39,6 +51,16 @@ class LayerSerializer(BaseModelSerializer):
         if obj.source:
             return obj.source.type
         return None
+
+    def get_raster_kind(self, obj):
+        if not obj.source:
+            return None
+        return (obj.source.metadata or {}).get("raster_kind")
+
+    def get_band_count(self, obj):
+        if not obj.source:
+            return None
+        return (obj.source.metadata or {}).get("band_count")
 
     def get_tileset(self, obj):
         """Get the tileset info if the source dataset has one."""

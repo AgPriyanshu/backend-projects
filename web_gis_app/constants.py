@@ -9,7 +9,6 @@ class DatasetNodeType(TextChoices):
 class DatasetType(TextChoices):
     VECTOR = "vector"
     RASTER = "raster"
-    RASTER_DEM = "raster-dem"
     TEXT = "text"
 
 

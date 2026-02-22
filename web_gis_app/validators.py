@@ -1,4 +1,7 @@
 from django.core.exceptions import ValidationError
+from rest_framework.exceptions import ValidationError as DRFValidationError
+
+from .constants import DatasetNodeType
 
 LAYER_TYPES = {
     "background",
@@ -13,7 +16,24 @@ LAYER_TYPES = {
     "sky",
 }
 
+
+DATASET_PARENT_VALIDATION_ERROR = (
+    "A dataset node cannot have another dataset as its parent. Parent must be a folder."
+)
+
+
+def validate_dataset_parent_for_node_type(*, node_type, parent, field_name="parent"):
+
+    if (
+        node_type == DatasetNodeType.DATASET.value
+        and parent
+        and parent.type == DatasetNodeType.DATASET.value
+    ):
+        raise DRFValidationError({field_name: DATASET_PARENT_VALIDATION_ERROR})
+
+
 def validate_style_spec(style):
+
     if not isinstance(style, dict):
         raise ValidationError("Style must be a JSON object.")
 
@@ -26,6 +46,7 @@ def validate_style_spec(style):
         raise ValidationError("Style must include a valid 'sources' object.")
 
     for source_name, source_config in sources.items():
+
         if not isinstance(source_name, str) or not source_name.strip():
             raise ValidationError("Source names must be non-empty strings.")
 
@@ -43,6 +64,7 @@ def validate_style_spec(style):
     layer_ids = set()
 
     for index, layer in enumerate(layers):
+
         if not isinstance(layer, dict):
             raise ValidationError(f"Layer at index {index} must be an object.")
 
@@ -74,6 +96,7 @@ def validate_style_spec(style):
         source_name = layer.get("source")
 
         if layer_type not in {"background", "sky"}:
+
             if not isinstance(source_name, str) or not source_name.strip():
                 raise ValidationError(
                     f"Layer '{layer_id}' must include a non-empty 'source'."
