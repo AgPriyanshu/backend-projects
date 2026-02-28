@@ -142,10 +142,10 @@ DATABASES = {
 CACHES = {
     "default": {
         "BACKEND": "django.core.cache.backends.redis.RedisCache",
-        "LOCATION": f"redis://{os.environ['REDIS_HOST']}:{os.environ['REDIS_PORT']}/0",
-        "OPTIONS": {
-            "CLIENT_CLASS": "django_redis.client.DefaultClient",
-        },
+        "LOCATION": (
+            f"redis://{os.environ.get('REDIS_HOST', 'redis')}"
+            f":{os.environ.get('REDIS_PORT', '6379')}/0"
+        ),
         "KEY_PREFIX": "backend_projects",
         "TIMEOUT": 300,
     },

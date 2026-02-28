@@ -226,7 +226,6 @@ class MultipartUploadService:
     @staticmethod
     def _infer_dataset_type(*, file_format):
         if file_format in {
-            FileFormat.GEOJSON,
             FileFormat.SHAPEFILE,
             FileFormat.KML,
             FileFormat.GEOPACKAGE,

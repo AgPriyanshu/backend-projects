@@ -91,7 +91,7 @@ class Dataset(BaseModelWithoutUser):
     format = models.CharField(
         max_length=20,
         choices=FileFormat.choices,
-        help_text="File format: geojson, shapefile, geotiff, etc.",
+        help_text="File format: shapefile, geotiff, etc.",
     )
 
     file_name = models.CharField(max_length=255, help_text="Primary file name")

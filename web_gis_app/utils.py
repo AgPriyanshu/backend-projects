@@ -5,7 +5,6 @@ from .constants import FileFormat
 # Extension to format mapping (case-insensitive)
 EXTENSION_TO_FORMAT = {
     # Vector formats.
-    "geojson": FileFormat.GEOJSON,
     "shp": FileFormat.SHAPEFILE,
     "kml": FileFormat.KML,
     "gpkg": FileFormat.GEOPACKAGE,

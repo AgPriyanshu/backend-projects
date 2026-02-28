@@ -1,103 +1,141 @@
-# Beginner to Ninja Backend Projects Using Django
+# Backend Projects with Django: From Fundamentals to Production Patterns
 
-This repository contains a collection of beginner to advanced backend projects developed using Django, based on the project ideas from [Roadmap.sh](https://roadmap.sh/backend/project-ideas). The purpose of this repository is to practice and enhance backend development skills by building real-world projects, focusing on a range of topics that are crucial for mastering backend development.
+This repository is a multi-app Django backend playground inspired by [Roadmap.sh backend project ideas](https://roadmap.sh/backend/project-ideas). It started as a learning-focused collection and has evolved into a more production-shaped backend system with async processing, geospatial workloads, object storage integration, real-time notifications, and Kubernetes deployment assets.
 
-## Purpose
+## Why This Repo Is Complex
 
-The primary goal of this repository is to provide a structured way for developers to practice and improve their backend development skills by building advanced projects. Each project covers important concepts such as:
+This is not a single CRUD app. It is a shared backend platform with multiple bounded contexts and cross-cutting infrastructure:
 
-- API Development
-- Authentication and Authorization
-- Database Design and Optimization
-- Asynchronous Processing
-- Caching and Performance Tuning
-- Microservices Architecture
-- WebSocket Implementation
+- Multi-app Django architecture with a shared core module.
+- ASGI-first serving with `uvicorn`, `daphne`, and Channels support.
+- PostGIS-backed data model for geospatial workflows.
+- Celery workers for asynchronous and long-running jobs.
+- Redis for caching, pub/sub notifications, and queue backing.
+- SeaweedFS S3-compatible object storage integration.
+- Reusable workflow/operation abstraction for pipeline-style processing.
+- Kubernetes Helm charts for platform and application deployment.
 
-These projects are built using **Django**, a powerful web framework for building scalable, maintainable, and efficient backend systems. By following the project ideas from Roadmap.sh, developers can challenge themselves with real-world problems and sharpen their skills in various aspects of backend development.
+## Current Feature Surface
 
-## Projects Covered
+The project currently includes these active API domains:
 
-The repository aims to implement the following backend projects inspired by [Roadmap.sh](https://roadmap.sh/backend/project-ideas):
+- `auth_app`: Authentication and token-based access patterns.
+- `blogs_app`: Blog APIs and content workflows.
+- `todo_app`: Task management APIs.
+- `expense_tracker_app`: Expense APIs with OpenAPI docs.
+- `note_markdown_app`: Markdown note APIs with OpenAPI docs.
+- `url_shortner_app`: URL shortener APIs.
+- `ecommerce_app`: Products, categories, and cart flows.
+- `web_gis_app`: Geospatial datasets, layers, tile serving, and COG processing.
+- `shared`: Notifications, SSE stream endpoint, shared serializers/models/utilities.
 
-1. **URL Shortener**: A system to shorten long URLs, with custom aliases and analytics tracking.
-2. **File Sharing Service**: A secure service that allows users to upload, share, and manage files.
-3. **Authentication System**: A robust system that handles user registration, login, and session management with JWT.
-4. **Social Media Platform**: A basic version of a social media site where users can post, comment, and interact.
-5. **Chat Application**: A real-time chat application using Django Channels and WebSockets.
-6. **Task Queue System**: A system for background job processing, using Django and a task queue like Celery.
-7. **Blog Platform**: A multi-user blogging platform with advanced features like content management, tagging, and commenting.
-8. **E-Commerce System**: A fully functional e-commerce site with user authentication, product management, and payment integration.
+There are also incubating modules (`chat_app`, `ai_chat`, `device_classifier`) present in the codebase, with some routes currently not enabled in project-level URL wiring.
 
-... and more!
+## Architecture Snapshot
+
+- Django project config: `backend_projects`.
+- API framework: Django REST Framework.
+- Database: PostgreSQL/PostGIS.
+- Cache + queue infra: Redis.
+- Async jobs: Celery worker (`worker` service in Docker Compose).
+- Real-time stream: Server-Sent Events endpoint at `/events/` with Redis pub/sub.
+- Storage: S3-compatible object storage via SeaweedFS.
+- Geospatial pipeline: COG generation workflow (`web_gis_app/tasks.py` + workflow operations).
+
+## Local Development (Docker Compose)
+
+This repository is intended to be run via Docker Compose:
+
+```bash
+git clone https://github.com/AgPriyanshu/backend-projects.git
+cd backend-projects
+docker compose up --build
+```
+
+Services started by default:
+
+- `web`: Django ASGI app.
+- `worker`: Celery worker.
+- `db`: PostGIS.
+- `redis`: Cache and broker.
+- `seaweedfs`: S3-compatible object storage.
+
+Common Django commands:
+
+```bash
+docker compose exec web python manage.py migrate
+docker compose exec web python manage.py createsuperuser
+docker compose exec web python manage.py shell
+```
+
+## Kubernetes Deployment
+
+Kubernetes assets are under `k8s/` and include both application and platform layers.
+
+- App charts: `k8s/apps/backend`, `k8s/apps/frontend`, `k8s/apps/shared`.
+- Platform charts: gateway, namespaces, PostgreSQL, Redis, object storage, registry, Cloudflare tunnel.
+- Gateway API and NGINX Gateway Fabric integration.
+- HPA configuration for backend workloads.
+- k6 scripts for load, soak, and spike testing (`k8s/k6`).
+
+Quick deployment entrypoint:
+
+```bash
+cd k8s
+./setup.sh
+```
+
+## Engineering Focus and Future Plans
+
+The next iteration of this repository will push deeper into advanced backend patterns:
+
+- Job queues with better retry policies, failure isolation, and scheduling semantics.
+- More asynchronous job orchestration for compute-heavy and I/O-heavy tasks.
+- Real-time collaboration capabilities beyond notifications (presence, shared state updates, and collaborative streams).
+- Stronger Kubernetes operational posture around scaling, rollout strategy, reliability, and observability.
+- Expansion of websocket-based and event-driven communication patterns where SSE is not sufficient.
 
 ## Technologies Used
 
-The projects are primarily built using:
-
-- **Django**: A high-level Python web framework that encourages rapid development and clean, pragmatic design.
-- **PostgreSQL**: The primary database used for storing and managing project data.
-- **Docker**: For containerization, allowing easy setup and deployment of each project.
-- **Redis**: For caching and handling asynchronous tasks (used in specific projects).
-
-## How to Use
-
-1. Clone the repository:
-   ```bash
-   git clone https://github.com/AgPriyanshu/backend-projects.git
-   ```
-2. Navigate to the project folder and follow the specific setup instructions for each project, which are included in the respective directories.
-
-3. Run the projects locally using:
-   ```bash
-   python manage.py runserver
-   ```
+- Django + Django REST Framework.
+- Channels + Daphne + Uvicorn.
+- Celery.
+- PostgreSQL/PostGIS.
+- Redis.
+- SeaweedFS (S3-compatible object storage).
+- Docker + Docker Compose.
+- Kubernetes + Helm + Gateway API.
 
 ## Contributing
 
-Contributions are welcome! Feel free to open issues or submit pull requests to improve the projects or add new ones.
+Contributions are welcome. Please open an issue or submit a pull request for improvements, bug fixes, or new project modules.
 
 ## Docker Image Optimization
 
-This project uses [SlimToolkit](https://github.com/slimtoolkit/slim) to automatically optimize Docker images in the CI/CD pipeline, reducing image sizes by up to 90% while maintaining full functionality.
+This project uses [SlimToolkit](https://github.com/slimtoolkit/slim) to optimize Docker images in CI/CD.
 
 ### Automated Optimization (CI/CD)
 
-When you push to the `master` branch, GitHub Actions automatically:
+When you push to the `master` branch, GitHub Actions:
 
-1. Builds the Docker image
-2. Optimizes it with SlimToolkit
-3. Pushes the optimized image to GitHub Container Registry
-4. Reports size reduction in the workflow summary
+1. Builds the Docker image.
+2. Optimizes it with SlimToolkit.
+3. Pushes the optimized image to GitHub Container Registry.
+4. Reports size reduction in the workflow summary.
 
 ### Local Optimization
 
-To optimize images locally:
-
-#### Install SlimToolkit
-
-**macOS:**
+Install SlimToolkit:
 
 ```bash
 brew install slimtoolkit/tap/slim
 ```
 
-**Linux:**
+Build and optimize:
 
 ```bash
-curl -L -o slim.tar.gz https://github.com/slimtoolkit/slim/releases/download/1.40.11/dist_linux.tar.gz
-tar -xvf slim.tar.gz
-sudo mv dist_linux/slim /usr/local/bin/
-sudo mv dist_linux/slim-sensor /usr/local/bin/
-```
-
-#### Build and Optimize
-
-```bash
-# Build the original image
 docker build -t backend-projects:original .
 
-# Optimize with SlimToolkit
 slim build \
   --target backend-projects:original \
   --tag backend-projects:slim \
@@ -105,24 +143,14 @@ slim build \
   --http-probe-cmd='http://localhost:8000/health/' \
   --continue-after=60
 
-# Compare sizes
 docker images | grep backend-projects
 ```
 
-#### Run Optimized Image
+Run optimized image:
 
 ```bash
 docker run -p 8000:8000 --env-file .env backend-projects:slim
 ```
-
-### Configuration
-
-SlimToolkit settings are defined in `.slimtoolkit.yaml`. The configuration includes:
-
-- HTTP probes to test Django endpoints during optimization
-- Path preservation for required files and directories
-- Environment variable preservation
-- Exclusion patterns for unnecessary files
 
 ## License
 

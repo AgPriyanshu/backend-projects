@@ -14,7 +14,6 @@ class DatasetType(TextChoices):
 
 class FileFormat(TextChoices):
     # Vector formats
-    GEOJSON = "geojson"
     SHAPEFILE = "shapefile"
     KML = "kml"
     GEOPACKAGE = "gpkg"
