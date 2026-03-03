@@ -78,18 +78,24 @@ MIDDLEWARE = [
 #     MIDDLEWARE += ["debug_toolbar.middleware.DebugToolbarMiddleware"]
 
 # CORS Configuration
-CORS_ALLOWED_ORIGINS = [
-    "http://localhost:3000",  # React dev server
-    "http://127.0.0.1:3000",
-    "http://localhost:5173",  # Vite dev server
-    "http://127.0.0.1:5173",
-    "https://app.worldofapps.bar",  # Production frontend
-    "https://worldofapps.bar",
-]
+# In production, set CORS_ALLOWED_ORIGINS env var as a comma-separated list,
+# e.g. "https://worldofapps.bar,https://app.worldofapps.bar"
+_cors_origins_env = os.environ.get("CORS_ALLOWED_ORIGINS", "")
+CORS_ALLOWED_ORIGINS = (
+    [o.strip() for o in _cors_origins_env.split(",") if o.strip()]
+    if _cors_origins_env
+    else [
+        "http://localhost:3000",   # React dev
+        "http://127.0.0.1:3000",
+        "http://localhost:5173",   # Vite dev
+        "http://127.0.0.1:5173",
+        "https://worldofapps.bar",
+        "https://app.worldofapps.bar",
+    ]
+)
 
+CORS_ALLOW_ALL_ORIGINS = DEBUG   # True only in local dev (DEBUG=1)
 CORS_ALLOW_CREDENTIALS = True
-
-CORS_ALLOW_ALL_ORIGINS = True
 
 CORS_ALLOWED_HEADERS = [
     "accept",
