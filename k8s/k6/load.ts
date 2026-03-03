@@ -1,17 +1,37 @@
-import http from 'k6/http';
-import { check } from 'k6';
+/**
+ * LOAD TEST
+ * ─────────
+ * Purpose : Evaluate normal expected traffic.
+ * Pattern : Ramp up → hold steady → ramp down.
+ * Duration: ~8 minutes total.
+ *
+ * Run:
+ *   k6 run -e BASE_URL=https://api.worldofapps.bar -e AUTH_TOKEN=<token> load.ts
+ */
+
+import { sleep } from "k6";
+import { commonThresholds } from "./config.ts";
+import { ensureTestUser, runAllScenarios, errorRate } from "./helpers.ts";
 
 export const options = {
-  iterations: 10,
+  stages: [
+    { duration: "1m", target: 20 }, // ramp up to 20 VUs
+    { duration: "3m", target: 20 }, // hold at 20 VUs
+    { duration: "1m", target: 50 }, // ramp up to 50 VUs
+    { duration: "2m", target: 50 }, // hold at 50 VUs
+    { duration: "1m", target: 0 }, // ramp down
+  ],
+  thresholds: {
+    ...commonThresholds,
+    custom_error_rate: ["rate<0.02"], // <2% custom errors
+  },
 };
 
-// The default exported function is gonna be picked up by k6 as the entry point for the test script. It will be executed repeatedly in "iterations" for the whole duration of the test.
-export default function () {
-  // Make a GET request to the target URL
-  const response = http.get('https://api.worldofapps.bar/tasks/',{headers: { 'Authorization': 'Bearer 4dbe9625eafbc2bc7abcc345532d8fe11e7f0bc5' }});
-  // http.post('https://api.worldofapps.bar/tasks/',{description: "k6 testing"},{headers: { 'Authorization': 'Bearer 4dbe9625eafbc2bc7abcc345532d8fe11e7f0bc5' }});
+export function setup() {
+  return ensureTestUser();
+}
 
-  check(response, {
-    'response code was 200': (response) => response.status == 200,
-  });
+export default function (data: { token: string }) {
+  runAllScenarios(data);
+  sleep(Math.random() * 2 + 1); // 1–3s think time between iterations
 }

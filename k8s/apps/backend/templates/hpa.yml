@@ -1,19 +1,19 @@
 apiVersion: autoscaling/v2
 kind: HorizontalPodAutoscaler
 metadata:
-  name: backend-projects-hpa
-  namespace: default
+  name: {{ .Values.appName }}-hpa
+  namespace: {{ .Release.Namespace }}
 spec:
   scaleTargetRef:
     apiVersion: apps/v1
     kind: Deployment
-    name: backend-app
-  minReplicas: { { .Values.minReplicas } }
-  maxReplicas: { { .Values.maxReplicas } }
+    name: {{ .Values.appName }}
+  minReplicas: {{ .Values.minReplicas }}
+  maxReplicas: {{ .Values.maxReplicas }}
   metrics:
     - type: Resource
       resource:
         name: cpu
         target:
           type: Utilization
-          averageUtilization: { { .Values.averageUtilization } }
+          averageUtilization: {{ .Values.averageUtilization }}

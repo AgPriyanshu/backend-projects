@@ -1,17 +1,43 @@
-import http from 'k6/http';
-import { check } from 'k6';
+/**
+ * SPIKE TEST
+ * ──────────
+ * Purpose : Test how the system handles sudden, extreme bursts of traffic.
+ *           Validates HPA response time, pod startup, and recovery.
+ * Pattern : Low baseline → sudden spike → back to baseline → repeat → ramp down.
+ * Duration: ~12 minutes total.
+ *
+ * Run:
+ *   k6 run -e BASE_URL=https://api.worldofapps.bar -e AUTH_TOKEN=<token> spike.ts
+ */
+
+import { sleep } from "k6";
+import { relaxedThresholds } from "./config.ts";
+import { ensureTestUser, runAllScenarios, errorRate } from "./helpers.ts";
 
 export const options = {
-  iterations: 10,
+  stages: [
+    { duration: "1m", target: 10 }, // baseline
+    { duration: "15s", target: 150 }, // 🚀 spike to 150 VUs
+    { duration: "2m", target: 150 }, // hold spike
+    { duration: "15s", target: 10 }, // rapid drop back to baseline
+    { duration: "2m", target: 10 }, // recovery period
+    { duration: "15s", target: 200 }, // 🚀 second spike — even higher
+    { duration: "2m", target: 200 }, // hold
+    { duration: "30s", target: 10 }, // cool down
+    { duration: "2m", target: 10 }, // recovery observation
+    { duration: "1m", target: 0 }, // ramp down
+  ],
+  thresholds: {
+    ...relaxedThresholds,
+    custom_error_rate: ["rate<0.10"], // allow up to 10% during spikes
+  },
 };
 
-// The default exported function is gonna be picked up by k6 as the entry point for the test script. It will be executed repeatedly in "iterations" for the whole duration of the test.
-export default function () {
-  // Make a GET request to the target URL
-  const response = http.get('https://api.worldofapps.bar/tasks/',{headers: { 'Authorization': 'Bearer 4dbe9625eafbc2bc7abcc345532d8fe11e7f0bc5' }});
-  // http.post('https://api.worldofapps.bar/tasks/',{description: "k6 testing"},{headers: { 'Authorization': 'Bearer 4dbe9625eafbc2bc7abcc345532d8fe11e7f0bc5' }});
+export function setup() {
+  return ensureTestUser();
+}
 
-  check(response, {
-    'response code was 200': (response) => response.status == 200,
-  });
+export default function (data: { token: string }) {
+  runAllScenarios(data);
+  sleep(Math.random() * 1.5 + 0.5); // 0.5–2s think time (fast during spikes)
 }
