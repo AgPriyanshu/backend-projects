@@ -1,20 +1,21 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: {{ .Values.appName }}
+  name: {{ .Values.appName }}-worker
   namespace: {{ .Release.Namespace }}
   labels:
-    app: {{ .Values.appName }}
+    app: {{ .Values.appName }}-worker
     chart: {{ .Chart.Name }}-{{ .Chart.Version }}
     release: {{ .Release.Name }}
 spec:
+  replicas: 1
   selector:
     matchLabels:
-      app: {{ .Values.appName }}
+      app: {{ .Values.appName }}-worker
   template:
     metadata:
       labels:
-        app: {{ .Values.appName }}
+        app: {{ .Values.appName }}-worker
         release: {{ .Release.Name }}
     spec:
       {{- with .Values.nodeSelector }}
@@ -23,14 +24,17 @@ spec:
       {{- end }}
       serviceAccountName: {{ .Values.serviceAccount.name }}
       containers:
-        - name: {{ .Values.appName }}
+        - name: {{ .Values.appName }}-worker
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
+          command: ["celery", "-A", "backend_projects", "worker", "-l", "info"]
           resources:
-            {{- toYaml .Values.resources | nindent 12 }}
-          ports:
-            - containerPort: {{ .Values.service.targetPort }}
-              name: http
+            requests:
+              cpu: 500m
+              memory: 512Mi
+            limits:
+              cpu: 1000m
+              memory: 1024Mi
           env:
             {{- range .Values.env }}
             - name: {{ .name }}
