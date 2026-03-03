@@ -15,7 +15,6 @@ DEBUG = os.environ.get("DEBUG", "0") == "1"
 
 ALLOWED_HOSTS = ["*"]
 
-CORS_ALLOWED_ORIGINS = ["*"]
 ASGI_APPLICATION = "backend_projects.asgi.application"
 
 CHANNEL_LAYERS = {
@@ -90,7 +89,7 @@ CORS_ALLOWED_ORIGINS = [
 
 CORS_ALLOW_CREDENTIALS = True
 
-CORS_ALLOW_ALL_ORIGINS = DEBUG  # Allow all origins in development
+CORS_ALLOW_ALL_ORIGINS = True
 
 CORS_ALLOWED_HEADERS = [
     "accept",
