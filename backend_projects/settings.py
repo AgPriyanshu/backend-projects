@@ -15,7 +15,7 @@ DEBUG = os.environ.get("DEBUG", "0") == "1"
 
 ALLOWED_HOSTS = ["*"]
 
-CORS_ALLOWED_ORIGINS = ["http://localhost:3000","https://worldofapps.bar"]
+CORS_ALLOWED_ORIGINS = ["*"]
 ASGI_APPLICATION = "backend_projects.asgi.application"
 
 CHANNEL_LAYERS = {

@@ -27,14 +27,14 @@ spec:
         - name: {{ .Values.appName }}-worker
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
-          command: ["celery", "-A", "backend_projects", "worker", "-l", "info"]
+          command: ["celery", "-A", "backend_projects", "worker", "-l", "info", "--concurrency", "2"]
           resources:
             requests:
               cpu: 500m
               memory: 512Mi
             limits:
               cpu: 1000m
-              memory: 1024Mi
+              memory: 1Gi
           env:
             {{- range .Values.env }}
             - name: {{ .name }}
