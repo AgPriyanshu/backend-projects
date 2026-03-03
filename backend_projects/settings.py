@@ -91,11 +91,23 @@ CORS_ALLOWED_ORIGINS = (
         "http://127.0.0.1:5173",
         "https://worldofapps.bar",
         "https://app.worldofapps.bar",
+        "https://api.worldofapps.bar",
     ]
 )
 
 CORS_ALLOW_ALL_ORIGINS = DEBUG   # True only in local dev (DEBUG=1)
 CORS_ALLOW_CREDENTIALS = True
+
+# Security/Proxy settings for K8s (behind Nginx/Cloudflare)
+SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
+USE_X_FORWARDED_HOST = True
+USE_X_FORWARDED_PORT = True
+
+CSRF_TRUSTED_ORIGINS = [
+    "https://worldofapps.bar",
+    "https://app.worldofapps.bar",
+    "https://api.worldofapps.bar",
+]
 
 CORS_ALLOWED_HEADERS = [
     "accept",
