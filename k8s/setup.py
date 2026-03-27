@@ -105,17 +105,31 @@ def minikube_is_running() -> bool:
 
 
 def minikube_current_config() -> tuple[int, int]:
-    """Returns (current_cpus, current_memory_mb) from minikube config."""
+    """Returns (current_cpus, current_memory_mb) from the running minikube node."""
     try:
-        cpus = int(check_output(["minikube", "config", "get", "cpus"]))
-        mem  = int(check_output(["minikube", "config", "get", "memory"]))
-        return cpus, mem
+        cpu_str = check_output([
+            "kubectl", "get", "node", "minikube",
+            "-o", "jsonpath={.status.capacity.cpu}",
+        ])
+        # memory reported as e.g. "8118080Ki"
+        mem_str = check_output([
+            "kubectl", "get", "node", "minikube",
+            "-o", "jsonpath={.status.capacity.memory}",
+        ])
+        cpus = int(cpu_str.strip())
+        # convert Ki → MiB
+        if mem_str.endswith("Ki"):
+            mem_mb = int(mem_str[:-2]) // 1024
+        else:
+            mem_mb = int(mem_str) // 1024 // 1024
+        return cpus, mem_mb
     except (subprocess.CalledProcessError, ValueError):
         return 0, 0
 
 
-def ensure_minikube_running(cpus: int, memory_mb: int) -> None:
-    step(f"Starting Minikube ({cpus} CPUs, {memory_mb}MB RAM)")
+def ensure_minikube_running(cpus: int, memory_mb: int, has_gpu: bool = False) -> None:
+    gpu_label = ", GPU passthrough" if has_gpu else ""
+    step(f"Starting Minikube ({cpus} CPUs, {memory_mb}MB RAM{gpu_label})")
 
     if minikube_is_running():
         current_cpus, current_mem = minikube_current_config()
@@ -128,12 +142,17 @@ def ensure_minikube_running(cpus: int, memory_mb: int) -> None:
         run(["minikube", "stop"])
         run(["minikube", "delete"])
 
-    run([
+    cmd = [
         "minikube", "start",
         "--cpus",   str(cpus),
         "--memory", f"{memory_mb}mb",
         "--driver", "docker",
-    ])
+    ]
+    if has_gpu:
+        # Requires the NVIDIA Container Toolkit and Docker GPU integration.
+        cmd += ["--gpus", "all"]
+        print("🎮 GPU flags enabled: --gpus all")
+    run(cmd)
     print("✅ Minikube running")
 
 
@@ -250,14 +269,16 @@ def main() -> None:
     computed      = result["values_path"]
     minikube_cpus = result["minikube_cpus"]
     minikube_mem  = result["minikube_memory_mb"]
-    print(f"✅ Resources computed → minikube: {minikube_cpus} CPUs, {minikube_mem}MB RAM")
+    has_gpu       = result["has_gpu"]
+    print(f"✅ Resources computed → minikube: {minikube_cpus} CPUs, {minikube_mem}MB RAM"
+          + (" + GPU" if has_gpu else ""))
 
     # Step 1-2: ensure tools
     ensure_helm()
     ensure_minikube()
 
     # Step 3: start minikube
-    ensure_minikube_running(minikube_cpus, minikube_mem)
+    ensure_minikube_running(minikube_cpus, minikube_mem, has_gpu)
 
     # Step 4+: deploy all charts
     deploy_all(computed)
