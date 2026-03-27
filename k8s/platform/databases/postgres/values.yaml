@@ -1,0 +1,20 @@
+# Default resource configuration for Postgres
+# These are overridden at deploy time by values-computed.yaml
+
+postgresResources:
+  requests:
+    cpu: 1000m
+    memory: 4Gi
+  limits:
+    cpu: 4000m
+    memory: 8Gi
+
+postgresPersistence:
+  size: 20Gi
+
+postgresConfig:
+  sharedBuffers: "2GB"
+  workMem: "64MB"
+  maintenanceWorkMem: "512MB"
+  effectiveCacheSize: "6GB"
+  maxConnections: "100"

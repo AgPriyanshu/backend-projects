@@ -29,12 +29,7 @@ spec:
           imagePullPolicy: {{ .Values.image.pullPolicy }}
           command: ["celery", "-A", "backend_projects", "worker", "-l", "info", "--concurrency", "2"]
           resources:
-            requests:
-              cpu: 500m
-              memory: 512Mi
-            limits:
-              cpu: 1000m
-              memory: 1Gi
+            {{- toYaml .Values.workerResources | nindent 12 }}
           env:
             {{- range .Values.env }}
             - name: {{ .name }}

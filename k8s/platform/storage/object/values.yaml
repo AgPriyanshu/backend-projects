@@ -10,7 +10,7 @@ image:
 replicas: 1
 
 # Resource limits and requests
-resources:
+seaweedfsResources:
   requests:
     cpu: 500m
     memory: 512Mi
@@ -19,7 +19,7 @@ resources:
     memory: 1Gi
 
 # Persistent storage configuration
-persistence:
+seaweefsPersistence:
   size: 50Gi
 
 # Service configuration

@@ -21,7 +21,7 @@ serviceAccount:
   create: false
   name: ghcr-sa
 
-resources:
+frontendResources:
   requests:
     cpu: 100m
     memory: 128Mi
@@ -29,8 +29,7 @@ resources:
     cpu: 200m
     memory: 256Mi
 
-nodeSelector:
-  kubernetes.io/arch: amd64
+nodeSelector: {}
 
 # Liveness and readiness probes
 probes:

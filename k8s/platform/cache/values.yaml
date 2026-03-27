@@ -1,0 +1,15 @@
+# Default resource configuration for Redis
+# These are overridden at deploy time by values-computed.yaml
+
+redisResources:
+  requests:
+    cpu: 250m
+    memory: 2Gi
+  limits:
+    cpu: 1000m
+    memory: 3Gi
+
+redisPersistence:
+  size: 10Gi
+
+redisMaxmemory: "2gb"

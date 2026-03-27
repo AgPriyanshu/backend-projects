@@ -68,6 +68,8 @@ spec:
             port: master
           initialDelaySeconds: 10
           periodSeconds: 5
+        resources:
+          {{- toYaml .Values.seaweedfsResources | nindent 10 }}
         volumeMounts:
         - name: data
           mountPath: /data
@@ -85,4 +87,4 @@ spec:
       accessModes: [ "ReadWriteOnce" ]
       resources:
         requests:
-          storage: {{ .Values.persistence.size }}
+          storage: {{ .Values.seaweefsPersistence.size }}
