@@ -18,44 +18,57 @@ class K8sObjectStorage(ObjectStorageAbstract):
 
     def __init__(self):
         """Initialize boto3 S3 client for SeaweedFS from environment variables."""
-        # Get environment variables
         endpoint = os.environ.get("S3_ENDPOINT")
+        public_endpoint = os.environ.get("S3_PUBLIC_ENDPOINT")
         region = os.environ.get("S3_REGION")
         self.default_bucket = os.environ.get("S3_BUCKET")
+        self.endpoint = endpoint
+        self.public_endpoint = public_endpoint
+        self.region = region
 
         # Check for unsigned mode
         use_unsigned = os.environ.get("S3_USE_UNSIGNED", "false").lower() == "true"
+        self.use_unsigned = use_unsigned
 
         if not endpoint or not self.default_bucket:
             raise RuntimeError(
                 "Missing required S3 configuration. S3_ENDPOINT and S3_BUCKET are required."
             )
 
-        if use_unsigned:
-            self.client = boto3.client(
+        self.client = self._build_client(endpoint)
+        self.presign_client = self._build_client(public_endpoint or endpoint)
+
+    def _build_client(self, endpoint: str):
+        if self.use_unsigned:
+            return boto3.client(
                 "s3",
                 endpoint_url=endpoint,
-                region_name=region,
-                config=Config(signature_version=UNSIGNED),
+                region_name=self.region,
+                config=Config(
+                    signature_version=UNSIGNED,
+                    s3={"addressing_style": "path"},
+                ),
             )
-        else:
-            # Standard auth mode
-            access_key = os.environ.get("S3_ACCESS_KEY")
-            secret_key = os.environ.get("S3_SECRET_KEY")
 
-            if not access_key or not secret_key:
-                raise RuntimeError(
-                    "S3_ACCESS_KEY and S3_SECRET_KEY are required unless S3_USE_UNSIGNED=true."
-                )
+        access_key = os.environ.get("S3_ACCESS_KEY")
+        secret_key = os.environ.get("S3_SECRET_KEY")
 
-            self.client = boto3.client(
-                "s3",
-                endpoint_url=endpoint,
-                aws_access_key_id=access_key,
-                aws_secret_access_key=secret_key,
-                region_name=region,
-                config=Config(signature_version="s3v4"),
+        if not access_key or not secret_key:
+            raise RuntimeError(
+                "S3_ACCESS_KEY and S3_SECRET_KEY are required unless S3_USE_UNSIGNED=true."
             )
+
+        return boto3.client(
+            "s3",
+            endpoint_url=endpoint,
+            aws_access_key_id=access_key,
+            aws_secret_access_key=secret_key,
+            region_name=self.region,
+            config=Config(
+                signature_version="s3v4",
+                s3={"addressing_style": "path"},
+            ),
+        )
 
     def upload_object(
         self,
@@ -167,18 +180,11 @@ class K8sObjectStorage(ObjectStorageAbstract):
             if "PartNumber" in kwargs:
                 params["PartNumber"] = kwargs["PartNumber"]
 
-            url = self.client.generate_presigned_url(
+            url = self.presign_client.generate_presigned_url(
                 ClientMethod=client_method,
                 Params=params,
                 ExpiresIn=expiration,
             )
-
-            # If a public endpoint is configured, replace the internal endpoint in the URL
-            public_endpoint = os.environ.get("S3_PUBLIC_ENDPOINT")
-            internal_endpoint = os.environ.get("S3_ENDPOINT")
-
-            if public_endpoint and internal_endpoint and internal_endpoint in url:
-                url = url.replace(internal_endpoint, public_endpoint)
 
             return url
         except ClientError as e:
