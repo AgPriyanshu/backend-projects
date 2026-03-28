@@ -49,6 +49,19 @@ def detect_machine() -> tuple[int, int]:
         raise RuntimeError(f"Unsupported OS: {system}")
 
 
+def detect_gpu() -> bool:
+    """Returns True if at least one NVIDIA GPU is accessible via nvidia-smi."""
+    try:
+        subprocess.check_output(
+            ["nvidia-smi", "--query-gpu=name", "--format=csv,noheader"],
+            stderr=subprocess.DEVNULL,
+            timeout=5,
+        )
+        return True
+    except Exception:
+        return False
+
+
 def docker_available_memory_mib() -> int | None:
     """
     Ask the Docker daemon how much memory its VM actually has.
@@ -273,6 +286,11 @@ def run(script_dir: Path = SCRIPT_DIR) -> dict:
     Returns a dict with 'minikube' keys for use by setup.py.
     """
     total_cpu, total_ram_mib = detect_machine()
+    has_gpu = detect_gpu()
+    if has_gpu:
+        print("🎮 GPU detected — minikube will start with GPU passthrough")
+    else:
+        print("ℹ️  No GPU detected")
 
     allocs, usable_cpu_m, usable_ram_mib = compute_allocations(total_cpu, total_ram_mib)
     pg_config = compute_postgres_config(allocs["postgres"])
@@ -293,6 +311,7 @@ def run(script_dir: Path = SCRIPT_DIR) -> dict:
         "values_path": values_path,
         "minikube_cpus": minikube_args["MINIKUBE_CPUS"],
         "minikube_memory_mb": minikube_args["MINIKUBE_MEMORY_MB"],
+        "has_gpu": has_gpu,
     }
 
 

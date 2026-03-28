@@ -62,7 +62,7 @@ spec:
               value: "postgres"
             - name: PGDATA
               value: "/var/lib/postgresql/data/pgdata"
-          resources: { { - toYaml .Values.postgresResources | nindent 12 } }
+          resources: {{- toYaml .Values.postgresResources | nindent 12 }}
           ports:
             - containerPort: 5432
               name: postgres
@@ -87,5 +87,5 @@ spec:
           - ReadWriteOnce
         resources:
           requests:
-            storage: { { .Values.postgresPersistence.size } }
+            storage: {{ .Values.postgresPersistence.size }}
         storageClassName: standard
