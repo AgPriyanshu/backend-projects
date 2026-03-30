@@ -1,157 +1,89 @@
-# Backend Projects with Django: From Fundamentals to Production Patterns
+# ⚙️ Atlas Platform Services
 
-This repository is a multi-app Django backend playground inspired by [Roadmap.sh backend project ideas](https://roadmap.sh/backend/project-ideas). It started as a learning-focused collection and has evolved into a more production-shaped backend system with async processing, geospatial workloads, object storage integration, real-time notifications, and Kubernetes deployment assets.
+> **An enterprise-grade, event-driven modular monolithic architecture orchestrating Python/Django micro-apps, heavy geospatial data workloads, and asynchronous ML tasks.**
 
-## Why This Repo Is Complex
+Atlas Services is the core backbone powering the [Atlas Platform Web Client](https://github.com/AgPriyanshu/atlas-platform-web). Deployed securely behind a Kubernetes Gateway, it serves as an ultra-reliable API gateway and processing orchestrator for diverse, resource-intensive workflows including Web GIS rendering, Server-Sent Events (SSE) streaming, and external ML integration.
 
-This is not a single CRUD app. It is a shared backend platform with multiple bounded contexts and cross-cutting infrastructure:
+## 🏗️ Core Architecture & Distributed System Design
 
-- Multi-app Django architecture with a shared core module.
-- ASGI-first serving with `uvicorn`, `daphne`, and Channels support.
-- PostGIS-backed data model for geospatial workflows.
-- Celery workers for asynchronous and long-running jobs.
-- Redis for caching, pub/sub notifications, and queue backing.
-- SeaweedFS S3-compatible object storage integration.
-- Reusable workflow/operation abstraction for pipeline-style processing.
-- Kubernetes Helm charts for platform and application deployment.
+Atlas Platform rejects the "silver bullet microservices" premise in favor of a **Modular Monolith Architecture**. This ensures domain separation across 10+ core apps without incurring network latency or distributed transaction complexities.
 
-## Current Feature Surface
+### Key Engineering Decisions:
 
-The project currently includes these active API domains:
+- **Asynchronous Task Queue:** Heavy workloads—specifically COG (Cloud Optimized GeoTIFF) generation and interactions with our dedicated local LLM server—are aggressively offloaded to an asynchronous compute layer populated by **Celery** workers. This guarantees the Django WSGI/ASGI core remains unblocked, responding instantly.
+- **Geospatial (GIS) Database Engine:** Leverages **PostgreSQL + PostGIS** extensions as the absolute source of truth for location data. Atlas translates complex spatial bounding-box queries into highly optimized vector and raster tile responses for the client's Web GIS module.
+- **Low-Latency Real-Time Infrastructure:** Adopted an ASGI-first topology using `uvicorn`, `daphne`, and **Django Channels**. **Redis** operates as a high-throughput broker to establish pub/sub systems, pushing real-time synchronization diffs down to connected clients via Server-Sent Events (`/events/`).
+- **S3-Compatible Object Storage:** Interoperable file systems leveraging **SeaweedFS** to store large-scale DEM models, images, and static resources without bloating the app tier.
 
-- `auth_app`: Authentication and token-based access patterns.
-- `blogs_app`: Blog APIs and content workflows.
-- `todo_app`: Task management APIs.
-- `expense_tracker_app`: Expense APIs with OpenAPI docs.
-- `note_markdown_app`: Markdown note APIs with OpenAPI docs.
-- `url_shortner_app`: URL shortener APIs.
-- `ecommerce_app`: Products, categories, and cart flows.
-- `web_gis_app`: Geospatial datasets, layers, tile serving, and COG processing.
-- `shared`: Notifications, SSE stream endpoint, shared serializers/models/utilities.
+```mermaid
+graph TD
+    Client[Atlas Web Client] -->|HTTPS/WSS| K8s[K8s NGINX Gateway / Route]
 
-There are also incubating modules (`chat_app`, `ai_chat`, `device_classifier`) present in the codebase, with some routes currently not enabled in project-level URL wiring.
+    K8s -->|REST APIs| Django[Django Monolithic Core]
+    K8s -->|SSE / WebSockets| Daphne[Daphne ASGI Layer]
 
-## Architecture Snapshot
+    subgraph Memory & Queue Layer
+        Daphne -.->|Pub/Sub Channels| Redis Broker & Cache]
+        Redis <--->|Cache| Django
+    end
 
-- Django project config: `backend_projects`.
-- API framework: Django REST Framework.
-- Database: PostgreSQL/PostGIS.
-- Cache + queue infra: Redis.
-- Async jobs: Celery worker (`worker` service in Docker Compose).
-- Real-time stream: Server-Sent Events endpoint at `/events/` with Redis pub/sub.
-- Storage: S3-compatible object storage via SeaweedFS.
-- Geospatial pipeline: COG generation workflow (`web_gis_app/tasks.py` + workflow operations).
+    subgraph Data & Persistence
+        Django --> PostGIS[(PostgreSQL/PostGIS)]
+        Django --> S3[SeaweedFS Object Storage]
+    end
 
-## Local Development (Docker Compose)
+    subgraph Asynchronous Processing
+        Django -->|Dispatch Task| Celery[Celery Worker Farm]
+        Celery -->|Read/Write State| Redis
+        Celery -->|Process COG / Compute| PostGIS
+        Celery -->|Inference Query| LLM((Local LLM Server))
+    end
+```
 
-This repository is intended to be run via Docker Compose:
+## 🛠️ Technology Stack
+
+**Framework:** Python 3.12, Django 5.1, Django REST Framework
+**Real-Time comms:** Django Channels, Server-Sent Events, Daphne
+**Database Engine:** PostgreSQL (PostGIS Extension)
+**Background Processing:** Celery + Redis
+**Cloud Object Storage:** SeaweedFS (S3-Compatible)
+**Local Inference:** Qwen3:8b Local Server
+
+## 🐳 Infrastructure & Container Orchestration
+
+This platform is containerized for deterministic deployment sequences and orchestration via **Kubernetes**.
+
+### Fast Local Development
+
+For isolated local testing, a complete infrastructure mock is provided via Docker Compose.
 
 ```bash
-git clone https://github.com/AgPriyanshu/backend-projects.git
-cd backend-projects
+# Spins up the entire modular monolith, workers, DB, Redis, and Object Storage
 docker compose up --build
 ```
 
-Services started by default:
+**Auto-Provisioned Services:**
 
-- `web`: Django ASGI app.
-- `worker`: Celery worker.
-- `db`: PostGIS.
-- `redis`: Cache and broker.
-- `seaweedfs`: S3-compatible object storage.
+- `web`: Main Django ASGI/WSGI app.
+- `worker`: Scaleable Celery task processor.
+- `db`: Bootstrapped PostGIS DB instance.
+- `redis`: Ephemeral state store / task broker.
+- `seaweedfs`: Local S3-compatible backend.
 
-Common Django commands:
+### Kubernetes Helm Deployments
 
-```bash
-docker compose exec web python manage.py migrate
-docker compose exec web python manage.py createsuperuser
-docker compose exec web python manage.py shell
-```
-
-## Kubernetes Deployment
-
-Kubernetes assets are under `k8s/` and include both application and platform layers.
-
-- App charts: `k8s/apps/backend`, `k8s/apps/frontend`, `k8s/apps/shared`.
-- Platform charts: gateway, namespaces, PostgreSQL, Redis, object storage, registry, Cloudflare tunnel.
-- Gateway API and NGINX Gateway Fabric integration.
-- HPA configuration for backend workloads.
-- k6 scripts for load, soak, and spike testing (`k8s/k6`).
-
-Quick deployment entrypoint:
+Production assets are templated under `k8s/` utilizing structural layers: Applications, Platform Middleware, and Gateway ingress.
 
 ```bash
+# Deploys standard Postgres, Redis caching, Gateways and Cloudflare tunnels
 cd k8s
 ./setup.sh
 ```
 
-## Engineering Focus and Future Plans
+## 📊 Scale and Load Testing Pipeline
 
-The next iteration of this repository will push deeper into advanced backend patterns:
+All new API models, database indices, and infrastructure routing rules are vetted locally via a rigorous `k6` load-testing suite stored inside `k8s/k6`. We simulate multi-vector load, soak, and spike concurrency tests to ensure response latency falls within target SLOs before promotion.
 
-- Job queues with better retry policies, failure isolation, and scheduling semantics.
-- More asynchronous job orchestration for compute-heavy and I/O-heavy tasks.
-- Real-time collaboration capabilities beyond notifications (presence, shared state updates, and collaborative streams).
-- Stronger Kubernetes operational posture around scaling, rollout strategy, reliability, and observability.
-- Expansion of websocket-based and event-driven communication patterns where SSE is not sufficient.
+## 🗜️ Docker Image Optimization Pipeline
 
-## Technologies Used
-
-- Django + Django REST Framework.
-- Channels + Daphne + Uvicorn.
-- Celery.
-- PostgreSQL/PostGIS.
-- Redis.
-- SeaweedFS (S3-compatible object storage).
-- Docker + Docker Compose.
-- Kubernetes + Helm + Gateway API.
-
-## Contributing
-
-Contributions are welcome. Please open an issue or submit a pull request for improvements, bug fixes, or new project modules.
-
-## Docker Image Optimization
-
-This project uses [SlimToolkit](https://github.com/slimtoolkit/slim) to optimize Docker images in CI/CD.
-
-### Automated Optimization (CI/CD)
-
-When you push to the `master` branch, GitHub Actions:
-
-1. Builds the Docker image.
-2. Optimizes it with SlimToolkit.
-3. Pushes the optimized image to GitHub Container Registry.
-4. Reports size reduction in the workflow summary.
-
-### Local Optimization
-
-Install SlimToolkit:
-
-```bash
-brew install slimtoolkit/tap/slim
-```
-
-Build and optimize:
-
-```bash
-docker build -t backend-projects:original .
-
-slim build \
-  --target backend-projects:original \
-  --tag backend-projects:slim \
-  --http-probe=true \
-  --http-probe-cmd='http://localhost:8000/health/' \
-  --continue-after=60
-
-docker images | grep backend-projects
-```
-
-Run optimized image:
-
-```bash
-docker run -p 8000:8000 --env-file .env backend-projects:slim
-```
-
-## License
-
-This repository is licensed under the MIT License.
+Because Atlas powers large GIS manipulation libraries, binary bloating is mitigated in CI/CD via an automated integration with [SlimToolkit](https://github.com/slimtoolkit/slim). Committing to the `master` branch triggers the GitHub Action, radically minifying the Docker image pushed to the GHCR registry while preserving crucial `/health/` probes.
