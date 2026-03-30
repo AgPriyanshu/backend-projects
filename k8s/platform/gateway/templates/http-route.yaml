@@ -39,3 +39,24 @@ spec:
         - name: backend-app-service
           port: 80
           namespace: default
+---
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: s3-route
+spec:
+  parentRefs:
+    - name: platform-gateway
+      namespace: gateway-ns
+      sectionName: http
+  hostnames:
+    - "s3.worldofapps.bar"
+  rules:
+    - matches:
+        - path:
+            type: PathPrefix
+            value: /
+      backendRefs:
+        - name: seaweedfs-s3
+          port: 8333
+          namespace: default

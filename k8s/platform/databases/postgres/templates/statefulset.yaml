@@ -36,33 +36,30 @@ spec:
               mountPath: /var/lib/postgresql/data
       containers:
         - name: postgres
-          image: postgis/postgis:17-3.6-alpine
-          args:
-            - "-c"
-            - "shared_buffers={{ .Values.postgresConfig.sharedBuffers }}"
-            - "-c"
-            - "work_mem={{ .Values.postgresConfig.workMem }}"
-            - "-c"
-            - "maintenance_work_mem={{ .Values.postgresConfig.maintenanceWorkMem }}"
-            - "-c"
-            - "effective_cache_size={{ .Values.postgresConfig.effectiveCacheSize }}"
-            - "-c"
-            - "max_connections={{ .Values.postgresConfig.maxConnections }}"
-            - "-c"
-            - "shared_preload_libraries=pg_stat_statements"
+          image: kartoza/postgis:17-3.5
           securityContext:
-            runAsUser: 70
+            runAsUser: 0
             runAsGroup: 70
           env:
-            - name: POSTGRES_DB
-              value: "postgres"
             - name: POSTGRES_USER
               value: "postgres"
-            - name: POSTGRES_PASSWORD
+            - name: POSTGRES_DBNAME
+              value: "postgres"
+            - name: POSTGRES_PASS
               value: "postgres"
             - name: PGDATA
               value: "/var/lib/postgresql/data/pgdata"
-          resources: {{- toYaml .Values.postgresResources | nindent 12 }}
+            - name: SHARED_PRELOAD_LIBRARIES
+              value: "pg_stat_statements"
+            - name: EXTRA_CONF
+              value: |
+                shared_buffers={{ .Values.postgresConfig.sharedBuffers }}
+                work_mem={{ .Values.postgresConfig.workMem }}
+                maintenance_work_mem={{ .Values.postgresConfig.maintenanceWorkMem }}
+                effective_cache_size={{ .Values.postgresConfig.effectiveCacheSize }}
+                max_connections={{ .Values.postgresConfig.maxConnections }}
+          resources:
+{{ toYaml .Values.postgresResources | nindent 12 }}
           ports:
             - containerPort: 5432
               name: postgres

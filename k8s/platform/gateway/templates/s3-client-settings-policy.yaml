@@ -1,0 +1,12 @@
+apiVersion: gateway.nginx.org/v1alpha1
+kind: ClientSettingsPolicy
+metadata:
+  name: s3-route-client-settings
+  namespace: gateway-ns
+spec:
+  targetRef:
+    group: gateway.networking.k8s.io
+    kind: HTTPRoute
+    name: s3-route
+  body:
+    maxSize: {{ .Values.s3ClientMaxBodySize | quote }}

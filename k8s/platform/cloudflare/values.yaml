@@ -20,6 +20,8 @@ ingress:
     service: http://platform-gateway-nginx.gateway-ns.svc.cluster.local
   - hostname: api.worldofapps.bar
     service: http://platform-gateway-nginx.gateway-ns.svc.cluster.local
+  - hostname: s3.worldofapps.bar
+    service: http://platform-gateway-nginx.gateway-ns.svc.cluster.local
 
 resources:
   requests:

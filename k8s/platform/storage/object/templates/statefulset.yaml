@@ -76,6 +76,10 @@ spec:
         - name: s3-config
           mountPath: /etc/seaweedfs/s3-config
           readOnly: true
+        - name: s3-config
+          mountPath: /etc/seaweedfs/security.toml
+          subPath: security.toml
+          readOnly: true
       volumes:
       - name: s3-config
         configMap:
