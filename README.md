@@ -23,7 +23,7 @@ graph TD
     K8s -->|SSE / WebSockets| Daphne[Daphne ASGI Layer]
 
     subgraph Memory & Queue Layer
-        Daphne -.->|Pub/Sub Channels| Redis Broker & Cache]
+        Daphne -.->|Pub/Sub Channels| Redis[Redis Broker & Cache]
         Redis <--->|Cache| Django
     end
 
