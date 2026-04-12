@@ -1,6 +1,7 @@
 from django.urls import include, path
 from rest_framework.routers import DefaultRouter
 
+from web_gis_app.views.feature_views import FeatureViewSet
 from web_gis_app.views.layer_views import LayerViewSet
 from web_gis_app.views.tiles_views import DatasetTileView
 
@@ -10,6 +11,7 @@ router = DefaultRouter()
 
 router.register(r"datasets", DatasetNodeViewSet, basename="datasets")
 router.register(r"layers", LayerViewSet, basename="layers")
+router.register(r"features", FeatureViewSet, basename="features")
 
 urlpatterns = [
     path("", include(router.urls)),

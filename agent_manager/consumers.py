@@ -106,6 +106,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
         )
 
         full_content = ""
+
         inputs = {
             "session_id": self.session_id,
             "messages": [HumanMessage(content=message)],

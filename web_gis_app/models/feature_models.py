@@ -7,11 +7,6 @@ from .dataset_models import Dataset
 
 
 class Feature(BaseModelWithoutUser):
-    """
-    Stores individual GeoJSON features with PostGIS geometry.
-    Each feature belongs to a dataset and contains geometry + properties.
-    """
-
     dataset = models.ForeignKey(
         Dataset,
         on_delete=models.CASCADE,

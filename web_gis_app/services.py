@@ -35,6 +35,36 @@ class DatasetStorageService:
 
 class DatasetCreateService:
     @staticmethod
+    def create_empty_vector_dataset(*, user, validated_data):
+        dataset_node = DatasetNode.objects.create(
+            name=validated_data.get("name"),
+            parent=validated_data.get("parent"),
+            type=DatasetNodeType.DATASET.value,
+            user=user,
+        )
+
+        metadata = dict(validated_data.get("metadata", {}))
+
+        if srid := validated_data.get("srid"):
+            metadata["srid"] = srid
+
+        if bbox := validated_data.get("bbox"):
+            metadata["bbox"] = bbox
+
+        dataset = Dataset.objects.create(
+            dataset_node=dataset_node,
+            type=DatasetType.VECTOR,
+            format=FileFormat.GEOPACKAGE,  # Abstract format for now
+            metadata=metadata,
+            file_name=f"{dataset_node.name}.gpkg",
+            file_size=0,
+            cloud_storage_path="",
+            status=DatasetStatus.UPLOADED,  # Ready immediately
+        )
+
+        return dataset_node, dataset
+
+    @staticmethod
     def create_dataset_with_file(*, user, validated_data, file):
         file_format = detect_dataset_format(file.name)
         dataset_type = validated_data.get("dataset_type") or MultipartUploadService._infer_dataset_type(

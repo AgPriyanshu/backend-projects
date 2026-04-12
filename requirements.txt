@@ -43,8 +43,9 @@ django-money==3.5.4
 django-stubs==5.2.9
 django-stubs-ext==5.2.9
 djangorestframework==3.16.1
+djangorestframework-gis==1.2.0
 filelock==3.16.1
-GDAL==3.10.3
+# GDAL==3.12.3
 gunicorn==23.0.0
 h11==0.16.0
 hiredis==3.0.0

@@ -19,6 +19,7 @@ from ..serializers.dataset_serializers import (
     DatasetNodeSerializer,
     DatasetNodeTreeSerializer,
     DatasetSerializer,
+    DatasetUploadBaseSerializer,
     DatasetUploadSerializer,
 )
 from ..services import (
@@ -60,26 +61,35 @@ class DatasetNodeViewSet(ModelViewSet):
         return Response(serializer.data, status=status.HTTP_201_CREATED)
 
     def _create_dataset(self, request):
-        """Create a dataset node with associated file"""
+        """Create a dataset node with associated file or empty structure"""
+        is_empty = str(request.data.get("is_empty", "")).lower() == "true"
         files = request.FILES.getlist("files")
 
-        if len(files) != 1:
+        if len(files) != 1 and not is_empty:
             return Response(
                 {"error": "Exactly one file must be uploaded per dataset"},
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
-        file = files[0]
+        if is_empty:
+            serializer = DatasetUploadBaseSerializer(data=request.data)
+        else:
+            serializer = DatasetUploadSerializer(data=request.data)
 
-        serializer = DatasetUploadSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
 
         try:
-            dataset_node, dataset = DatasetCreateService.create_dataset_with_file(
-                user=request.user,
-                validated_data=serializer.validated_data,
-                file=file,
-            )
+            if is_empty:
+                dataset_node, dataset = DatasetCreateService.create_empty_vector_dataset(
+                    user=request.user,
+                    validated_data=serializer.validated_data,
+                )
+            else:
+                dataset_node, dataset = DatasetCreateService.create_dataset_with_file(
+                    user=request.user,
+                    validated_data=serializer.validated_data,
+                    file=files[0],
+                )
         except ValueError as e:
             return Response(
                 {"error": str(e)},

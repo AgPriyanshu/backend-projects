@@ -1,8 +1,20 @@
 import json
 
+from django.contrib.gis.geos import GEOSGeometry
 from rest_framework import status
 from rest_framework.renderers import JSONRenderer
 from rest_framework.utils.encoders import JSONEncoder
+
+
+class GeoJSONEncoder(JSONEncoder):
+    """
+    Extends DRF's JSONEncoder to serialize GEOSGeometry objects as GeoJSON dicts.
+    """
+
+    def default(self, obj):
+        if isinstance(obj, GEOSGeometry):
+            return json.loads(obj.json)
+        return super().default(obj)
 
 
 class CustomJSONRenderer(JSONRenderer):
@@ -40,4 +52,4 @@ class CustomJSONRenderer(JSONRenderer):
             "data": response_data_body,
         }
 
-        return json.dumps(response_data, cls=JSONEncoder, ensure_ascii=False)
+        return json.dumps(response_data, cls=GeoJSONEncoder, ensure_ascii=False)
