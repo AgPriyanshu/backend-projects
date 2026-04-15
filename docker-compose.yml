@@ -3,6 +3,8 @@ services:
     build: .
     container_name: django_app
     command: uvicorn backend_projects.asgi:application --host 0.0.0.0 --port 8000 --ws wsproto --reload
+    cpus: 1.0
+    mem_limit: 1g
     volumes:
       - .:/app
       - ./requirements.txt:/app/requirements.txt
@@ -19,6 +21,8 @@ services:
     build: .
     container_name: celery_worker
     command: celery -A backend_projects worker -l info
+    cpus: 0.75
+    mem_limit: 768m
     volumes:
       - .:/app
     entrypoint: ""
@@ -33,6 +37,8 @@ services:
     platform: linux/amd64
     image: postgis/postgis:17-3.6-alpine
     container_name: postgres_postgis_db
+    cpus: 1.0
+    mem_limit: 1g
     environment:
       POSTGRES_DB: postgres
       POSTGRES_USER: postgres
@@ -51,6 +57,8 @@ services:
   redis:
     image: redis:latest
     container_name: redis_cache
+    cpus: 0.25
+    mem_limit: 256m
     command: >
       redis-server
       --loglevel verbose
@@ -64,6 +72,8 @@ services:
   seaweedfs:
     image: chrislusf/seaweedfs:latest
     container_name: seaweedfs
+    cpus: 0.5
+    mem_limit: 512m
     entrypoint:
       - /bin/sh
       - -c

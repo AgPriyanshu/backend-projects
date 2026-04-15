@@ -16,8 +16,17 @@ class EnvVariable(Enum):
     REDIS_HOST = os.environ.get("REDIS_HOST", "redis")
     REDIS_PORT = os.environ.get("REDIS_PORT", "6379")
 
-    S3_ENDPOINT_URL = os.environ.get("S3_ENDPOINT_URL", "http://localhost:8333")
+    S3_ENDPOINT_URL = os.environ.get(
+        "S3_ENDPOINT_URL",
+        os.environ.get("S3_ENDPOINT", "http://localhost:8333"),
+    )
+    S3_ENDPOINT = os.environ.get("S3_ENDPOINT", S3_ENDPOINT_URL)
     S3_ACCESS_KEY = os.environ.get("S3_ACCESS_KEY", "minioadmin")
     S3_SECRET_KEY = os.environ.get("S3_SECRET_KEY", "minioadmin")
-    S3_REGION_NAME = os.environ.get("S3_REGION_NAME", "ap-south-1")
-    S3_BUCKET_NAME = os.environ.get("S3_BUCKET_NAME", "woa")
+    S3_REGION_NAME = os.environ.get(
+        "S3_REGION_NAME",
+        os.environ.get("S3_REGION", "ap-south-1"),
+    )
+    S3_REGION = os.environ.get("S3_REGION", S3_REGION_NAME)
+    S3_BUCKET_NAME = os.environ.get("S3_BUCKET_NAME", os.environ.get("S3_BUCKET", "woa"))
+    S3_BUCKET = os.environ.get("S3_BUCKET", S3_BUCKET_NAME)
