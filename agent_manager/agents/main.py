@@ -15,6 +15,12 @@ llm = ChatOllama(
 class Node(StrEnum):
     ORCHESTRATOR = "orchestrator"
     WEB_GIS_EXPERT = "web_gis_expert"
+    NOTE_EXPERT = "node_expert"
+
+
+class UIState(TypedDict):
+    current_app: str
+    actions: dict
 
 
 class GlobalMessageState(TypedDict):
@@ -23,6 +29,7 @@ class GlobalMessageState(TypedDict):
     active_node: Node
     next_node: Node | None
     final_response: str
+    ui: UIState
 
 
 class WebGISMessageState(TypedDict):
@@ -52,7 +59,12 @@ def orchestrator_node(state: GlobalMessageState) -> dict:
             "next_node": Node.WEB_GIS_EXPERT,
         }
 
-    fallback_response = "I can only answer Web GIS questions in this graph."
+    elif any(word in question.lower() for word in ["note", "todo"]):
+        return {"active_node": Node.ORCHESTRATOR, "next_node": Node.NOTE_EXPERT}
+
+    fallback_response = (
+        "I can only answer Web GIS questions and Note taking questions in this graph."
+    )
 
     return {
         "active_node": Node.ORCHESTRATOR,
@@ -103,6 +115,25 @@ async def web_gis_expert_node(state: WebGISMessageState) -> WebGISMessageState:
     }
 
 
+async def note_taker_expert(state: GlobalMessageState):
+    question = get_latest_human_message(state["messages"])
+
+    expert_response = ""
+    async for chunk in llm.astream(
+        [
+            SystemMessage(
+                content=(
+                    "You are a Note taker expert and you fix the grammar and rephrase the user note"
+                )
+            ),
+            HumanMessage(content=question.content),
+        ]
+    ):
+        expert_response += chunk.content or ""
+
+    return {"messages": AIMessage(content=expert_response)}
+
+
 async def web_gis_expert_entry_node(state: GlobalMessageState) -> dict:
     web_gis_state = build_web_gis_state(state)
     web_gis_result = await web_gis_expert_node(web_gis_state)
@@ -119,6 +150,8 @@ async def web_gis_expert_entry_node(state: GlobalMessageState) -> dict:
 def graph_router(state: GlobalMessageState) -> str:
     if state["next_node"]:
         return Node.WEB_GIS_EXPERT
+    elif state["next_node"]:
+        return Node.NOTE_EXPERT
 
     return END
 
@@ -127,6 +160,7 @@ graph = StateGraph(GlobalMessageState)
 
 graph.add_node(Node.ORCHESTRATOR, orchestrator_node)
 graph.add_node(Node.WEB_GIS_EXPERT, web_gis_expert_entry_node)
+graph.add_node(Node.NOTE_EXPERT, note_taker_expert)
 
 graph.add_edge(START, Node.ORCHESTRATOR)
 graph.add_conditional_edges(
@@ -134,9 +168,11 @@ graph.add_conditional_edges(
     graph_router,
     {
         Node.WEB_GIS_EXPERT: Node.WEB_GIS_EXPERT,
+        Node.NOTE_EXPERT: Node.NOTE_EXPERT,
         END: END,
     },
 )
 graph.add_edge(Node.WEB_GIS_EXPERT, END)
+graph.add_edge(Node.NOTE_EXPERT, END)
 
 agent = graph.compile()

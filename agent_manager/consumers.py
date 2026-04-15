@@ -68,9 +68,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
             payload = json.loads(text_data)
 
         except json.JSONDecodeError:
-            await self.send(
-                text_data=json.dumps({"error": "Invalid JSON payload."})
-            )
+            await self.send(text_data=json.dumps({"error": "Invalid JSON payload."}))
             return
 
         message = payload.get("message", "").strip()
@@ -160,7 +158,8 @@ class ChatConsumer(AsyncWebsocketConsumer):
                     },
                 )
 
-        except Exception:
+        except Exception as e:
+            print(e)
             error_msg = "I could not process your request right now."
             full_content += error_msg
             await self.channel_layer.group_send(
