@@ -13,7 +13,11 @@ class EnvVariable(Enum):
 
     INFRA_PROVIDER = os.environ.get("INFRA_PROVIDER", "k8s")
 
-    # MinIO Object Storage Configuration
-    MINIO_ENDPOINT = os.environ.get("MINIO_ENDPOINT", "minio:9000")
-    MINIO_ACCESS_KEY = os.environ.get("MINIO_ACCESS_KEY", "minioadmin")
-    MINIO_SECRET_KEY = os.environ.get("MINIO_SECRET_KEY", "minioadmin123")
+    REDIS_HOST = os.environ.get("REDIS_HOST", "redis")
+    REDIS_PORT = os.environ.get("REDIS_PORT", "6379")
+
+    S3_ENDPOINT_URL = os.environ.get("S3_ENDPOINT_URL", "http://localhost:8333")
+    S3_ACCESS_KEY = os.environ.get("S3_ACCESS_KEY", "minioadmin")
+    S3_SECRET_KEY = os.environ.get("S3_SECRET_KEY", "minioadmin")
+    S3_REGION_NAME = os.environ.get("S3_REGION_NAME", "ap-south-1")
+    S3_BUCKET_NAME = os.environ.get("S3_BUCKET_NAME", "woa")
