@@ -140,9 +140,11 @@ class K8sObjectStorage(ObjectStorageAbstract):
                 "size": response.get("ContentLength"),
                 "etag": response.get("ETag", "").strip('"'),
                 "content_type": response.get("ContentType"),
-                "last_modified": response.get("LastModified").isoformat()
-                if response.get("LastModified")
-                else None,
+                "last_modified": (
+                    response.get("LastModified").isoformat()
+                    if response.get("LastModified")
+                    else None
+                ),
                 "metadata": response.get("Metadata", {}),
                 "version_id": response.get("VersionId"),
             }
@@ -232,9 +234,11 @@ class K8sObjectStorage(ObjectStorageAbstract):
                             "key": obj.get("Key"),
                             "size": obj.get("Size"),
                             "etag": obj.get("ETag", "").strip('"'),
-                            "last_modified": obj.get("LastModified").isoformat()
-                            if obj.get("LastModified")
-                            else None,
+                            "last_modified": (
+                                obj.get("LastModified").isoformat()
+                                if obj.get("LastModified")
+                                else None
+                            ),
                             "storage_class": obj.get("StorageClass"),
                         }
                     )
@@ -259,6 +263,11 @@ class K8sObjectStorage(ObjectStorageAbstract):
         """Initiate a multipart upload."""
         upload_bucket = bucket if bucket is not None else self.default_bucket
         try:
+            try:
+                self.client.head_bucket(Bucket=upload_bucket)
+            except ClientError:
+                self.client.create_bucket(Bucket=upload_bucket)
+
             params = {
                 "Bucket": upload_bucket,
                 "Key": key,

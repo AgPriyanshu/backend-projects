@@ -19,7 +19,10 @@ class Url(BaseModel):
     def save(self, *args, **kwargs):
         if not self.slug:
             slug = generate_base62_slug()
+
+            # To check for collision, if the generated slug already exists, generate a new one.
             while Url.objects.filter(slug=slug).exists():
                 slug = generate_base62_slug()
+
             self.slug = slug
         super().save(*args, **kwargs)

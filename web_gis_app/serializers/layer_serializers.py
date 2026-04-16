@@ -1,3 +1,4 @@
+from django.db import connection
 from rest_framework import serializers
 
 from shared.serializers import BaseModelSerializer
@@ -30,19 +31,49 @@ class LayerSerializer(BaseModelSerializer):
 
     def get_bbox(self, obj):
         """
-        Get bounding box from the source dataset's metadata or tileset.
-        Returns [minX, minY, maxX, maxY]
+        Get bounding box from the source dataset.
+        Returns [minLng, minLat, maxLng, maxLat] (EPSG:4326).
         """
-        # 1. Try metadata (Vector datasets usually handle this)
-        if obj.source and obj.source.metadata and "bbox" in obj.source.metadata:
-            return obj.source.metadata.get("bbox")
+        if not obj.source:
+            return None
 
-        # 2. Try tileset (Raster datasets)
-        if obj.source and hasattr(obj.source, "tileset"):
-            try:
-                return obj.source.tileset.bounds
-            except obj.source.tileset.RelatedObjectDoesNotExist:
-                pass
+        # Raster: try metadata bounds then tileset bounds.
+        if obj.source.type == "raster":
+            bounds = (obj.source.metadata or {}).get("bounds")
+
+            if bounds:
+                return bounds
+
+            if hasattr(obj.source, "tileset"):
+                try:
+                    return obj.source.tileset.bounds
+                except obj.source.tileset.RelatedObjectDoesNotExist:
+                    pass
+
+            return None
+
+        # Vector: compute from PostGIS ST_Extent so it works even without stored metadata.
+        try:
+            with connection.cursor() as cursor:
+                cursor.execute(
+                    """
+                    SELECT
+                        ST_XMin(extent), ST_YMin(extent),
+                        ST_XMax(extent), ST_YMax(extent)
+                    FROM (
+                        SELECT ST_Extent(ST_Transform(geometry, 4326)) AS extent
+                        FROM feature
+                        WHERE dataset_id = %s
+                    ) sub
+                    """,
+                    [str(obj.source_id)],
+                )
+                row = cursor.fetchone()
+
+            if row and row[0] is not None:
+                return [row[0], row[1], row[2], row[3]]
+        except Exception:
+            pass
 
         return None
 

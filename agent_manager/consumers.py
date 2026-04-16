@@ -111,10 +111,12 @@ class ChatConsumer(AsyncWebsocketConsumer):
             "active_node": Node.ORCHESTRATOR,
             "next_node": None,
             "final_response": "",
+            "ui_actions": [],
         }
 
         try:
             last_final_response = ""
+            last_ui_actions: list = []
             async for event in agent.astream_events(inputs, version="v2"):
                 if event["event"] == "on_chat_model_stream":
                     chunk_content = event["data"]["chunk"].content
@@ -135,14 +137,17 @@ class ChatConsumer(AsyncWebsocketConsumer):
                                 "isChunk": True,
                             },
                         )
-                # Capture node state updates to get the final response if no streaming occurs
+                # Capture node state updates to get the final response and ui_actions.
                 elif event["event"] == "on_chain_end":
                     output = event["data"].get("output")
-                    if isinstance(output, dict) and "final_response" in output:
-                        if output["final_response"]:
-                            last_final_response = output["final_response"]
 
-            # If no tokens were streamed (e.g., fallback response from orchestrator), send the final response directly
+                    if isinstance(output, dict):
+                        if output.get("final_response"):
+                            last_final_response = output["final_response"]
+                        if output.get("ui_actions"):
+                            last_ui_actions = output["ui_actions"]
+
+            # If no tokens were streamed (e.g., fallback response from orchestrator), send the final response directly.
             if not full_content and last_final_response:
                 full_content = str(last_final_response)
                 await self.channel_layer.group_send(
@@ -175,7 +180,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
                 },
             )
 
-        # Notify frontend stream is done, passing `isChunk: false` triggers finalization if needed, though we already updated store incrementally
+        # Notify frontend stream is done, passing `isChunk: false` triggers finalization if needed, though we already updated store incrementally.
         await self.channel_layer.group_send(
             self.group_name,
             {
@@ -189,6 +194,16 @@ class ChatConsumer(AsyncWebsocketConsumer):
             },
         )
 
+        if last_ui_actions:
+            await self.channel_layer.group_send(
+                self.group_name,
+                {
+                    "type": "chat.ui_action",
+                    "session_id": str(self.session_id),
+                    "actions": last_ui_actions,
+                },
+            )
+
         await self.update_message(saved_agent_message.id, full_content)
 
     async def chat_message(self, event):
@@ -201,6 +216,17 @@ class ChatConsumer(AsyncWebsocketConsumer):
                     "user_id": event["user_id"],
                     "role": event["role"],
                     "isChunk": event.get("isChunk", False),
+                }
+            )
+        )
+
+    async def chat_ui_action(self, event):
+        await self.send(
+            text_data=json.dumps(
+                {
+                    "type": "ui_action",
+                    "session_id": event["session_id"],
+                    "actions": event["actions"],
                 }
             )
         )

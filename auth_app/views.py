@@ -22,13 +22,13 @@ class AuthViewSet(ViewSet):
         serializer.is_valid(raise_exception=True)
 
         user = authenticate(
-            username=serializer.validated_data["username"],
-            password=serializer.validated_data["password"],
+            username=serializer.validated_data.get("username"),
+            password=serializer.validated_data.get("password"),
         )
 
         if user:
             user_token = Token.objects.get_or_create(user=user)
-            data = {"token": user_token[0].key, "is_staff": user.is_staff}
+            data = {"token": user_token[0].key}
 
             return Response(
                 {
@@ -68,4 +68,4 @@ class AuthViewSet(ViewSet):
 
             User.objects.create_user(**user_details)
 
-        return Response({"data": serializer.validated_data})
+        return Response({"message": "User registered successfully"})

@@ -5,6 +5,7 @@ from web_gis_app.views.feature_views import FeatureViewSet
 from web_gis_app.views.layer_views import LayerViewSet
 from web_gis_app.views.processing_views import ProcessingJobViewSet
 from web_gis_app.views.tiles_views import DatasetTileView
+from web_gis_app.views.vector_tile_view import VectorTileView
 
 from .views.dataset_views import DatasetNodeViewSet
 
@@ -21,5 +22,10 @@ urlpatterns = [
         "datasets/<uuid:pk>/tiles/<int:z>/<int:x>/<int:y>.png",
         DatasetTileView.as_view(),
         name="dataset-tile",
+    ),
+    path(
+        "datasets/<uuid:pk>/vector-tiles/<int:z>/<int:x>/<int:y>.mvt",
+        VectorTileView.as_view(),
+        name="dataset-vector-tile",
     ),
 ]

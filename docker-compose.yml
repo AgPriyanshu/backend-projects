@@ -2,7 +2,12 @@ services:
   web:
     build: .
     container_name: django_app
-    command: uvicorn backend_projects.asgi:application --host 0.0.0.0 --port 8000 --ws wsproto --reload --timeout-graceful-shutdown 3
+    command: uvicorn backend_projects.asgi:application --host 0.0.0.0 --port 8000 --ws wsproto --reload
+    deploy:
+      resources:
+        limits:
+          cpus: '1.0'
+          memory: 1g
     volumes:
       - .:/app
       - ./requirements.txt:/app/requirements.txt
@@ -18,7 +23,13 @@ services:
   worker:
     build: .
     container_name: celery_worker
+    profiles: [web-gis]
     command: celery -A backend_projects worker -l info
+    deploy:
+      resources:
+        limits:
+          cpus: '0.75'
+          memory: 768m
     volumes:
       - .:/app
     entrypoint: ""
@@ -33,6 +44,11 @@ services:
     platform: linux/amd64
     image: postgis/postgis:17-3.6-alpine
     container_name: postgres_postgis_db
+    deploy:
+      resources:
+        limits:
+          cpus: '1.0'
+          memory: 1g
     environment:
       POSTGRES_DB: postgres
       POSTGRES_USER: postgres
@@ -53,9 +69,13 @@ services:
     container_name: redis_cache
     command: >
       redis-server
-      --loglevel verbose
-      --slowlog-log-slower-than 0
-      --slowlog-max-len 1000
+      --loglevel warning
+      --slowlog-log-slower-than -1
+    deploy:
+      resources:
+        limits:
+          cpus: '0.25'
+          memory: 256m
     ports:
       - "6379:6379"
     volumes:
@@ -64,6 +84,12 @@ services:
   seaweedfs:
     image: chrislusf/seaweedfs:latest
     container_name: seaweedfs
+    profiles: [web-gis]
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 512m
     entrypoint:
       - /bin/sh
       - -c

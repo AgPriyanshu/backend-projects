@@ -13,11 +13,6 @@ class UrlShortnerViewerSet(BaseModelViewSet):
     serializer_class = UrlSerializer
     lookup_field = "slug"
 
-    def get_queryset(self):
-        if self.request.user:
-            return Url.objects.filter(user=self.request.user)
-        return super().get_queryset()
-
     def get_permissions(self):
         if self.action == "retrieve":
             self.permission_classes = [AllowAny]

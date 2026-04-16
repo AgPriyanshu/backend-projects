@@ -17,9 +17,8 @@ urlpatterns = [
     path("tasks/", include("todo_app.urls")),
     path("expenses/", include("expense_tracker_app.urls")),
     path("notes/", include("note_markdown_app.urls")),
-    path("urls/", include("url_shortner_app.urls")),
+    path("url-shortner/urls/", include("url_shortner_app.urls")),
     # path("device-classifier/", include("device_classifier.urls")),
-    # path("chats/", include("chat_app.urls")),
     path("web-gis/", include("web_gis_app.urls")),
     path("ecom/", include("ecommerce_app.urls")),
     path(

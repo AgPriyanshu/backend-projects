@@ -76,7 +76,8 @@ class DatasetTileView(APIView):
                     if is_elevation is None:
                         preview_tile = src.tile(x, y, z, resampling_method="bilinear")
                         is_elevation = (
-                            preview_tile.data.ndim == 3 and preview_tile.data.shape[0] == 1
+                            preview_tile.data.ndim == 3
+                            and preview_tile.data.shape[0] == 1
                         )
 
                     # Elevation rasters (single-band) are encoded as Terrain-RGB.
@@ -107,7 +108,7 @@ class DatasetTileView(APIView):
                             tile_data.mask,
                             assets=tile_data.assets,
                             bounds=tile_data.bounds,
-                            crs=tile_data.crs
+                            crs=tile_data.crs,
                         )
                         content = rgb_tile.render(img_format="PNG")
                     else:
@@ -173,7 +174,7 @@ class DatasetTileView(APIView):
             "AWS_S3_ENDPOINT": os.environ.get("S3_ENDPOINT", ""),
             "AWS_REGION": os.environ.get("S3_REGION", "us-east-1"),
             "AWS_HTTPS": "NO",  # Assuming internal SeaweedFS is HTTP; change if HTTPS
-            "AWS_VIRTUAL_HOSTING": "FALSE", # Path-style access for MinIO/SeaweedFS
+            "AWS_VIRTUAL_HOSTING": "FALSE",  # Path-style access for MinIO/SeaweedFS
             # Ensure GDAL knows we are treating this as S3
             "CPL_VSIL_CURL_ALLOWED_EXTENSIONS": ".tif,.tiff",
         }
