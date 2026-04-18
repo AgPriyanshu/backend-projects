@@ -3,8 +3,8 @@ from pathlib import Path
 from shared.infrastructure import InfraManager
 from shared.utils import URIType, parse_uri
 
+from ...schemas import StrictPayload
 from ..base.base_operation import Operation
-from ..schemas import StrictPayload
 
 
 class UploadPayload(StrictPayload):

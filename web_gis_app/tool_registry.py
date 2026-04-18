@@ -13,7 +13,7 @@ from typing import Literal, Optional
 
 from pydantic import Field
 
-from shared.workflows.schemas import StrictPayload
+from shared.schemas import StrictPayload
 
 from .constants import DatasetType, ProcessingTool, ProcessingToolCategory
 

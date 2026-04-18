@@ -127,7 +127,6 @@ def rebuild_descendant_closures(node):
         # Create new closures based on current parent (node)
         create_ancestor_closures(child)
 
-
         # Recursively rebuild for this child's descendants
         rebuild_descendant_closures(child)
 
@@ -145,6 +144,7 @@ def trigger_dataset_processing(sender, instance, created, **kwargs):
             return
 
         update_fields = kwargs.get("update_fields")
+
         if update_fields is not None and "status" not in update_fields and not created:
             return
 
@@ -157,12 +157,19 @@ def trigger_dataset_processing(sender, instance, created, **kwargs):
         # Do not enqueue duplicates while a tileset is already being processed or is ready.
         if hasattr(instance, "tileset"):
             try:
-                if instance.tileset.status in {TileSetStatus.PROCESSING, TileSetStatus.READY}:
+                if instance.tileset.status in {
+                    TileSetStatus.PROCESSING,
+                    TileSetStatus.READY,
+                }:
                     return
             except instance.tileset.RelatedObjectDoesNotExist:
                 pass
 
-        print(f"Signal: Dataset {instance.id} transitioned to UPLOADED RASTER. Triggering COG task.")
+        print(
+            f"Signal: Dataset {instance.id} transitioned to UPLOADED RASTER. Triggering COG task."
+        )
+
         generate_cog_task.delay(str(instance.id))
+
     finally:
         _old_dataset_status_cache.pop(instance.pk, None)

@@ -1,41 +1,35 @@
-import math
 import os
 
-import rasterio
+from rasterio.warp import transform_bounds
 from rio_cogeo.cogeo import cog_translate
 from rio_cogeo.profiles import cog_profiles
 
+from shared.schemas import StrictPayload
 from shared.workflows.base.base_operation import Operation
 from shared.workflows.base.base_workflow import Workflow
 from shared.workflows.operations.download import Download
 from shared.workflows.operations.upload import Upload
-from shared.workflows.schemas import StrictPayload
 
 from ..constants import TileSetStatus
+from ..helpers import get_raster_info, get_raster_kind
 from ..models import TileSet
 from ..notifications import send_notification
 
 
 class GenerateCOGPayload(StrictPayload):
-    """Payload for converting a raster to a Cloud Optimized GeoTIFF."""
-
     input_path: str
     work_dir: str
 
 
 class UpdateTileSetPayload(StrictPayload):
-    """Payload for updating the TileSet record with processed file metadata."""
-
     tileset_id: str
     storage_path: str
 
 
 class GenerateCOG(Operation[GenerateCOGPayload, dict]):
-    """Convert a raster file to Cloud Optimized GeoTIFF."""
-
     name = "generate_cog"
 
-    def execute(self, *args, **kwargs) -> dict:
+    def execute(self, *args, **kwargs):
         input_path = self.payload.input_path
         work_dir = self.payload.work_dir
         output_path = os.path.join(work_dir, "output.tif")
@@ -51,55 +45,28 @@ class GenerateCOG(Operation[GenerateCOGPayload, dict]):
             quiet=True,
         )
 
-        from rasterio.warp import transform_bounds
+        raster_info = get_raster_info(output_path)
 
-        # Extract metadata from the generated COG.
-        with rasterio.open(output_path) as src:
-            # Reproject bounds to EPSG:4326 (WGS84 Lng/Lat) for frontend consumption.
-            src_crs = src.crs
-            if src_crs and src_crs.to_string() != "EPSG:4326":
-                bounds_4326 = transform_bounds(src_crs, "EPSG:4326", *src.bounds)
-                bounds = list(bounds_4326)
-            else:
-                bounds = list(src.bounds)
+        if raster_info.crs and raster_info.crs.to_string() != "EPSG:4326":
+            bounds_4326 = transform_bounds(
+                raster_info.crs, "EPSG:4326", *raster_info.bounds
+            )
+            bounds = list(bounds_4326)
+        else:
+            bounds = list(raster_info.bounds)
 
-            file_size = os.path.getsize(output_path)
-            band_count = src.count
-            raster_kind = self._infer_raster_kind(band_count)
+        file_size = os.path.getsize(output_path)
+        band_count = raster_info.band_count
+        raster_kind = get_raster_kind(band_count)
 
-            # Estimate zoom levels from resolution.
-            res = src.res[0]
-            max_zoom = self._resolution_to_zoom(res)
-            min_zoom = max(0, max_zoom - 10)
-
-        # Write metadata to shared context for downstream operations.
         self.ctx["tileset_metadata"] = {
             "file_size": file_size,
             "bounds": bounds,
-            "min_zoom": min_zoom,
-            "max_zoom": max_zoom,
+            "min_zoom": raster_info.minzoom,
+            "max_zoom": raster_info.maxzoom,
             "band_count": band_count,
             "raster_kind": raster_kind,
         }
-
-
-    @staticmethod
-    def _resolution_to_zoom(resolution_degrees: float) -> int:
-        """Estimate max zoom level from pixel resolution in degrees."""
-        if resolution_degrees <= 0:
-            return 18
-        zoom = math.log2(360.0 / (resolution_degrees * 256))
-        return min(22, max(0, int(zoom)))
-
-    @staticmethod
-    def _infer_raster_kind(band_count: int) -> str:
-        # Product decision:
-        # 1 band -> elevation; 3 or 4 bands -> orthophoto (RGB/RGBA); otherwise generic raster.
-        if band_count == 1:
-            return "elevation"
-        if band_count in (3, 4):
-            return "ortho"
-        return "raster"
 
 
 class UpdateTileSet(Operation[UpdateTileSetPayload, dict]):
@@ -126,9 +93,9 @@ class UpdateTileSet(Operation[UpdateTileSetPayload, dict]):
         dataset.metadata = dataset_metadata
         dataset.save(update_fields=["metadata"])
 
-        # Send notification to the user.
-        user = tileset.dataset.dataset_node.user
-        dataset_name = tileset.dataset.dataset_node.name
+        user = dataset.dataset_node.user
+        dataset_name = dataset.dataset_node.name
+
         send_notification(
             f"Tileset generation completed for dataset '{dataset_name}'.",
             user=user,
