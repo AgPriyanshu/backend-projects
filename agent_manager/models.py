@@ -16,7 +16,7 @@ class LLM(BaseModelWithoutUser):
 
 class ChatSession(BaseModel):
     name = models.TextField(verbose_name="Name")
-    llm = models.OneToOneField(
+    llm = models.ForeignKey(
         LLM,
         on_delete=models.DO_NOTHING,
         verbose_name="LLM",

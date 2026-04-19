@@ -1,5 +1,5 @@
 import json
-from typing import Any, Literal, TypedDict, cast
+from typing import Any, TypedDict, cast
 from uuid import UUID
 
 from asgiref.sync import sync_to_async
@@ -8,8 +8,9 @@ from channels.generic.websocket import AsyncWebsocketConsumer
 from django.core.exceptions import ObjectDoesNotExist
 from langchain.messages import HumanMessage
 
-from agent_manager.agents.main import Node, agent
-from agent_manager.models import ChatSession, Message
+from .agents.agent import Node, agent_new
+from .constants import Role
+from .models import ChatSession, Message
 
 
 class UrlRoute(TypedDict):
@@ -20,11 +21,6 @@ class UrlRoute(TypedDict):
 class ChannelsWebSocketScope(WebSocketScope):
     user: Any
     url_route: UrlRoute
-
-
-class ChatMessage(TypedDict):
-    type: Literal["chat.message"]
-    message: str
 
 
 class ChatConsumer(AsyncWebsocketConsumer):
@@ -55,13 +51,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
             await self.close(code=4404)
             return
 
-        self.group_name = f"chat-session-{self.session_id}"
-        await self.channel_layer.group_add(self.group_name, self.channel_name)
         await self.accept()
-
-    async def disconnect(self, close_code):
-        if hasattr(self, "group_name"):
-            await self.channel_layer.group_discard(self.group_name, self.channel_name)
 
     async def receive(self, text_data):
         try:
@@ -85,16 +75,10 @@ class ChatConsumer(AsyncWebsocketConsumer):
             content=message,
         )
 
-        await self.channel_layer.group_send(
-            self.group_name,
-            {
-                "type": "chat.message",
-                "message_id": str(saved_message.id),
-                "session_id": str(self.session_id),
-                "message": saved_message.content,
-                "user_id": saved_message.user_id,  # type: ignore
-                "role": "user",
-            },
+        await self._send_message(
+            message_id=str(saved_message.id),
+            role=Role.USER,
+            content=saved_message.content,
         )
 
         saved_agent_message = await self.create_message(
@@ -108,125 +92,112 @@ class ChatConsumer(AsyncWebsocketConsumer):
         inputs = {
             "session_id": self.session_id,
             "messages": [HumanMessage(content=message)],
-            "active_node": Node.ORCHESTRATOR,
+            "active_node": Node,
             "next_node": None,
             "final_response": "",
-            "ui_actions": [],
         }
 
         try:
             last_final_response = ""
-            last_ui_actions: list = []
-            async for event in agent.astream_events(inputs, version="v2"):
-                if event["event"] == "on_chat_model_stream":
+            last_ui_action = None
+
+            async for event in agent_new.astream_events(inputs, version="v2"):
+                if (
+                    event["event"] == "on_chat_model_stream"
+                    and event.get("metadata", {}).get("langgraph_node")
+                    != Node.ORCHESTRATOR
+                ):
                     chunk_content = event["data"]["chunk"].content
+
                     if chunk_content:
                         if not isinstance(chunk_content, str):
                             chunk_content = str(chunk_content)
+
                         full_content += chunk_content
 
-                        await self.channel_layer.group_send(
-                            self.group_name,
-                            {
-                                "type": "chat.message",
-                                "message_id": str(saved_agent_message.id),
-                                "session_id": str(self.session_id),
-                                "message": chunk_content,
-                                "user_id": saved_agent_message.user_id,  # type: ignore
-                                "role": "assistant",
-                                "isChunk": True,
-                            },
+                        await self._send_message(
+                            message_id=str(saved_agent_message.id),
+                            role=Role.ASSISTANT,
+                            content=chunk_content,
+                            is_chunk=True,
                         )
-                # Capture node state updates to get the final response and ui_actions.
+
+                # Capture node state updates to get the final response and ui_action.
                 elif event["event"] == "on_chain_end":
                     output = event["data"].get("output")
 
                     if isinstance(output, dict):
                         if output.get("final_response"):
                             last_final_response = output["final_response"]
-                        if output.get("ui_actions"):
-                            last_ui_actions = output["ui_actions"]
+                        if output.get("ui_action"):
+                            last_ui_action = output["ui_action"]
 
             # If no tokens were streamed (e.g., fallback response from orchestrator), send the final response directly.
             if not full_content and last_final_response:
                 full_content = str(last_final_response)
-                await self.channel_layer.group_send(
-                    self.group_name,
-                    {
-                        "type": "chat.message",
-                        "message_id": str(saved_agent_message.id),
-                        "session_id": str(self.session_id),
-                        "message": full_content,
-                        "user_id": saved_agent_message.user_id,  # type: ignore
-                        "role": "assistant",
-                        "isChunk": True,
-                    },
+
+                await self._send_message(
+                    message_id=str(saved_agent_message.id),
+                    role=Role.ASSISTANT,
+                    content=full_content,
+                    is_chunk=True,
                 )
 
         except Exception as e:
-            print(e)
-            error_msg = "I could not process your request right now."
-            full_content += error_msg
-            await self.channel_layer.group_send(
-                self.group_name,
-                {
-                    "type": "chat.message",
-                    "message_id": str(saved_agent_message.id),
-                    "session_id": str(self.session_id),
-                    "message": error_msg,
-                    "user_id": saved_agent_message.user_id,  # type: ignore
-                    "role": "assistant",
-                    "isChunk": True,
-                },
+            import logging
+
+            logging.getLogger(__name__).exception("Agent stream error: %s", e)
+
+            await self._send_message(
+                message_id=str(saved_agent_message.id),
+                role=Role.ASSISTANT,
+                content="I could not process your request right now.",
+                is_chunk=True,
             )
 
-        # Notify frontend stream is done, passing `isChunk: false` triggers finalization if needed, though we already updated store incrementally.
-        await self.channel_layer.group_send(
-            self.group_name,
-            {
-                "type": "chat.message",
-                "message_id": str(saved_agent_message.id),
-                "session_id": str(self.session_id),
-                "message": "",
-                "user_id": saved_agent_message.user_id,  # type: ignore
-                "role": "assistant",
-                "isChunk": False,
-            },
+        # Notify frontend the stream is done.
+        await self._send_message(
+            message_id=str(saved_agent_message.id),
+            role=Role.ASSISTANT,
+            content="",
+            is_chunk=False,
         )
 
-        if last_ui_actions:
-            await self.channel_layer.group_send(
-                self.group_name,
-                {
-                    "type": "chat.ui_action",
-                    "session_id": str(self.session_id),
-                    "actions": last_ui_actions,
-                },
+        if last_ui_action:
+            await self.send(
+                text_data=json.dumps(
+                    {
+                        "type": "ui_action",
+                        "session_id": self.session_id,
+                        "actions": [
+                            {
+                                "app": last_ui_action["app"],
+                                "action_type": last_ui_action["type"],
+                                "payload": last_ui_action["payload"],
+                            }
+                        ],
+                    }
+                )
             )
 
         await self.update_message(saved_agent_message.id, full_content)
 
-    async def chat_message(self, event):
+    async def _send_message(
+        self,
+        message_id: str,
+        role: Role,
+        content: str,
+        is_chunk: bool = False,
+    ):
         await self.send(
             text_data=json.dumps(
                 {
-                    "id": event["message_id"],
-                    "session_id": event["session_id"],
-                    "message": event["message"],
-                    "user_id": event["user_id"],
-                    "role": event["role"],
-                    "isChunk": event.get("isChunk", False),
-                }
-            )
-        )
-
-    async def chat_ui_action(self, event):
-        await self.send(
-            text_data=json.dumps(
-                {
-                    "type": "ui_action",
-                    "session_id": event["session_id"],
-                    "actions": event["actions"],
+                    "id": message_id,
+                    "session_id": self.session_id,
+                    "message": content,
+                    "user_id": str(self.user.id),
+                    "role": role,
+                    "isChunk": is_chunk,
                 }
             )
         )

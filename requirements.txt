@@ -35,6 +35,7 @@ cryptography==46.0.3
 daphne==4.2.1
 dill==0.4.1
 distlib==0.3.9
+distro==1.9.0
 Django==6.0.1
 django-cors-headers==4.9.0
 django-debug-toolbar==4.4.6
@@ -45,7 +46,6 @@ django-stubs-ext==5.2.9
 djangorestframework==3.16.1
 djangorestframework-gis==1.2.0
 filelock==3.16.1
-# GDAL==3.12.3
 gunicorn==23.0.0
 h11==0.16.0
 hiredis==3.0.0
@@ -56,13 +56,15 @@ identify==2.6.1
 idna==3.11
 Incremental==24.11.0
 isort==7.0.0
+jiter==0.14.0
 jmespath==1.1.0
 jsonpatch==1.33
 jsonpointer==3.1.1
 kombu==5.6.2
 langchain==1.2.15
-langchain-core==1.2.26
-langchain-ollama==1.0.1
+langchain-core==1.3.0
+langchain-ollama==1.1.0
+langchain-openai==1.1.14
 langgraph==1.1.6
 langgraph-checkpoint==4.0.1
 langgraph-prebuilt==1.0.9
@@ -81,6 +83,7 @@ nodeenv==1.9.1
 numexpr==2.14.1
 numpy==2.4.2
 ollama==0.6.1
+openai==2.32.0
 orjson==3.11.8
 ormsgpack==1.12.2
 packaging==25.0
@@ -114,6 +117,7 @@ pytz==2025.2
 PyYAML==6.0.3
 rasterio==1.5.0
 redis==7.1.0
+regex==2026.4.4
 requests==2.32.5
 requests-toolbelt==1.0.0
 rio-cogeo==7.0.1
@@ -123,12 +127,14 @@ rio-tiler==9.0.6
 ruamel.appconfig==0.5.5
 ruamel.std.argparse==0.8.3
 s3transfer==0.16.0
-service-identity==24.2.0
 scipy==1.17.1
+service-identity==24.2.0
 setuptools==80.9.0
 six==1.17.0
+sniffio==1.3.1
 sqlparse==0.5.5
 tenacity==9.1.4
+tiktoken==0.12.0
 toml==0.10.2
 tomlkit==0.14.0
 tqdm==4.67.1
@@ -153,3 +159,4 @@ xxhash==3.6.0
 yaml-1.3==0.1.0
 zope.interface==8.2
 zstandard==0.25.0
+geopy==2.4.1
