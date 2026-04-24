@@ -29,6 +29,17 @@ class ChatSession(BaseModel):
         verbose_name_plural = "Chat sessions"
 
 
+class MessageRole(models.TextChoices):
+    USER = "user", "User"
+    ASSISTANT = "assistant", "Assistant"
+
+
+class MessageStatus(models.TextChoices):
+    PENDING = "pending", "Pending"
+    COMPLETE = "complete", "Complete"
+    FAILED = "failed", "Failed"
+
+
 class Message(BaseModel):
     session = models.ForeignKey(
         ChatSession,
@@ -36,6 +47,18 @@ class Message(BaseModel):
         verbose_name="Session",
     )
     content = models.TextField(verbose_name="Content")
+    role = models.CharField(
+        max_length=20,
+        choices=MessageRole.choices,
+        default=MessageRole.USER,
+        verbose_name="Role",
+    )
+    status = models.CharField(
+        max_length=20,
+        choices=MessageStatus.choices,
+        default=MessageStatus.COMPLETE,
+        verbose_name="Status",
+    )
 
     class Meta:
         verbose_name = "Message"

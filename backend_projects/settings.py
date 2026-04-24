@@ -180,6 +180,12 @@ CELERY_ACCEPT_CONTENT = ["json"]
 CELERY_TASK_SERIALIZER = "json"
 CELERY_RESULT_SERIALIZER = "json"
 CELERY_TIMEZONE = "UTC"
+CELERY_BEAT_SCHEDULE = {
+    "cleanup-stale-pending-messages": {
+        "task": "agent_manager.tasks.cleanup_stale_pending_messages",
+        "schedule": 300,  # Every 5 minutes.
+    },
+}
 
 # Password validation
 # https://docs.djangoproject.com/en/5.1/ref/settings/#auth-password-validators
