@@ -253,8 +253,8 @@ MEDIA_ROOT = os.path.join(BASE_DIR, "media")
 
 # LLM Server Configuration
 LLM_SERVER_CONFIG = {
-    "BASE_URL": os.environ.get("LLM_SERVER_URL", "http://localhost:8001"),
-    "DEFAULT_MODEL": os.environ.get("LLM_DEFAULT_MODEL", "qwen3:8b"),
+    "BASE_URL": os.environ.get("LLM_SERVER_URL", "http://100.64.122.97:8080/v1"),
+    "DEFAULT_MODEL": os.environ.get("LLM_DEFAULT_MODEL", "Qwen/Qwen3-8B-AWQ"),
     "TIMEOUT": int(
         os.environ.get("LLM_TIMEOUT", "120")
     ),  # Increased for geospatial tool processing

@@ -82,6 +82,8 @@ class ChatConsumer(AsyncWebsocketConsumer):
             await self.send(text_data=json.dumps({"error": "Message content is required."}))
             return
 
+        loaded_layers = self._parse_loaded_layers(payload.get("context"))
+
         if len(message) > MAX_MESSAGE_LENGTH:
             await self.send(
                 text_data=json.dumps({"error": f"Message exceeds {MAX_MESSAGE_LENGTH} character limit."})
@@ -135,7 +137,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
 
         try:
             full_content, last_ui_action = await asyncio.wait_for(
-                self._execute_graph(message, saved_agent_message.id),
+                self._execute_graph(message, saved_agent_message.id, loaded_layers),
                 timeout=GRAPH_TURN_TIMEOUT,
             )
         except asyncio.TimeoutError:
@@ -179,7 +181,12 @@ class ChatConsumer(AsyncWebsocketConsumer):
         final_status = MessageStatus.FAILED if timed_out else MessageStatus.COMPLETE
         await self.update_message(saved_agent_message.id, full_content, final_status)
 
-    async def _execute_graph(self, message: str, agent_message_id) -> tuple[str, dict | None]:
+    async def _execute_graph(
+        self,
+        message: str,
+        agent_message_id,
+        loaded_layers: list[dict] | None = None,
+    ) -> tuple[str, dict | None]:
         """Run the LangGraph agent and stream tokens to the client.
 
         Returns (full_content, last_ui_action) after the stream completes.
@@ -188,9 +195,11 @@ class ChatConsumer(AsyncWebsocketConsumer):
         inputs = {
             "session_id": self.session_id,
             "messages": [HumanMessage(content=message)],
-            "active_node": Node,
+            "active_node": Node.ORCHESTRATOR,
             "next_node": None,
             "final_response": "",
+            "loaded_layers": loaded_layers or [],
+            "pending_processing_tool": None,
         }
         config = cast(
             RunnableConfig,
@@ -286,6 +295,45 @@ class ChatConsumer(AsyncWebsocketConsumer):
                 }
             )
         )
+
+    @staticmethod
+    def _parse_loaded_layers(context: Any) -> list[dict]:
+        """Extract a sanitized list of loaded layers from the inbound payload."""
+        if not isinstance(context, dict):
+            return []
+
+        raw = context.get("loaded_layers")
+
+        if not isinstance(raw, list):
+            return []
+
+        result: list[dict] = []
+
+        for entry in raw[:100]:
+            if not isinstance(entry, dict):
+                continue
+
+            layer_id = entry.get("id")
+            name = entry.get("name")
+            layer_type = entry.get("type")
+
+            if not isinstance(layer_id, str) or not isinstance(name, str):
+                continue
+
+            sanitized: dict[str, Any] = {
+                "id": layer_id,
+                "name": name,
+                "type": layer_type if isinstance(layer_type, str) else "",
+            }
+
+            dataset_id = entry.get("datasetId") or entry.get("dataset_id")
+
+            if isinstance(dataset_id, str):
+                sanitized["dataset_id"] = dataset_id
+
+            result.append(sanitized)
+
+        return result
 
     @sync_to_async
     def get_chat_session(self, session_id, user_id):

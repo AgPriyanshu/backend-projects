@@ -1,6 +1,6 @@
 import operator
 from enum import StrEnum
-from typing import Annotated, TypedDict
+from typing import Annotated, Any, NotRequired, TypedDict
 
 from langchain.messages import AnyMessage
 from pydantic import BaseModel
@@ -8,6 +8,7 @@ from pydantic import BaseModel
 
 class UIActionType(StrEnum):
     MAP_ZOOM_TO = "map_zoom_to"
+    OPEN_PROCESSING_TOOL = "open_processing_tool"
 
 
 class MapZoomToPayload(TypedDict):
@@ -15,10 +16,16 @@ class MapZoomToPayload(TypedDict):
     latitude: float
 
 
+class OpenProcessingToolPayload(TypedDict):
+    tool_name: str
+    defaults: dict[str, Any]
+    output_name: NotRequired[str]
+
+
 class UIAction(TypedDict):
     app: str
     type: str
-    payload: dict | MapZoomToPayload
+    payload: dict | MapZoomToPayload | OpenProcessingToolPayload
 
 
 class RoutingDecision(BaseModel):
@@ -31,6 +38,19 @@ class Node(StrEnum):
     WEB_GIS_EXPERT = "web_gis_expert"
     UI_EXPERT = "ui_expert"
     MAP_ZOOM_TO = "map_zoom_to"
+    OPEN_PROCESSING_TOOL = "open_processing_tool"
+
+
+class LoadedLayer(TypedDict):
+    id: str
+    name: str
+    type: str
+    dataset_id: NotRequired[str]
+
+
+class PendingProcessingTool(TypedDict):
+    tool_name: str
+    defaults: dict[str, Any]
 
 
 class GlobalMessageState(TypedDict):
@@ -42,3 +62,5 @@ class GlobalMessageState(TypedDict):
     final_response: str | list[str | dict]
     ui_action: UIAction
     geocode_result: dict | None
+    loaded_layers: list[LoadedLayer]
+    pending_processing_tool: PendingProcessingTool | None
