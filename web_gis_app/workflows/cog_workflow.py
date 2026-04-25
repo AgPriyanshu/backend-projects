@@ -34,6 +34,13 @@ class GenerateCOG(Operation[GenerateCOGPayload, dict]):
         work_dir = self.payload.work_dir
         output_path = os.path.join(work_dir, "output.tif")
 
+        import rasterio
+
+        # If the input TIFF lacks a CRS, assign EPSG:4326 iteratively to headers without loading massive arrays into RAM (which causes OOM crashes).
+        with rasterio.open(input_path, "r+") as src:
+            if not src.crs:
+                src.crs = "EPSG:4326"
+
         # Use LZW compression profile for COG.
         output_profile = cog_profiles.get("lzw")
 

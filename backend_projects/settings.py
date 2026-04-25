@@ -58,7 +58,8 @@ INSTALLED_APPS = [
     # "chat_app.apps.ChatAppConfig",
     "ecommerce_app.apps.EcommerceAppConfig",
     "web_gis_app.apps.WebGisAppConfig",
-    "agent_manager.apps.AgentManagerConfig"
+    "agent_manager.apps.AgentManagerConfig",
+    "level_up_app.apps.LevelUpAppConfig",
 ]
 
 MIDDLEWARE = [

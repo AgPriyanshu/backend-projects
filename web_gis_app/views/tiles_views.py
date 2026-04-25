@@ -90,8 +90,19 @@ class DatasetTileView(APIView):
                         tile_data = src.tile(x, y, z, resampling_method="bilinear")
                         data = tile_data.data.astype(np.float32)
 
-                        # Handle no-data / NaNs
-                        data = np.nan_to_num(data, nan=-10000.0)
+                        # Apply mask: rio-tiler provides a mask (255=valid, 0=nodata)
+                        # We must zero-out nodata pixels because Mapbox terrain ignores alpha
+                        # and decodes whatever rgb values are present.
+                        # We set them to 0.0 meters (sea level).
+                        if tile_data.mask is not None:
+                            data[:, tile_data.mask == 0] = 0.0
+
+                        # Catch uncached nodata values like -32768.0 if they bypass the dataset mask.
+                        # Earth's lowest exposed land is ~ -430m, anything < -1000 is a nodata anomaly.
+                        data[data < -1000.0] = 0.0
+
+                        # Handle any actual NaNs just in case
+                        data = np.nan_to_num(data, nan=0.0)
 
                         # rio_rgbify expects a 2D array for a single band DEM.
                         if data.ndim == 3 and data.shape[0] == 1:

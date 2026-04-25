@@ -36,14 +36,14 @@ def get_raster_info(path: str) -> RasterInfo:
         info = cog.info()
         x_res, y_res = cog.dataset.res  # type: ignore
 
-        return {
-            "bounds": info.bounds,
-            "band_count": info.count,  # type: ignore
-            "min_zoom": cog.minzoom,
-            "max_zoom": cog.maxzoom,
-            "crs": cog.crs,
-            "resolution": Resolution(x_res, y_res),
-        }
+        return RasterInfo(
+            bounds=info.bounds,
+            band_count=info.count,  # type: ignore
+            minzoom=cog.minzoom,
+            maxzoom=cog.maxzoom,
+            crs=cog.crs,
+            resolution=Resolution(x_res, y_res),
+        )
 
 
 def format_to_ext(format: str):

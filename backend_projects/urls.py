@@ -40,6 +40,7 @@ urlpatterns = [
         name="note-api-doc",
     ),
     path("ai/", include("agent_manager.urls")),
+    path("level-up/", include("level_up_app.urls")),
     path("ping/", ping),
     # TODO: Add API Doc for each app
 ] + static(STATIC_URL, document_root=STATIC_ROOT)

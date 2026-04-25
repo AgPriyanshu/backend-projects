@@ -119,12 +119,10 @@ class K8sObjectStorage(ObjectStorageAbstract):
         try:
             response = self.client.get_object(Bucket=download_bucket, Key=key)
 
-            # Read the response body into a BytesIO object
-            data = io.BytesIO(response["Body"].read())
-
-            # Reset to beginning for reading
-            data.seek(0)
-            return data
+            # Return the boto3 StreamingBody natively for chunked reads.
+            # Doing so prevents 1GB+ files from loading completely into memory
+            # and killing cluster Pods/Containers via OOM.
+            return response["Body"]
         except ClientError as e:
             raise RuntimeError(f"Failed to download object: {e}")
 
