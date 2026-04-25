@@ -6,7 +6,7 @@ from .models import Character, Stat
 class StatSerializer(serializers.ModelSerializer):
     class Meta:
         model = Stat
-        fields = ["id", "name", "value", "max", "created_at", "updated_at"]
+        fields = ["id", "name", "value", "max", "notes", "created_at", "updated_at"]
         read_only_fields = ["id", "created_at", "updated_at"]
 
     def validate(self, attrs):

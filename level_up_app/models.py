@@ -24,6 +24,7 @@ class Stat(BaseModel):
     name = models.CharField(max_length=50)
     value = models.IntegerField(default=0, validators=[MinValueValidator(0)])
     max = models.IntegerField(default=5, validators=[MinValueValidator(1)])
+    notes = models.TextField(blank=True, default="")
 
     class Meta:
         ordering = ["created_at"]
