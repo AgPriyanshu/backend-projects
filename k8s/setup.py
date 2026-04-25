@@ -168,8 +168,17 @@ def helm(release: str, chart: str, *extra_args: str, values: Path | None = None)
     run(cmd)
 
 
-def deploy_all(computed: Path) -> None:
-    # 1. Gateway API CRDs
+def deploy_all(computed: Path, has_gpu: bool = False) -> None:
+    # 1. NVIDIA device plugin (GPU only)
+    if has_gpu:
+        step("Installing NVIDIA Device Plugin")
+        run([
+            "kubectl", "apply", "-f",
+            "https://raw.githubusercontent.com/NVIDIA/k8s-device-plugin/v0.17.0/deployments/static/nvidia-device-plugin.yml",
+        ])
+        print("✅ NVIDIA Device Plugin installed")
+
+    # 2. Gateway API CRDs
     step("Installing Gateway API CRDs")
     run(["kubectl", "apply", "-f", "platform/crds/gateway-api/standard-install.yaml"])
     # kustomize piped to kubectl
@@ -255,6 +264,12 @@ def deploy_all(computed: Path) -> None:
          "--namespace", "gateway-ns", "--create-namespace")
     print("✅ Cloudflare Tunnel installed")
 
+    # 13. vLLM inference server (GPU only)
+    if has_gpu:
+        step("Installing vLLM Inference Server")
+        helm("platform-llm", "platform/llm", "--namespace", "default", values=computed)
+        print("✅ vLLM Inference Server installed (reachable at http://vllm:8000 inside the cluster)")
+
 
 # ---------------------------------------------------------------------------
 # Main
@@ -281,16 +296,18 @@ def main() -> None:
     ensure_minikube_running(minikube_cpus, minikube_mem, has_gpu)
 
     # Step 4+: deploy all charts
-    deploy_all(computed)
+    deploy_all(computed, has_gpu=has_gpu)
 
     # Summary
     print("\n" + "=" * 50)
     print("🎉 Full deployment completed successfully!")
     print("=" * 50)
-    print(f"\n  ✅ Minikube  ({minikube_cpus} CPUs, {minikube_mem}MB RAM)")
+    print(f"\n  ✅ Minikube  ({minikube_cpus} CPUs, {minikube_mem}MB RAM" + (" + GPU" if has_gpu else "") + ")")
     print("  ✅ Gateway API CRDs + NGINX Gateway Fabric")
     print("  ✅ PostgreSQL · Redis · SeaweedFS")
     print("  ✅ Backend · Frontend · Cloudflare Tunnel")
+    if has_gpu:
+        print("  ✅ vLLM inference server  →  http://vllm:8000  (cluster-internal only)")
     print("\nTo check status:")
     print("  kubectl get pods -A")
     print("  kubectl get gateway -n gateway-ns")
