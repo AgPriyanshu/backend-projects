@@ -1,0 +1,64 @@
+import logging
+
+from rest_framework.permissions import AllowAny
+from rest_framework.request import Request
+from rest_framework.response import Response
+from rest_framework.views import APIView
+
+from ..serializers import SearchItemSerializer
+from ..services.search import build_search_qs, log_search
+
+logger = logging.getLogger(__name__)
+
+
+def _float_or_none(value: str | None) -> float | None:
+    if value is None:
+        return None
+    try:
+        return float(value)
+    except (ValueError, TypeError):
+        return None
+
+
+class SearchItemsView(APIView):
+    permission_classes = [AllowAny]
+
+    def get(self, request: Request):
+        q = request.query_params.get("q", "").strip()
+        lat = _float_or_none(request.query_params.get("lat"))
+        lng = _float_or_none(request.query_params.get("lng"))
+        radius_km = float(request.query_params.get("radius_km", 10))
+        category_slug = request.query_params.get("category", "")
+        min_price = _float_or_none(request.query_params.get("min_price"))
+        max_price = _float_or_none(request.query_params.get("max_price"))
+        sort = request.query_params.get("sort", "distance")
+        cursor = request.query_params.get("cursor", "")
+        limit = min(int(request.query_params.get("limit", 20)), 100)
+
+        items, next_cursor = build_search_qs(
+            q=q,
+            lat=lat,
+            lng=lng,
+            radius_km=radius_km,
+            category_slug=category_slug,
+            min_price=min_price,
+            max_price=max_price,
+            sort=sort,
+            cursor=cursor,
+            limit=limit,
+        )
+
+        log_search(
+            query=q,
+            result_count=len(items),
+            lat=lat,
+            lng=lng,
+            user=request.user,
+        )
+
+        return Response(
+            {
+                "items": SearchItemSerializer(items, many=True).data,
+                "next_cursor": next_cursor,
+            }
+        )
