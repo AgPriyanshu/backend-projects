@@ -215,6 +215,7 @@ REST_FRAMEWORK = {
         "backend_projects.renderer.CustomJSONRenderer",
     ],
     "DEFAULT_AUTHENTICATION_CLASSES": [
+        "dead_stock_app.authentication.JWTBearerAuthentication",
         "rest_framework.authentication.TokenAuthentication",  # Add standard token auth
         "auth_app.authentication.BearerAuthentication",
     ],
@@ -268,3 +269,10 @@ LLM_SERVER_CONFIG = {
 
 
 DEFAULT_CURRENCY = "INR"
+
+# Dead Stock — OTP / JWT.
+MSG91_AUTH_KEY = os.environ.get("MSG91_AUTH_KEY", "")
+MSG91_TEMPLATE_ID = os.environ.get("MSG91_TEMPLATE_ID", "")
+MSG91_SENDER_ID = os.environ.get("MSG91_SENDER_ID", "DSTOCK")
+DS_JWT_SECRET = os.environ.get("DS_JWT_SECRET", SECRET_KEY)
+DS_JWT_TTL_SECONDS = int(os.environ.get("DS_JWT_TTL_SECONDS", "2592000"))
