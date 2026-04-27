@@ -43,6 +43,7 @@ INSTALLED_APPS = [
     "django.contrib.staticfiles",
     "corsheaders",
     "django.contrib.gis",
+    "django.contrib.postgres",
     "channels",
     "rest_framework",
     "rest_framework.authtoken",
