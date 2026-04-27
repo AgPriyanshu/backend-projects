@@ -186,6 +186,31 @@ class InventoryItemSerializer(serializers.ModelSerializer):
         read_only_fields = ("id", "shop", "shop_name", "stale_at", "images", "created_at", "updated_at")
 
 
+class SearchItemSerializer(InventoryItemSerializer):
+    distance_m = serializers.SerializerMethodField()
+    shop_lat = serializers.SerializerMethodField()
+    shop_lng = serializers.SerializerMethodField()
+
+    class Meta(InventoryItemSerializer.Meta):
+        fields = InventoryItemSerializer.Meta.fields + (
+            "distance_m",
+            "shop_lat",
+            "shop_lng",
+        )
+
+    def get_distance_m(self, obj):
+        d = getattr(obj, "distance", None)
+        return round(d.m, 1) if d is not None else None
+
+    def get_shop_lat(self, obj):
+        loc = obj.shop.location if obj.shop else None
+        return loc.y if loc else None
+
+    def get_shop_lng(self, obj):
+        loc = obj.shop.location if obj.shop else None
+        return loc.x if loc else None
+
+
 class PresignImageRequestSerializer(serializers.Serializer):
     content_type = serializers.RegexField(regex=r"^image/(jpeg|png|webp)$")
 

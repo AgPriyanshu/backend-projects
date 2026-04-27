@@ -15,6 +15,7 @@ from ..serializers import (
     PresignImageRequestSerializer,
 )
 from ..services.images import delete_object, presign_put
+from ..tasks import generate_image_variants
 
 
 class InventoryItemViewSet(viewsets.ModelViewSet):
@@ -78,7 +79,7 @@ class InventoryItemViewSet(viewsets.ModelViewSet):
             position=position,
             is_primary=is_primary,
         )
-        # Day 05 wires the Celery variant task here.
+        generate_image_variants.delay(str(image.id))
         return Response(
             ItemImageSerializer(image).data, status=status.HTTP_201_CREATED
         )
