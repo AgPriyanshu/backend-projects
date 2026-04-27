@@ -1,6 +1,10 @@
+import os
 import re
 
+from django.contrib.gis.geos import Point
 from rest_framework import serializers
+
+from .models import Category, InventoryItem, ItemImage, Shop
 
 # Indian mobile: starts with 6-9 followed by 9 digits, prefixed with +91.
 PHONE_REGEX = re.compile(r"^\+91[6-9]\d{9}$")
@@ -32,3 +36,162 @@ class OTPVerifySerializer(serializers.Serializer):
 
 class RefreshTokenSerializer(serializers.Serializer):
     token = serializers.CharField()
+
+
+# ---------------------------------------------------------------------------
+# Domain serializers
+# ---------------------------------------------------------------------------
+
+
+class CategorySerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Category
+        fields = ("id", "slug", "name", "parent")
+
+
+class ShopSerializer(serializers.ModelSerializer):
+    latitude = serializers.FloatField(write_only=True)
+    longitude = serializers.FloatField(write_only=True)
+    lat = serializers.SerializerMethodField()
+    lng = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Shop
+        fields = (
+            "id",
+            "name",
+            "address",
+            "city",
+            "pincode",
+            "phone",
+            "is_verified",
+            "rating_avg",
+            "lat",
+            "lng",
+            "latitude",
+            "longitude",
+            "created_at",
+            "updated_at",
+        )
+        read_only_fields = ("id", "is_verified", "rating_avg", "created_at", "updated_at")
+
+    def get_lat(self, obj):
+        return obj.location.y if obj.location else None
+
+    def get_lng(self, obj):
+        return obj.location.x if obj.location else None
+
+    def validate(self, attrs):
+        if "latitude" in attrs and "longitude" in attrs:
+            attrs["location"] = Point(
+                attrs.pop("longitude"), attrs.pop("latitude"), srid=4326
+            )
+        elif "latitude" in attrs or "longitude" in attrs:
+            raise serializers.ValidationError(
+                "Both latitude and longitude are required."
+            )
+        return attrs
+
+    def to_internal_value(self, data):
+        # Validate phone with same regex used elsewhere when present.
+        if data.get("phone"):
+            _validate_phone(data["phone"])
+        return super().to_internal_value(data)
+
+
+class ShopWithDistanceSerializer(ShopSerializer):
+    distance_m = serializers.SerializerMethodField()
+
+    class Meta(ShopSerializer.Meta):
+        fields = ShopSerializer.Meta.fields + ("distance_m",)
+
+    def get_distance_m(self, obj):
+        d = getattr(obj, "distance", None)
+        return round(d.m, 1) if d else None
+
+
+class ItemImageSerializer(serializers.ModelSerializer):
+    url = serializers.SerializerMethodField()
+    thumb_url = serializers.SerializerMethodField()
+    card_url = serializers.SerializerMethodField()
+
+    class Meta:
+        model = ItemImage
+        fields = (
+            "id",
+            "position",
+            "is_primary",
+            "variants_ready",
+            "width",
+            "height",
+            "url",
+            "thumb_url",
+            "card_url",
+            "created_at",
+        )
+        read_only_fields = fields
+
+    def _public_base(self):
+        return os.environ.get("S3_PUBLIC_ENDPOINT", "").rstrip("/")
+
+    def _bucket(self):
+        return os.environ.get("S3_BUCKET", "")
+
+    def _build(self, key):
+        base = self._public_base()
+        bucket = self._bucket()
+        if not (base and bucket and key):
+            return None
+        return f"{base}/{bucket}/{key}"
+
+    def _variant_key(self, obj, size):
+        # variants live alongside the original under /variants/<size>.webp
+        # original key: dead-stock/items/<id>/originals/<uuid>.<ext>
+        prefix = obj.s3_key.rsplit("/originals/", 1)[0]
+        return f"{prefix}/variants/{size}.webp"
+
+    def get_url(self, obj):
+        return self._build(obj.s3_key)
+
+    def get_thumb_url(self, obj):
+        return self._build(self._variant_key(obj, "thumb_200")) if obj.variants_ready else None
+
+    def get_card_url(self, obj):
+        return self._build(self._variant_key(obj, "card_600")) if obj.variants_ready else None
+
+
+class InventoryItemSerializer(serializers.ModelSerializer):
+    images = ItemImageSerializer(many=True, read_only=True)
+    shop_name = serializers.CharField(source="shop.name", read_only=True)
+
+    class Meta:
+        model = InventoryItem
+        fields = (
+            "id",
+            "shop",
+            "shop_name",
+            "category",
+            "name",
+            "sku",
+            "description",
+            "quantity",
+            "price",
+            "condition",
+            "status",
+            "stale_at",
+            "images",
+            "created_at",
+            "updated_at",
+        )
+        read_only_fields = ("id", "shop", "shop_name", "stale_at", "images", "created_at", "updated_at")
+
+
+class PresignImageRequestSerializer(serializers.Serializer):
+    content_type = serializers.RegexField(regex=r"^image/(jpeg|png|webp)$")
+
+
+class ConfirmImageRequestSerializer(serializers.Serializer):
+    key = serializers.CharField()
+    width = serializers.IntegerField(min_value=1)
+    height = serializers.IntegerField(min_value=1)
+    is_primary = serializers.BooleanField(default=False)
