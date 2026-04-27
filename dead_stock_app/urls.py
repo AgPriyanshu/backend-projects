@@ -4,9 +4,12 @@ from rest_framework.routers import DefaultRouter
 from .views import (
     CategoryViewSet,
     InventoryItemViewSet,
+    LeadCreateView,
+    LeadInboxView,
     OTPRequestView,
     OTPVerifyView,
     RefreshTokenView,
+    ReportCreateView,
     SearchItemsView,
     ShopViewSet,
     ping,
@@ -23,5 +26,8 @@ urlpatterns = [
     path("auth/otp/verify/", OTPVerifyView.as_view(), name="ds-otp-verify"),
     path("auth/refresh/", RefreshTokenView.as_view(), name="ds-refresh"),
     path("search/items/", SearchItemsView.as_view(), name="ds-search-items"),
+    path("leads/", LeadCreateView.as_view(), name="ds-leads-create"),
+    path("leads/inbox/", LeadInboxView.as_view(), name="ds-leads-inbox"),
+    path("reports/", ReportCreateView.as_view(), name="ds-reports-create"),
     path("", include(router.urls)),
 ]

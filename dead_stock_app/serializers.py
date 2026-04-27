@@ -4,7 +4,7 @@ import re
 from django.contrib.gis.geos import Point
 from rest_framework import serializers
 
-from .models import Category, InventoryItem, ItemImage, Shop
+from .models import Category, InventoryItem, ItemImage, Lead, Report, Shop
 
 # Indian mobile: starts with 6-9 followed by 9 digits, prefixed with +91.
 PHONE_REGEX = re.compile(r"^\+91[6-9]\d{9}$")
@@ -190,12 +190,14 @@ class SearchItemSerializer(InventoryItemSerializer):
     distance_m = serializers.SerializerMethodField()
     shop_lat = serializers.SerializerMethodField()
     shop_lng = serializers.SerializerMethodField()
+    shop_phone = serializers.CharField(source="shop.phone", read_only=True)
 
     class Meta(InventoryItemSerializer.Meta):
         fields = InventoryItemSerializer.Meta.fields + (
             "distance_m",
             "shop_lat",
             "shop_lng",
+            "shop_phone",
         )
 
     def get_distance_m(self, obj):
@@ -220,3 +222,44 @@ class ConfirmImageRequestSerializer(serializers.Serializer):
     width = serializers.IntegerField(min_value=1)
     height = serializers.IntegerField(min_value=1)
     is_primary = serializers.BooleanField(default=False)
+
+
+class LeadSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Lead
+        fields = (
+            "id",
+            "buyer",
+            "shop",
+            "item",
+            "message",
+            "contacted_at",
+            "created_at",
+        )
+        read_only_fields = fields
+
+
+class CreateLeadSerializer(serializers.Serializer):
+    shop_id = serializers.UUIDField()
+    item_id = serializers.UUIDField(required=False, allow_null=True)
+    message = serializers.CharField(min_length=5, max_length=1000)
+    phone = serializers.CharField(required=False, allow_blank=True)
+    buyer_name = serializers.CharField(
+        required=False, allow_blank=True, max_length=120
+    )
+
+    def validate_phone(self, value):
+        return _validate_phone(value) if value else value
+
+
+class CreateReportSerializer(serializers.Serializer):
+    shop_id = serializers.UUIDField(required=False, allow_null=True)
+    item_id = serializers.UUIDField(required=False, allow_null=True)
+    reason = serializers.CharField(min_length=5, max_length=1000)
+
+
+class ReportSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Report
+        fields = ("id", "shop", "item", "reason", "status", "created_at")
+        read_only_fields = fields

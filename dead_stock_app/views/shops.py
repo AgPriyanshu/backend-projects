@@ -7,8 +7,12 @@ from rest_framework.exceptions import NotFound, ValidationError
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 
-from ..models import Shop
-from ..serializers import ShopSerializer, ShopWithDistanceSerializer
+from ..models import InventoryItem, Shop
+from ..serializers import (
+    SearchItemSerializer,
+    ShopSerializer,
+    ShopWithDistanceSerializer,
+)
 
 
 class ShopViewSet(viewsets.ViewSet):
@@ -80,3 +84,19 @@ class ShopViewSet(viewsets.ViewSet):
         return Response(
             {"shops": ShopWithDistanceSerializer(qs, many=True).data}
         )
+
+    @action(detail=True, methods=["get"], permission_classes=[AllowAny])
+    def items(self, request, pk=None):
+        try:
+            shop = Shop.objects.get(pk=pk)
+        except Shop.DoesNotExist as exc:
+            raise NotFound("Shop not found.") from exc
+
+        limit = min(int(request.query_params.get("limit", 30)), 100)
+        qs = (
+            InventoryItem.objects.filter(shop=shop, status=InventoryItem.Status.ACTIVE)
+            .select_related("shop", "category")
+            .prefetch_related("images")
+            .order_by("-updated_at")[:limit]
+        )
+        return Response({"items": SearchItemSerializer(qs, many=True).data})
