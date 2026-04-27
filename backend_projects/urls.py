@@ -13,6 +13,7 @@ urlpatterns = [
     path("admin/", admin.site.urls),
     path("auth/", include("auth_app.urls")),
     path("blogs/", include("blogs_app.urls")),
+    path("dead-stock/", include("dead_stock_app.urls")),
     path("weather/", include("weather_app.urls")),
     path("tasks/", include("todo_app.urls")),
     path("expenses/", include("expense_tracker_app.urls")),

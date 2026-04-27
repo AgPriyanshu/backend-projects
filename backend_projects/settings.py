@@ -49,6 +49,7 @@ INSTALLED_APPS = [
     "shared.apps.SharedConfig",
     "auth_app.apps.AuthAppConfig",
     "blogs_app.apps.BlogsAppConfig",
+    "dead_stock_app.apps.DeadStockAppConfig",
     "expense_tracker_app.apps.ExpenseTrackerAppConfig",
     "todo_app.apps.TodoAppConfig",
     "weather_app.apps.WeatherAppConfig",
